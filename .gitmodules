@@ -1,0 +1,3 @@
+[submodule "tools/video-analyzer-tool"]
+	path = tools/video-analyzer-tool
+	url = https://github.com/myfunuiai-del/video-analyzer-tool.git

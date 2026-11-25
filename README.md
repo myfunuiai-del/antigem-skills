@@ -36,8 +36,8 @@
 | **`fast-android-automation`** | Mobile Automation | AntiGem / Claude | Batch ADB/Shizuku/Root shell, direct Intents, zero accessibility lag. |
 | **`fast-browser-automation`** | Web Automation | AntiGem / Claude | Viewport-only JS text extraction, avoids heavy full-DOM dumps. |
 | **`rea-video`** | Video Reverse Engineering | AntiGem | Interactive token-saver gate, dialogue script remake, visual style breakdown & FFmpeg zero-heat slicer. |
-| **`video-content-analyzer`** | Video Intelligence | AntiGem | Zero-download speech-to-text, on-screen GitHub repo/tool detection & Google Transcribe integration. |
-| **`video-insight-research`** | Video Intelligence | Claude Code / CLI | Complete video analysis pipeline tailored for Claude agent runtime. |
+| **`video-content-analyzer`** | Video Intelligence | AntiGem | Zero-download speech-to-text, on-screen GitHub repo/tool detection & Google Transcribe integration (Powered by [video-analyzer-tool](https://github.com/myfunuiai-del/video-analyzer-tool)). |
+| **`video-insight-research`** | Video Intelligence | Claude Code / CLI | Complete video analysis pipeline tailored for Claude agent runtime (Powered by [video-analyzer-tool](https://github.com/myfunuiai-del/video-analyzer-tool)). |
 | **`chisle-ponytail-efficiency`** | Developer Rules | AntiGem / Claude | Extreme token economy, YAGNI-first code, concise communication. |
 | **`svg-generator`** | Visual Design | AntiGem / Claude | AI-driven vector/SVG graphics creation and raster-to-SVG conversion. |
 
@@ -49,6 +49,12 @@
 * 🎬 **Zero-Download Video Intelligence**: Tap directly into remote media streams (YouTube, Facebook, X, direct URLs) without storing multi-gigabyte video files.
 * ✂️ **Token & Phone-Heat Optimization**: Every skill implements aggressive payload compression, silence trimming, and interactive confirmation gates to keep mobile CPU usage and token consumption near zero.
 * 🛡️ **Dual-Agent Portability**: Optimized for seamless interoperability between AntiGem (Antigravity CLI) and Claude Code agents.
+
+---
+
+## 🔗 Linked Repositories & Submodules
+
+* 🎥 **[Video Analyzer Tool](https://github.com/myfunuiai-del/video-analyzer-tool)**: Standalone zero-download CLI tool for AI speech transcription, Google Gemini transcribe, and visual keyframe extraction. Embedded as a Git submodule under `tools/video-analyzer-tool/` and automatically synced via GitHub Actions.
 
 ---
 

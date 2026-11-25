@@ -1,0 +1,41 @@
+name: Sync Video Analyzer Tool Submodule
+
+on:
+  schedule:
+    # Runs every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    name: Sync Video Analyzer Tool Submodule
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update submodules to latest remote commit
+        run: |
+          git submodule update --remote --merge tools/video-analyzer-tool
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add tools/video-analyzer-tool
+            git commit -m "chore(submodule): auto-sync video-analyzer-tool to latest commit"
+            git push origin main
+          else
+            echo "No submodule updates found."
+          fi
