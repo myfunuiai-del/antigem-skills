@@ -1,0 +1,214 @@
+#!/data/user/0/ai.antigem/files/usr/bin/python3
+"""fast-touch - High performance Android Automation helper using Shizuku (rish)."""
+import sys
+import os
+import subprocess
+import time
+import signal
+import argparse
+
+AUTO_NOTIF_TAG = "fast_touch_auto"
+APP_LOCK_KEYWORDS = [
+    "applock", "biometric", "confirmdevicecredential", "keyguard",
+    "lockscreen", "securitycenter.applock", "miui.securitycenter/com.miui.appmanager",
+    "credential", "fingerprint", "faceunlock"
+]
+
+
+def run_rish(cmd_str):
+    res = subprocess.run(["rish", "-c", cmd_str], capture_output=True, text=True)
+    return res.returncode, res.stdout.strip(), res.stderr.strip()
+
+
+def get_show_touches():
+    code, out, _ = run_rish("settings get system show_touches")
+    if code == 0 and out in ("0", "1"):
+        return out
+    return "0"
+
+
+def set_show_touches(val):
+    run_rish(f"settings put system show_touches {val}")
+
+
+def post_auto_notification(msg="Auto Mode Running..."):
+    # Best-effort status notification; silently ignored on restricted ROMs
+    safe_msg = msg.replace("'", "")
+    run_rish(f"cmd notification post -t 'AntiGem Auto Mode' {AUTO_NOTIF_TAG} '{safe_msg}' 2>/dev/null || true")
+
+
+def clear_auto_notification():
+    run_rish(f"cmd notification cancel {AUTO_NOTIF_TAG} 2>/dev/null || true")
+
+
+def get_focused_window():
+    _, out, _ = run_rish("dumpsys window 2>/dev/null | grep -E 'mCurrentFocus|mFocusedApp' | head -n 4")
+    return out
+
+
+def is_app_locked(focused_text):
+    low = focused_text.lower()
+    return any(kw in low for kw in APP_LOCK_KEYWORDS)
+
+
+def set_stay_on(enable):
+    val = "true" if enable else "false"
+    run_rish(f"svc power stayon {val} 2>/dev/null || true")
+
+
+class AutoSession:
+    """Context manager guaranteeing pointer, stayon & notification cleanup even on SIGINT/SIGTERM."""
+
+    def __init__(self, enable_pointer=True, show_notif=True, keep_awake=True, label="Auto Mode Running..."):
+        self.enable_pointer = enable_pointer
+        self.show_notif = show_notif
+        self.keep_awake = keep_awake
+        self.label = label
+        self.orig_touches = "0"
+        self._cleaned = False
+
+    def cleanup(self, *_):
+        if self._cleaned:
+            return
+        self._cleaned = True
+        if self.enable_pointer:
+            set_show_touches(self.orig_touches)
+        if self.keep_awake:
+            set_stay_on(False)
+        if self.show_notif:
+            clear_auto_notification()
+
+    def __enter__(self):
+        if self.enable_pointer:
+            self.orig_touches = get_show_touches()
+            set_show_touches("1")
+        if self.keep_awake:
+            set_stay_on(True)
+        if self.show_notif:
+            post_auto_notification(self.label)
+
+        def _sig_handler(signum, _frame):
+            self.cleanup()
+            sys.exit(128 + signum)
+
+        signal.signal(signal.SIGINT, _sig_handler)
+        signal.signal(signal.SIGTERM, _sig_handler)
+        signal.signal(signal.SIGHUP, _sig_handler)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.cleanup()
+
+
+def wait_for_unlock(timeout_sec=60):
+    """Silently wait until App Lock / Keyguard disappears."""
+    deadline = time.time() + timeout_sec
+    while time.time() < deadline:
+        focused = get_focused_window()
+        if focused and not is_app_locked(focused):
+            return True
+        time.sleep(1.0)
+    return False
+
+
+def launch_app(pkg, wait_sec=2.0, unlock_timeout=60):
+    print(f"[*] Launching {pkg} via Intent...")
+    cmd = (
+        f"am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "
+        f"$(cmd package resolve-activity --brief {pkg} | tail -n 1) 2>/dev/null "
+        f"|| monkey -p {pkg} -c android.intent.category.LAUNCHER 1"
+    )
+    run_rish(cmd)
+    time.sleep(wait_sec)
+    focused = get_focused_window()
+    if focused and is_app_locked(focused):
+        print("[*] App Lock detected; waiting silently for user to unlock...")
+        if not wait_for_unlock(unlock_timeout):
+            print(f"APP_LOCK_TIMEOUT: {focused}")
+            return 2
+        time.sleep(0.5)
+    return 0
+
+
+def tap(x, y):
+    return run_rish(f"input tap {x} {y}")
+
+
+def swipe(x1, y1, x2, y2, duration_ms=250):
+    return run_rish(f"input swipe {x1} {y1} {x2} {y2} {duration_ms}")
+
+
+def text(t):
+    safe_t = t.replace(" ", "%s").replace("&", "\\&").replace("'", "\\'")
+    return run_rish(f"input text {safe_t}")
+
+
+def key(code):
+    return run_rish(f"input keyevent {code}")
+
+
+def screenshot(dest_path):
+    with open(dest_path, "wb") as f:
+        res = subprocess.run(["rish", "-c", "screencap -p"], stdout=f, stderr=subprocess.PIPE)
+    return res.returncode == 0
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Fast Android Automation Helper (Shizuku)")
+    parser.add_argument(
+        "action",
+        choices=["launch", "tap", "swipe", "scroll_down", "scroll_up", "text", "key", "shot", "batch", "check_lock"]
+    )
+    parser.add_argument("args", nargs="*", help="Arguments for the action")
+    parser.add_argument("-o", "--output", default="/data/user/0/ai.antigem/files/usr/tmp/screen.png")
+    parser.add_argument("--no-pointer", action="store_true", help="Disable Show Taps pointer animation")
+    parser.add_argument("--no-notif", action="store_true", help="Disable Auto Mode status notification")
+
+    parsed = parser.parse_args()
+    act = parsed.action
+
+    if act == "check_lock":
+        focused = get_focused_window()
+        locked = is_app_locked(focused)
+        print(f"LOCKED={locked} WINDOW={focused}")
+        sys.exit(2 if locked else 0)
+
+    if act == "shot":
+        ok = screenshot(parsed.output)
+        print(f"[✓] Screenshot saved: {parsed.output}" if ok else "[x] Failed screenshot")
+        sys.exit(0 if ok else 1)
+
+    use_pointer = not parsed.no_pointer and act in {"tap", "swipe", "scroll_down", "scroll_up", "batch"}
+    use_notif = not parsed.no_notif and act in {"launch", "tap", "swipe", "scroll_down", "scroll_up", "batch"}
+
+    with AutoSession(enable_pointer=use_pointer, show_notif=use_notif, label=f"Auto Mode: {act}"):
+        if act == "launch":
+            pkg = parsed.args[0] if parsed.args else "com.facebook.katana"
+            code = launch_app(pkg)
+            sys.exit(code)
+        elif act == "tap":
+            tap(parsed.args[0], parsed.args[1])
+        elif act == "swipe":
+            swipe(
+                parsed.args[0], parsed.args[1], parsed.args[2], parsed.args[3],
+                parsed.args[4] if len(parsed.args) > 4 else 250
+            )
+        elif act == "scroll_down":
+            swipe(500, 1600, 500, 400, 250)
+        elif act == "scroll_up":
+            swipe(500, 400, 500, 1600, 250)
+        elif act == "text":
+            text(" ".join(parsed.args))
+        elif act == "key":
+            key(parsed.args[0])
+        elif act == "batch":
+            cmd_chain = " ".join(parsed.args)
+            run_rish(cmd_chain)
+            focused = get_focused_window()
+            if focused and is_app_locked(focused):
+                print(f"APP_LOCK_DETECTED: {focused}")
+                sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()
