@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 260" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070b14" />
+      <stop offset="50%" stop-color="#0d1527" />
+      <stop offset="100%" stop-color="#181738" />
+    </linearGradient>
+
+    <!-- Logo Gradients -->
+    <linearGradient id="neonCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f2fe" />
+      <stop offset="100%" stop-color="#4facfe" />
+    </linearGradient>
+    <linearGradient id="neonPink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff0844" />
+      <stop offset="100%" stop-color="#ffb199" />
+    </linearGradient>
+    <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f6d365" />
+      <stop offset="100%" stop-color="#fda085" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Banner Card Base -->
+  <rect width="900" height="260" rx="20" fill="url(#bgGrad)" stroke="#1e293b" stroke-width="2"/>
+
+  <!-- Subtle Radial Ambient Light -->
+  <circle cx="150" cy="130" r="140" fill="#00f2fe" opacity="0.08" filter="url(#glow)"/>
+  <circle cx="820" cy="60" r="120" fill="#ff0844" opacity="0.06" filter="url(#glow)"/>
+
+  <!-- ==================== LEFT ICON: Hexagon + AI Core ==================== -->
+  <g transform="translate(45, 30)">
+    <!-- Outer Ambient Glow Hexagon -->
+    <polygon points="100,8 185,55 185,145 100,192 15,145 15,55"
+             fill="none" stroke="url(#neonCyan)" stroke-width="3" opacity="0.4" filter="url(#glow)"/>
+    <!-- Outer Sharp Hexagon -->
+    <polygon points="100,12 180,57 180,143 100,188 20,143 20,57"
+             fill="#0b1120" stroke="url(#neonCyan)" stroke-width="2.5"/>
+
+    <!-- Inner Shield / Box -->
+    <rect x="52" y="60" width="96" height="80" rx="16" fill="#131e36" stroke="#2563eb" stroke-width="2"/>
+
+    <!-- Camera / Projector Lens Lens Accent -->
+    <path d="M148,82 L168,70 L168,130 L148,118 Z" fill="url(#neonCyan)" opacity="0.9"/>
+    
+    <!-- Audio Waveform Bars (AI Speech) -->
+    <g transform="translate(68, 80)">
+      <rect x="0" y="10" width="5" height="20" rx="2.5" fill="#38bdf8"/>
+      <rect x="12" y="3" width="5" height="34" rx="2.5" fill="url(#neonCyan)"/>
+      <rect x="24" y="0" width="5" height="40" rx="2.5" fill="#f43f5e"/>
+      <rect x="36" y="5" width="5" height="30" rx="2.5" fill="url(#neonCyan)"/>
+      <rect x="48" y="12" width="5" height="16" rx="2.5" fill="#38bdf8"/>
+    </g>
+
+    <!-- Energy Bolt / Lightning Icon -->
+    <path d="M152,42 L140,62 L150,62 L138,82 L164,56 L150,56 Z" fill="url(#boltGrad)" filter="url(#glow)"/>
+  </g>
+
+  <!-- ==================== RIGHT TEXT AREA ==================== -->
+  <g transform="translate(265, 40)">
+    <!-- Small Category Pill -->
+    <g transform="translate(0, 0)">
+      <rect width="180" height="26" rx="13" fill="#0f233f" stroke="#0284c7" stroke-width="1.2"/>
+      <circle cx="15" cy="13" r="4.5" fill="#38bdf8" filter="url(#glow)"/>
+      <text x="28" y="17.5" fill="#7dd3fc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" letter-spacing="1.2">
+        AI AGENT SKILLS PACK
+      </text>
+    </g>
+
+    <!-- Main Title -->
+    <text x="0" y="68" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="40" font-weight="900" fill="#ffffff" letter-spacing="-0.5">
+      AntiGem <tspan fill="url(#neonCyan)">Skills</tspan>
+    </text>
+
+    <!-- Subtitle / Tagline -->
+    <text x="0" y="98" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="500" fill="#94a3b8">
+      Zero-Heat Automation, AI Video Intelligence &amp; Token-Efficient Agent Tools for Android / Linux
+    </text>
+
+    <!-- Feature Tag Pills -->
+    <g transform="translate(0, 126)">
+      <!-- Pill 1: Fast Automation -->
+      <g transform="translate(0, 0)">
+        <rect width="140" height="28" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+        <text x="12" y="18" fill="#fbbf24" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13">⚡</text>
+        <text x="28" y="18" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">Fast Automation</text>
+      </g>
+
+      <!-- Pill 2: Zero-Heat Video -->
+      <g transform="translate(150, 0)">
+        <rect width="135" height="28" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+        <text x="12" y="18" fill="#38bdf8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13">🎬</text>
+        <text x="28" y="18" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">Video Intelligence</text>
+      </g>
+
+      <!-- Pill 3: Token Saver -->
+      <g transform="translate(295, 0)">
+        <rect width="125" height="28" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+        <text x="12" y="18" fill="#34d399" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13">✂️</text>
+        <text x="28" y="18" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">Token Saver</text>
+      </g>
+
+      <!-- Pill 4: Termux Ready -->
+      <g transform="translate(430, 0)">
+        <rect width="135" height="28" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+        <text x="12" y="18" fill="#a78bfa" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13">🤖</text>
+        <text x="28" y="18" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">Android / Termux</text>
+      </g>
+    </g>
+  </g>
+</svg>
