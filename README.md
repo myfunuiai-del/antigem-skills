@@ -58,17 +58,31 @@
 
 ---
 
-## 🛠️ Installation & Setup
+## 🛠️ Installation & Setup (One-Click Setup)
+
+Run the included `install.sh` script to automatically install all dependencies (`python`, `ffmpeg`, `yt-dlp`, `quickjs-ng`) and link the skills into your agent directory:
 
 ```bash
-# Clone the repository into your skills directory
+# Clone the repository
 git clone https://github.com/myfunuiai-del/antigem-skills.git
+cd antigem-skills
 
-# Link or copy to AntiGem config:
-cp -r antigem-skills/skills/* ~/.gemini/config/skills/
+# Run automated installer
+chmod +x install.sh
+./install.sh
+```
 
-# Or link for Claude Agent:
-cp -r antigem-skills/skills/* ~/.claude/skills/
+### Manual Installation
+If you prefer manual setup:
+```bash
+# 1. Install system dependencies in Termux:
+pkg install -y python ffmpeg yt-dlp quickjs-ng
+
+# 2. Deploy skills to AntiGem:
+cp -r skills/* ~/.gemini/config/skills/
+
+# 3. Or deploy to Claude Code:
+cp -r skills/* ~/.claude/skills/
 ```
 
 ---

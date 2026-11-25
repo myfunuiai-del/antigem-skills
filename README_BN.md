@@ -60,17 +60,31 @@
 
 ---
 
-## 🛠️ ইনস্টলেশন ও ব্যবহার (Installation)
+## 🛠️ ইনস্টলেশন ও অটোমেটিক ডিপেনডেন্সি সেটআপ (One-Click Setup)
+
+রেপোতে থাকা `install.sh` স্ক্রিপ্টটি চালালে প্রয়োজনীয় সব ডিপেনডেন্সি (`python`, `ffmpeg`, `yt-dlp`, `quickjs-ng`) স্বয়ংক্রিয়ভাবে ইনস্টল হয়ে যাবে এবং স্কিলগুলো এজেন্টের ডিরেক্টরিতে সেটআপ হয়ে যাবে:
 
 ```bash
 # রিপোজিটরিটি ক্লোন করুন
 git clone https://github.com/myfunuiai-del/antigem-skills.git
+cd antigem-skills
 
-# AntiGem এজেন্টের জন্য স্কিল ফোল্ডারে কপি করুন:
-cp -r antigem-skills/skills/* ~/.gemini/config/skills/
+# অটোমেটিক ইন্সটলার রান করুন
+chmod +x install.sh
+./install.sh
+```
 
-# অথবা Claude Code এজেন্টের জন্য:
-cp -r antigem-skills/skills/* ~/.claude/skills/
+### ম্যানুয়াল ইনস্টলেশন
+আপনি চাইলে ম্যানুয়ালি প্যাকেজ ও স্কিল সেটআপ করতে পারেন:
+```bash
+# ১. টারমাক্সে সিস্টেম ডিপেনডেন্সি ইনস্টল করুন:
+pkg install -y python ffmpeg yt-dlp quickjs-ng
+
+# ২. AntiGem এজেন্টের জন্য স্কিল ফোল্ডারে কপি করুন:
+cp -r skills/* ~/.gemini/config/skills/
+
+# ৩. অথবা Claude Code এজেন্টের জন্য:
+cp -r skills/* ~/.claude/skills/
 ```
 
 ---
