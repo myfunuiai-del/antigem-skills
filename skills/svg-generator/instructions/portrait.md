@@ -1,0 +1,11 @@
+# Portrait tracing hints
+
+- Use curved `<path>`s (with `Q`/`C` commands), `<circle>`, or `<ellipse>` for facial contours, hair outlines, and any organic silhouette (jawline, hairline, ear curves, shoulder/collar line) — never a `<polygon>` or `<rect>` on a classed shape, per SKILL.md's **Line rules**. Paths render smoother curves and carry the mandatory wobbly hand-drawn edge.
+- Target 8-12 `class="fill"` regions for a typical portrait (skin, hair, 2+ clothing zones, background, plus any distinct facial-feature fills) — this is well within SKILL.md's fill-region ceiling and is what closes the density gap against approved targets.
+- Eye and pupil detail shapes should be **classed normally** (`class="fill"` for the eye-white/pupil color, `class="stroke-sil"` for the eye outline) — canvas.py scales the scribble fill and wobble/width floor down proportionately for small shapes, so eyes/pupils get real hand-drawn texture consistent with the rest of the composition instead of reading as flat, clean, geometric circles.
+- Layer hair and clothing as 2-3 overlapping `class="fill"` `<path>` shapes within the same color zone (e.g. two or three overlapping hair-strand paths instead of one flat hair blob) — the overlapping scribble fill strokes from each layer compound to produce the dense, textured look targets have, rather than one thin pass.
+- Outer head/shoulder silhouette always gets `class="stroke-sil"`.
+- Interior face/hair lines (jaw, ear, hair part, collar) get `class="stroke-int"` regardless of size — canvas.py scales the wobble/width floor down proportionately for small shapes (see SKILL.md), so class them normally rather than leaving them unclassed.
+- Use `class="fill"` with `skin/peach` for visible face/neck skin, and route hair to its own fill region(s) separate from skin.
+- Frame the face within the usable zone (x/y ∈ [0.08, 0.92]) with the head occupying most of the vertical extent — avoid leaving large empty margins above the head.
+- Include a border frame around the full canvas with `class="stroke-sil"` when matching targets that use one (e.g. meme-style portraits) — author it as a `<path>` whose four edges each carry a gentle `Q` curve (never a `<polygon>` or `<rect>`, per SKILL.md's **Line rules**); this is a compositional element, not a per-shape detail.
