@@ -58,6 +58,16 @@
 
 ---
 
+## 📦 Environment & Dotfiles Included
+
+Along with agent skills, this repository carries the optimized Termux/Android developer environment:
+* **`bin/fast-touch`**: Native-speed touch/swipe driver via Shizuku (`rish`), bypassing accessibility lag.
+* **`bin/auto-cut`**: Zero-dependency Termux silence cutter via `ffmpeg silencedetect`.
+* **`dotfiles/.zshrc`**: Instant-startup (~20ms) shell with Git integration, auto-suggestions, and syntax highlighting.
+* **`memory/`**: Global agent policies (`image-generation-policy.md`, `video-analysis-preference.md`).
+
+---
+
 ## 🛠️ Installation & Setup (One-Click Setup)
 
 Run the included `install.sh` script to automatically install all dependencies (`python`, `ffmpeg`, `yt-dlp`, `quickjs-ng`) and link the skills into your agent directory:
@@ -69,7 +79,7 @@ cd antigem-skills
 
 # Run automated installer
 chmod +x install.sh
-./install.sh
+./install.sh --full
 ```
 
 ### Manual Installation

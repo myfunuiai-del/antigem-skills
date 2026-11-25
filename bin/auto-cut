@@ -1,0 +1,104 @@
+#!/data/user/0/ai.antigem/files/usr/bin/python3
+"""
+Termux-native Video Silence Cutter (Alternative to auto-editor)
+Uses ffmpeg silencedetect to automatically cut out silence from video/audio.
+"""
+import sys
+import os
+import re
+import subprocess
+import argparse
+
+def run_command(cmd):
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    out, err = p.communicate()
+    return p.returncode, out, err
+
+def get_duration(input_file):
+    cmd = ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", input_file]
+    _, out, _ = run_command(cmd)
+    return float(out.strip())
+
+def detect_silence(input_file, db="-30dB", min_duration=0.5):
+    print(f"[*] Analyzing silence: threshold={db}, min_silence={min_duration}s...")
+    cmd = [
+        "ffmpeg", "-i", input_file,
+        "-af", f"silencedetect=noise={db}:d={min_duration}",
+        "-f", "null", "-"
+    ]
+    _, _, err = run_command(cmd)
+    
+    silence_starts = [float(x) for x in re.findall(r"silence_start: ([\d\.]+)", err)]
+    silence_ends = [float(x) for x in re.findall(r"silence_end: ([\d\.]+)", err)]
+    
+    return list(zip(silence_starts, silence_ends))
+
+def main():
+    parser = argparse.ArgumentParser(description="Auto Silence Cutter for Video/Audio in Termux")
+    parser.add_argument("input", help="Input video or audio file")
+    parser.add_argument("-o", "--output", help="Output file path")
+    parser.add_argument("--db", default="-30dB", help="Silence threshold (default: -30dB)")
+    parser.add_argument("--min-silence", type=float, default=0.5, help="Minimum silence duration in seconds (default: 0.5)")
+    parser.add_argument("--margin", type=float, default=0.1, help="Padding margin around speech in seconds (default: 0.1)")
+    
+    args = parser.parse_args()
+    if not os.path.isfile(args.input):
+        print(f"Error: File not found: {args.input}")
+        sys.exit(1)
+        
+    out_file = args.output
+    if not out_file:
+        base, ext = os.path.splitext(args.input)
+        out_file = f"{base}_clean{ext}"
+        
+    total_dur = get_duration(args.input)
+    silences = detect_silence(args.input, args.db, args.min_silence)
+    
+    if not silences:
+        print("[!] No silence detected above threshold. Video is untouched.")
+        sys.exit(0)
+        
+    # Calculate speech segments (inverse of silence)
+    segments = []
+    prev_end = 0.0
+    for s_start, s_end in silences:
+        seg_start = max(0.0, prev_end - args.margin if prev_end > 0 else 0.0)
+        seg_end = min(total_dur, s_start + args.margin)
+        if seg_end > seg_start + 0.1:
+            segments.append((seg_start, seg_end))
+        prev_end = s_end
+        
+    if prev_end < total_dur:
+        seg_start = max(0.0, prev_end - args.margin)
+        if total_dur > seg_start + 0.1:
+            segments.append((seg_start, total_dur))
+            
+    print(f"[*] Detected {len(silences)} silence zones. Retaining {len(segments)} speech segments.")
+    
+    # Generate ffmpeg filter complex for lossless/high-speed concatenation
+    filter_parts = []
+    concat_inputs = []
+    for i, (start, end) in enumerate(segments):
+        filter_parts.append(f"[0:v]trim=start={start:.3f}:end={end:.3f},setpts=PTS-STARTPTS[v{i}];")
+        filter_parts.append(f"[0:a]atrim=start={start:.3f}:end={end:.3f},asetpts=PTS-STARTPTS[a{i}];")
+        concat_inputs.append(f"[v{i}][a{i}]")
+        
+    filter_str = "".join(filter_parts) + "".join(concat_inputs) + f"concat=n={len(segments)}:v=1:a=1[outv][outa]"
+    
+    print(f"[*] Exporting cut video to: {out_file}")
+    export_cmd = [
+        "ffmpeg", "-y", "-i", args.input,
+        "-filter_complex", filter_str,
+        "-map", "[outv]", "-map", "[outa]",
+        "-preset", "ultrafast",
+        out_file
+    ]
+    code, _, err = run_command(export_cmd)
+    if code == 0:
+        print(f"[✓] Completed successfully: {out_file}")
+    else:
+        print("[x] Error exporting video:")
+        print(err[-500:])
+
+if __name__ == "__main__":
+    main()
