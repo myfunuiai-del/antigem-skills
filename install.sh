@@ -55,8 +55,8 @@ confirm_and_install() {
 
 # 1. Install System Packages (Interactive Confirmation)
 echo "[1/5] Checking required system packages..."
-CORE_PKGS="python python-pillow tesseract ffmpeg yt-dlp quickjs-ng git zsh rust ripgrep fd"
-APT_PKGS="python3 ffmpeg yt-dlp quickjs git zsh rustc cargo ripgrep fd-find"
+CORE_PKGS="python python-pillow tesseract ffmpeg yt-dlp quickjs-ng git zsh rust ripgrep fd jql dust bat procs watchexec"
+APT_PKGS="python3 ffmpeg yt-dlp quickjs git zsh rustc cargo ripgrep fd-find jq dust bat procs watchexec"
 
 if command -v pkg >/dev/null 2>&1; then
     confirm_and_install "pkg" $CORE_PKGS
