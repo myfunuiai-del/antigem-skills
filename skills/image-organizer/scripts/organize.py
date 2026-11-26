@@ -120,8 +120,12 @@ OCR_TOPIC_KEYWORDS = {
     'ECommerce_and_BuySell': ['marketplace', 'price', 'tk', 'bdt', 'taka', 'dam', 'daraz', 'bikroy', 'order', 'delivery', 'sell', 'discount', 'cart', 'buy', 'অর্ডার', 'দাম', 'ডেলিভারি', 'মূল্য', 'ডিসকাউন্ট', 'শপ', 'কিনুন'],
     'Tech_Code_Settings': ['termux', 'error', 'system', 'root', 'github', 'settings', 'storage', 'wifi', 'battery', 'device', 'android', 'ip', 'port', 'terminal', 'rust', 'cargo', 'python', 'কোড', 'সার্ভার', 'সেটিংস'],
     'Media_and_Entertainment': ['youtube', 'video', 'music', 'song', 'episode', 'game', 'play', 'stream', 'movie', 'ভিডিও', 'গান', 'মুভি', 'গেম'],
+    'News_and_Memes': ['news', 'breaking', 'report', 'police', 'government', 'পুলিশ', 'সরকার', 'আইন', 'গ্রেফতার', 'বিস্তারিত', 'সংবাদ', 'নিউজ', 'ভাইরাল', 'বাংলাদেশ', 'ঢাকা', 'রিপোর্ট'],
     'Documents_and_Text': ['document', 'pdf', 'notice', 'form', 'account', 'application', 'ফর্ম', 'ডকুমেন্ট', 'আবেদন']
 }
+
+def count_bengali_chars(text):
+    return sum(1 for ch in text if '\u0980' <= ch <= '\u09ff')
 
 def get_tesseract_lang():
     try:
@@ -255,6 +259,8 @@ def organize(src_dirs, target_dir, use_ocr=True, copy_mode=False, old_year_thres
                         best_cat = topic
                 if best_cat and best_score > 0:
                     cat, subcat = "Content_Detected", best_cat
+                elif count_bengali_chars(txt) >= 20:
+                    cat, subcat = "Content_Detected", "Bengali_Posts_and_Memes"
                 else:
                     cat, subcat = "Uncategorized", "General"
                 if ocr_processed % 25 == 0:
