@@ -112,14 +112,50 @@ APP_TAG_MAP = {
 }
 
 OCR_TOPIC_KEYWORDS = {
-    'Social_and_Chat': ['facebook', 'whatsapp', 'messenger', 'friend', 'profile', 'reply', 'comment', 'share', 'status', 'chat', 'message'],
-    'ECommerce_and_BuySell': ['marketplace', 'price', 'tk', 'bdt', 'daraz', 'bikroy', 'order', 'delivery', 'sell', 'discount', 'cart', 'buy'],
-    'Tech_Code_Settings': ['termux', 'error', 'system', 'root', 'github', 'settings', 'storage', 'wifi', 'battery', 'device', 'android', 'ip', 'port', 'terminal'],
-    'Media_and_Entertainment': ['youtube', 'video', 'music', 'song', 'episode', 'game', 'play', 'stream', 'movie'],
-    'Documents_and_Text': ['document', 'pdf', 'notice', 'form', 'account', 'invoice', 'receipt', 'bank', 'login', 'password', 'code']
+    'Social_and_Chat': ['facebook', 'whatsapp', 'messenger', 'friend', 'profile', 'reply', 'comment', 'share', 'status', 'chat', 'message', 'inbox', 'লাইক', 'কমেন্ট', 'শেয়ার', 'ফলো', 'ইনবক্স', 'পোস্ট', 'বন্ধু'],
+    'ECommerce_and_BuySell': ['marketplace', 'price', 'tk', 'bdt', 'taka', 'dam', 'daraz', 'bikroy', 'order', 'delivery', 'sell', 'discount', 'cart', 'buy', 'অর্ডার', 'দাম', 'ডেলিভারি', 'মূল্য', 'ডিসকাউন্ট', 'শপ', 'কিনুন'],
+    'Tech_Code_Settings': ['termux', 'error', 'system', 'root', 'github', 'settings', 'storage', 'wifi', 'battery', 'device', 'android', 'ip', 'port', 'terminal', 'rust', 'cargo', 'python', 'কোড', 'সার্ভার', 'সেটিংস'],
+    'Media_and_Entertainment': ['youtube', 'video', 'music', 'song', 'episode', 'game', 'play', 'stream', 'movie', 'ভিডিও', 'গান', 'মুভি', 'গেম'],
+    'Documents_and_Text': ['document', 'pdf', 'notice', 'form', 'account', 'invoice', 'receipt', 'bank', 'bkash', 'nagad', 'rocket', 'login', 'password', 'code', 'বিকাশ', 'নগদ', 'রকেট', 'টাকা', 'বিল', 'রসিদ', 'ফর্ম']
 }
 
-def scan_text_fast_ocr(img_path, tmp_path):
+def get_tesseract_lang():
+    try:
+        res = subprocess.run(['tesseract', '--list-langs'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        langs = res.stdout.lower()
+        if 'ben' in langs:
+            return 'eng+ben'
+    except Exception:
+        pass
+    return 'eng'
+
+def find_duplicates_via_rust(src_dirs):
+    """Use Rust img-scan to detect exact duplicates fast (Zero-Deletion)."""
+    dup_files = set()
+    if not shutil.which('img-scan'):
+        return dup_files
+    for d in src_dirs:
+        if not os.path.isdir(d):
+            continue
+        try:
+            res = subprocess.run(['img-scan', d, '--dups-only'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            in_group = False
+            kept_first = False
+            for line in res.stdout.splitlines():
+                s = line.strip()
+                if s.startswith('[Group '):
+                    in_group = True
+                    kept_first = False
+                elif in_group and s:
+                    if not kept_first:
+                        kept_first = True
+                    else:
+                        dup_files.add(os.path.abspath(s))
+        except Exception:
+            pass
+    return dup_files
+
+def scan_text_fast_ocr(img_path, tmp_path, lang='eng'):
     try:
         from PIL import Image
         with Image.open(img_path) as im:
@@ -129,7 +165,7 @@ def scan_text_fast_ocr(img_path, tmp_path):
             im_small.save(tmp_path)
         
         proc = subprocess.run(
-            ['tesseract', tmp_path, 'stdout', '--psm', '11'],
+            ['tesseract', tmp_path, 'stdout', '-l', lang, '--psm', '11'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -153,6 +189,12 @@ def organize(src_dirs, target_dir, use_ocr=True, copy_mode=False, old_year_thres
 
     print(f"[*] Found {len(all_files)} images to organize.")
     print("    [Policy: Zero-Deletion active. No files will be permanently deleted.]")
+    ocr_lang = get_tesseract_lang() if use_ocr else 'eng'
+    if use_ocr:
+        print(f"    [OCR Language: {ocr_lang}]")
+    dup_files = find_duplicates_via_rust(src_dirs)
+    if dup_files:
+        print(f"    [Rust img-scan: {len(dup_files)} exact duplicate(s) routed to Duplicates_Review/]")
     stats = {}
     ocr_processed = 0
 
@@ -161,12 +203,18 @@ def organize(src_dirs, target_dir, use_ocr=True, copy_mode=False, old_year_thres
         matched = False
         cat, subcat = None, None
 
+        # 0. Route exact duplicates detected by Rust img-scan
+        if os.path.abspath(fpath) in dup_files:
+            cat, subcat = "Duplicates_Review", "Exact_Duplicates"
+            matched = True
+
         # 1. Check known Android package tag
-        for key, target in APP_TAG_MAP.items():
-            if key in fname:
-                cat, subcat = target
-                matched = True
-                break
+        if not matched:
+            for key, target in APP_TAG_MAP.items():
+                if key in fname:
+                    cat, subcat = target
+                    matched = True
+                    break
 
         # 2. Check year timestamps (e.g. screenshot_2025...)
         if not matched:
@@ -174,7 +222,7 @@ def organize(src_dirs, target_dir, use_ocr=True, copy_mode=False, old_year_thres
                 if f"screenshot_{y}" in fname:
                     cat = "Old_Archive"
                     if use_ocr:
-                        txt = scan_text_fast_ocr(fpath, tmp_ocr_path)
+                        txt = scan_text_fast_ocr(fpath, tmp_ocr_path, ocr_lang)
                         ocr_processed += 1
                         best_score, best_cat = 0, "Uncategorized_Old"
                         for topic, kws in OCR_TOPIC_KEYWORDS.items():
@@ -193,7 +241,7 @@ def organize(src_dirs, target_dir, use_ocr=True, copy_mode=False, old_year_thres
         # 3. Content detection via OCR or Uncategorized
         if not matched:
             if use_ocr:
-                txt = scan_text_fast_ocr(fpath, tmp_ocr_path)
+                txt = scan_text_fast_ocr(fpath, tmp_ocr_path, ocr_lang)
                 ocr_processed += 1
                 best_score, best_cat = 0, None
                 for topic, kws in OCR_TOPIC_KEYWORDS.items():
