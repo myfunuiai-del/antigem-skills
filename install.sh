@@ -2,96 +2,113 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-FULL_SETUP=false
+AUTO_ALL=false
 AUTO_YES=false
 
 for arg in "$@"; do
     case "$arg" in
-        --full|-f) FULL_SETUP=true ;;
-        --yes|-y)  AUTO_YES=true ;;
+        --all|--full|-a|-f) AUTO_ALL=true ;;
+        --yes|-y)            AUTO_YES=true ;;
     esac
 done
 
 echo "=================================================="
-echo "   AntiGem Skills & Unified Rust Core Installer   "
+echo "   AntiGem Modular Skills & Rust Core Installer   "
 echo "=================================================="
 echo ""
-echo "=== Dependency Impact Matrix (What Breaks If Missing) ==="
-echo "  * rust (rustc + cargo) [MANDATORY] : Without Rust, ctx-squeeze, mem-search,"
-echo "                                       ui-filter, srt-clean, img-scan & router-stats"
-echo "                                       cannot build or run."
-echo "  * ripgrep (rg) + fd    [MANDATORY] : Without these, fast codebase & file search"
-echo "                                       for agents will not work."
-echo "  * jql, dust, bat, procs, watchexec : Without these, fast JSON query, disk scan,"
-echo "                                       syntax view, process monitor & file watcher fail."
-echo "  * python, pillow, tesseract        : Without these, image-organizer OCR & claude-router fail."
-echo "  * ffmpeg, yt-dlp                   : Without these, video-analyzer-tool & rea-video fail."
-echo "  * git                              : Without git, GitHub sync & updates fail."
-echo "=================================================="
+echo "Select modules to install (with approx. download sizes):"
+echo "  [1] Unified Rust Core (rust + rg, fd, jql, dust, bat, procs, watchexec + 6 CLI tools)"
+echo "      ~145 MB download  | Required to build/update Rust Core & fast agent search"
+echo "  [2] Image Organizer & OCR (python + python-pillow + tesseract)"
+echo "      ~45 MB download   | Required for image-organizer OCR text reading"
+echo "  [3] Video & Audio Suite (ffmpeg + yt-dlp + python)"
+echo "      ~35 MB download   | Required for video-analyzer-tool & rea-video"
+echo "  [4] Browser / JS Runtime (quickjs-ng)"
+echo "      ~2 MB download    | Required for fast-browser-automation JS eval"
+echo "  [5] Zsh Shell & Plugins (zsh + .zshrc + autosuggestions + syntax-highlighting)"
+echo "      ~5 MB download    | Optional terminal speed & theme"
+echo "  [A] Install ALL of the above (~230 MB total download)"
+echo "  [Q] Quit / Cancel"
+echo ""
 
-confirm_and_install() {
-    local pm="$1"
-    shift
-    local pkgs=("$@")
+SEL_RUST=false
+SEL_IMG=false
+SEL_VID=false
+SEL_JS=false
+SEL_ZSH=false
 
-    echo ""
-    echo "The following system packages will be installed/checked:"
-    for p in "${pkgs[@]}"; do
-        echo "  - $p"
-    done
-    echo ""
-
-    if [ "$AUTO_YES" = true ]; then
-        echo "[*] Auto-confirmation enabled (--yes)."
+if [ "$AUTO_ALL" = true ]; then
+    SEL_RUST=true; SEL_IMG=true; SEL_VID=true; SEL_JS=true; SEL_ZSH=true
+    echo "[*] --all specified: selecting all modules."
+else
+    read -r -p "Enter choices (e.g. 1,2 or A for all): " choices
+    choices_upper=$(echo "$choices" | tr '[:lower:]' '[:upper:]')
+    if [[ "$choices_upper" == *"Q"* ]] || [ -z "$choices_upper" ]; then
+        echo "[!] Installation cancelled."
+        exit 0
+    fi
+    if [[ "$choices_upper" == *"A"* ]]; then
+        SEL_RUST=true; SEL_IMG=true; SEL_VID=true; SEL_JS=true; SEL_ZSH=true
     else
-        read -r -p "Do you want to proceed with installing these packages? (y/N): " response
-        case "$response" in
-            [yY][eE][sS]|[yY])
-                echo "[*] Proceeding with installation..."
-                ;;
-            *)
-                echo "[!] Installation aborted by user."
-                if ! command -v rustc >/dev/null 2>&1 || ! command -v cargo >/dev/null 2>&1; then
-                    echo "[ERROR] Rust (rustc/cargo) is MANDATORY for the AntiGem Rust Core. Exiting."
-                    exit 1
-                fi
-                return 0
-                ;;
-        esac
+        [[ "$choices_upper" == *"1"* ]] && SEL_RUST=true
+        [[ "$choices_upper" == *"2"* ]] && SEL_IMG=true
+        [[ "$choices_upper" == *"3"* ]] && SEL_VID=true
+        [[ "$choices_upper" == *"4"* ]] && SEL_JS=true
+        [[ "$choices_upper" == *"5"* ]] && SEL_ZSH=true
     fi
+fi
 
-    if [ "$pm" = "pkg" ]; then
-        pkg update -y || true
-        pkg install -y "${pkgs[@]}"
-    elif [ "$pm" = "apt" ]; then
-        sudo apt-get update -y || true
-        sudo apt-get install -y "${pkgs[@]}"
-    fi
-}
+PKGS=()
+[ "$SEL_RUST" = true ] && PKGS+=(rust ripgrep fd jql dust bat procs watchexec git)
+[ "$SEL_IMG" = true ]  && PKGS+=(python python-pillow tesseract)
+[ "$SEL_VID" = true ]  && PKGS+=(ffmpeg yt-dlp python)
+[ "$SEL_JS" = true ]   && PKGS+=(quickjs-ng)
+[ "$SEL_ZSH" = true ]  && PKGS+=(zsh git)
 
-# 1. Install Mandatory & Core System Packages
-echo "[1/6] Checking mandatory Rust & core packages..."
-CORE_PKGS="rust ripgrep fd jql dust bat procs watchexec python python-pillow tesseract ffmpeg yt-dlp quickjs-ng git zsh"
-APT_PKGS="rustc cargo ripgrep fd-find jq dust bat procs watchexec python3 ffmpeg yt-dlp quickjs git zsh"
+# Deduplicate package list
+UNIQUE_PKGS=($(printf "%s\n" "${PKGS[@]}" | sort -u))
+
+if [ ${#UNIQUE_PKGS[@]} -eq 0 ]; then
+    echo "[!] No valid modules selected. Exiting."
+    exit 0
+fi
+
+if [ "$SEL_RUST" = false ] && ! command -v rustc >/dev/null 2>&1; then
+    echo ""
+    echo "[WARNING] Rust Core [1] is not selected and rustc is not installed."
+    echo "          Without Rust, you cannot build/update ctx-squeeze, mem-search,"
+    echo "          ui-filter, srt-clean, img-scan, or router-stats from source."
+fi
+
+echo ""
+echo "Packages to install/verify: ${UNIQUE_PKGS[*]}"
+if [ "$AUTO_YES" = true ]; then
+    echo "[*] Auto-confirmation enabled (--yes)."
+else
+    read -r -p "Proceed with installation? (y/N): " confirm
+    case "$confirm" in
+        [yY][eE][sS]|[yY]) ;;
+        *)
+            echo "[!] Installation aborted by user."
+            exit 0
+            ;;
+    esac
+fi
 
 if command -v pkg >/dev/null 2>&1; then
-    confirm_and_install "pkg" $CORE_PKGS
+    pkg update -y || true
+    pkg install -y "${UNIQUE_PKGS[@]}"
 elif command -v apt-get >/dev/null 2>&1; then
-    confirm_and_install "apt" $APT_PKGS
+    sudo apt-get update -y || true
+    sudo apt-get install -y "${UNIQUE_PKGS[@]}"
 fi
 
-# Verify mandatory Rust toolchain
-if ! command -v rustc >/dev/null 2>&1 || ! command -v cargo >/dev/null 2>&1; then
-    echo "[ERROR] Rust (rustc/cargo) is required but not found. Aborting."
-    exit 1
-fi
-
-# 2. Build Unified Rust Workspace
-echo "[2/6] Building Unified Rust Core Workspace..."
+# Build Unified Rust Workspace if Rust is available
 BIN_TARGET="${PREFIX:-/data/user/0/ai.antigem/files/usr}/bin"
 mkdir -p "$BIN_TARGET" "$SCRIPT_DIR/bin"
 
-if [ -f "$SCRIPT_DIR/tools/Cargo.toml" ]; then
+if [ "$SEL_RUST" = true ] && command -v cargo >/dev/null 2>&1 && [ -f "$SCRIPT_DIR/tools/Cargo.toml" ]; then
+    echo "[*] Building Unified Rust Core Workspace..."
     cargo build --release --workspace --manifest-path "$SCRIPT_DIR/tools/Cargo.toml"
     for tool in ctx-squeeze mem-search ui-filter srt-clean img-scan router-stats; do
         if [ -f "$SCRIPT_DIR/tools/target/release/$tool" ]; then
@@ -101,61 +118,45 @@ if [ -f "$SCRIPT_DIR/tools/Cargo.toml" ]; then
     echo "  [✓] Built all 6 Rust Core binaries."
 fi
 
-# 3. Deploy Custom Binaries
-echo "[3/6] Installing binaries to $BIN_TARGET..."
+# Deploy binaries (including pre-built ones)
 if [ -d "$SCRIPT_DIR/bin" ]; then
     cp -r "$SCRIPT_DIR/bin/"* "$BIN_TARGET/"
     chmod +x "$BIN_TARGET"/{fast-touch,auto-cut,ctx-squeeze,mem-search,ui-filter,srt-clean,img-scan,router-stats} 2>/dev/null || true
-    echo "  [✓] Installed binaries to $BIN_TARGET"
+    echo "  [✓] Deployed binaries to $BIN_TARGET"
 fi
 
-# 4. Deploy Skills to AntiGem and Claude
-echo "[4/6] Deploying Skills to Agent directories..."
-ANTIGEM_SKILLS="$HOME/.gemini/config/skills"
-CLAUDE_SKILLS="$HOME/.claude/skills"
-
+# Deploy Skills
 if [ -d "$HOME/.gemini" ]; then
-    mkdir -p "$ANTIGEM_SKILLS"
-    cp -r "$SCRIPT_DIR/skills/"* "$ANTIGEM_SKILLS/"
-    echo "  [✓] Deployed skills to AntiGem ($ANTIGEM_SKILLS)"
+    mkdir -p "$HOME/.gemini/config/skills"
+    cp -r "$SCRIPT_DIR/skills/"* "$HOME/.gemini/config/skills/"
+    echo "  [✓] Deployed skills to AntiGem"
 fi
-
 if [ -d "$HOME/.claude" ]; then
-    mkdir -p "$CLAUDE_SKILLS"
-    cp -r "$SCRIPT_DIR/skills/"* "$CLAUDE_SKILLS/"
-    echo "  [✓] Deployed skills to Claude Code ($CLAUDE_SKILLS)"
+    mkdir -p "$HOME/.claude/skills"
+    cp -r "$SCRIPT_DIR/skills/"* "$HOME/.claude/skills/"
+    echo "  [✓] Deployed skills to Claude Code"
 fi
 
-# 5. Deploy Global Agent Memory Rules
-echo "[5/6] Syncing Global Agent Memories..."
-MEMORY_DIR="$HOME/.antigem/memory/global"
-mkdir -p "$MEMORY_DIR"
+# Deploy Global Memories
+mkdir -p "$HOME/.antigem/memory/global"
 if [ -d "$SCRIPT_DIR/memory" ]; then
-    cp -r "$SCRIPT_DIR/memory/"* "$MEMORY_DIR/"
-    echo "  [✓] Copied global memory policies to $MEMORY_DIR"
+    cp -r "$SCRIPT_DIR/memory/"* "$HOME/.antigem/memory/global/"
+    echo "  [✓] Synced global agent memories"
 fi
 
-# 6. Full Shell & Dotfiles Setup (when run with --full)
-if [ "$FULL_SETUP" = true ]; then
-    echo "[6/6] Configuring Zsh shell & plugins..."
+# Optional Zsh Setup
+if [ "$SEL_ZSH" = true ]; then
     if [ -f "$SCRIPT_DIR/dotfiles/.zshrc" ]; then
         [ -f "$HOME/.zshrc" ] && cp "$HOME/.zshrc" "$HOME/.zshrc.bak_$(date +%s)"
         cp "$SCRIPT_DIR/dotfiles/.zshrc" "$HOME/.zshrc"
         echo "  [✓] Deployed optimized .zshrc"
     fi
-
     mkdir -p "$HOME/.zsh"
-    if [ ! -d "$HOME/.zsh/zsh-autosuggestions" ]; then
-        git clone https://github.com/zsh-users/zsh-autosuggestions "$HOME/.zsh/zsh-autosuggestions" --depth 1
-    fi
-    if [ ! -d "$HOME/.zsh/zsh-syntax-highlighting" ]; then
-        git clone https://github.com/zsh-users/zsh-syntax-highlighting "$HOME/.zsh/zsh-syntax-highlighting" --depth 1
-    fi
-    echo "  [✓] Shell plugins ready."
-else
-    echo "[6/6] Note: Shell dotfiles (.zshrc) skipped. Run './install.sh --full' to apply."
+    [ ! -d "$HOME/.zsh/zsh-autosuggestions" ] && git clone https://github.com/zsh-users/zsh-autosuggestions "$HOME/.zsh/zsh-autosuggestions" --depth 1
+    [ ! -d "$HOME/.zsh/zsh-syntax-highlighting" ] && git clone https://github.com/zsh-users/zsh-syntax-highlighting "$HOME/.zsh/zsh-syntax-highlighting" --depth 1
+    echo "  [✓] Zsh plugins ready."
 fi
 
 echo "=================================================="
-echo " [✓] AntiGem Unified Rust Setup Complete!"
+echo " [✓] AntiGem Setup Complete!"
 echo "=================================================="
