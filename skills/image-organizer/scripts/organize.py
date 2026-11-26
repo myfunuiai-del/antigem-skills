@@ -262,6 +262,15 @@ def organize(src_dirs, target_dir, use_ocr=True, copy_mode=False, old_year_thres
             else:
                 cat, subcat = "Uncategorized", "General"
 
+        # 4. Offline Zero-Heat Face Detection for Uncategorized images
+        if cat == "Uncategorized" and subcat == "General" and shutil.which("face-check"):
+            try:
+                fc = subprocess.run(["face-check", fpath], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                if fc.stdout.startswith("FACE "):
+                    cat, subcat = "People_and_Faces", "Detected_Faces"
+            except Exception:
+                pass
+
         dest_dir = os.path.join(target_dir, cat, subcat)
         os.makedirs(dest_dir, exist_ok=True)
         dest_file = os.path.join(dest_dir, os.path.basename(fpath))
