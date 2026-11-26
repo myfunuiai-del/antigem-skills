@@ -60,7 +60,7 @@ fi
 
 PKGS=()
 [ "$SEL_RUST" = true ] && PKGS+=(rust ripgrep fd jql dust bat procs watchexec git)
-[ "$SEL_IMG" = true ]  && PKGS+=(python python-pillow tesseract)
+[ "$SEL_IMG" = true ]  && PKGS+=(python python-pillow tesseract curl)
 [ "$SEL_VID" = true ]  && PKGS+=(ffmpeg yt-dlp python)
 [ "$SEL_JS" = true ]   && PKGS+=(quickjs-ng)
 [ "$SEL_ZSH" = true ]  && PKGS+=(zsh git)
@@ -123,6 +123,14 @@ if [ -d "$SCRIPT_DIR/bin" ]; then
     cp -r "$SCRIPT_DIR/bin/"* "$BIN_TARGET/"
     chmod +x "$BIN_TARGET"/{fast-touch,auto-cut,ctx-squeeze,mem-search,ui-filter,srt-clean,img-scan,router-stats} 2>/dev/null || true
     echo "  [✓] Deployed binaries to $BIN_TARGET"
+fi
+
+# Download Bengali OCR traineddata if Image Organizer [2] is selected
+TESS_DIR="${PREFIX:-/data/user/0/ai.antigem/files/usr}/share/tessdata"
+if [ "$SEL_IMG" = true ] && [ ! -f "$TESS_DIR/ben.traineddata" ] && command -v curl >/dev/null 2>&1; then
+    echo "[*] Downloading Bengali OCR data (ben.traineddata ~2.3 MB)..."
+    mkdir -p "$TESS_DIR"
+    curl -fsSL -o "$TESS_DIR/ben.traineddata" "https://github.com/tesseract-ocr/tessdata_fast/raw/main/ben.traineddata" || true
 fi
 
 # Deploy Skills
