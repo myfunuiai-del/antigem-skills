@@ -42,6 +42,7 @@
 | **`video-insight-research`** | ভিডিও ইন্টেলিজেন্স | Claude Code / CLI | ক্লদ এজেন্টের জন্য অপ্টিমাইজড পূর্ণাঙ্গ ভিডিও অ্যানালাইসিস পাইপলাইন ([video-analyzer-tool](https://github.com/myfunuiai-del/video-analyzer-tool) ভিত্তিক)। |
 | **`chisle-ponytail-efficiency`** | ডেভেলপার ফিলোসফি | AntiGem / Claude | এক্সট্রিম টোকেন এফিশিয়েন্সি, YAGNI-ফার্স্ট কোডিং এবং টু-দ্য-পয়েন্ট কমিউনিকেশন। |
 | **`svg-generator`** | ভিজ্যুয়াল ডিজাইন | AntiGem / Claude | Quiver AI ও ক্লদ দিয়ে টেক্সট বা ইমেজ থেকে ভেক্টর/এসভিজি গ্রাফিক্স তৈরি। |
+| **`image-organizer`** | মিডিয়া ও স্টোরেজ | AntiGem / Claude | জিরো-ডিলিট পলিসিসহ অফলাইন ফাস্ট OCR ও প্যাকেজ ট্যাগ ভিত্তিক স্ক্রিনশট ও ইমেজ অর্গানাইজার। |
 
 ---
 

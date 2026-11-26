@@ -40,6 +40,7 @@
 | **`video-insight-research`** | Video Intelligence | Claude Code / CLI | Complete video analysis pipeline tailored for Claude agent runtime (Powered by [video-analyzer-tool](https://github.com/myfunuiai-del/video-analyzer-tool)). |
 | **`chisle-ponytail-efficiency`** | Developer Rules | AntiGem / Claude | Extreme token economy, YAGNI-first code, concise communication. |
 | **`svg-generator`** | Visual Design | AntiGem / Claude | AI-driven vector/SVG graphics creation and raster-to-SVG conversion. |
+| **`image-organizer`** | Storage & Media | AntiGem / Claude | Zero-heat, zero-deletion offline screenshot/image classifier with fast scaled OCR & auto-dependency prompt. |
 
 ---
 

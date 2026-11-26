@@ -16,7 +16,7 @@ echo "=================================================="
 echo "[1/5] Checking and installing system packages..."
 if command -v pkg >/dev/null 2>&1; then
     pkg update -y || true
-    PACKAGES="python ffmpeg yt-dlp quickjs-ng git zsh"
+    PACKAGES="python python-pillow tesseract ffmpeg yt-dlp quickjs-ng git zsh"
     pkg install -y $PACKAGES
 elif command -v apt-get >/dev/null 2>&1; then
     sudo apt-get update -y || true
