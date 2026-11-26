@@ -1,0 +1,16 @@
+[workspace]
+resolver = "2"
+members = [
+    "antigem-common",
+    "ctx-squeeze",
+    "mem-search",
+    "ui-filter",
+    "srt-clean",
+    "img-scan",
+    "router-stats",
+]
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true

@@ -1,41 +1,17 @@
+use antigem_common::{collect_files, read_lossy};
 use std::env;
-use std::fs;
 use std::path::{Path, PathBuf};
 use std::process;
 
-const SKIP_DIRS: &[&str] = &[
-    ".git",
-    "node_modules",
-    "target",
-    "__pycache__",
-    "dist",
-    "build",
-    ".venv",
-    "venv",
-    ".next",
+const DEFAULT_EXTS: &[&str] = &[
+    "rs", "py", "js", "jsx", "ts", "tsx", "go", "sh", "bash", "zsh", "c", "cpp", "h", "hpp",
+    "java", "kt",
 ];
-
-fn is_supported_ext(path: &Path, filter_exts: &[String]) -> bool {
-    let ext = match path.extension().and_then(|e| e.to_str()) {
-        Some(e) => e.to_lowercase(),
-        None => return false,
-    };
-    if !filter_exts.is_empty() {
-        return filter_exts.iter().any(|f| f == &ext);
-    }
-    matches!(
-        ext.as_str(),
-        "rs" | "py" | "js" | "jsx" | "ts" | "tsx" | "go" | "sh" | "bash" | "zsh" | "c" | "cpp"
-            | "h" | "hpp" | "java" | "kt"
-    )
-}
 
 fn is_structural_line(trimmed: &str, ext: &str) -> bool {
     if trimmed.is_empty() || trimmed.len() > 240 {
         return false;
     }
-
-    // Universal structural prefixes
     if trimmed.starts_with("///")
         || trimmed.starts_with("//!")
         || trimmed.starts_with("/**")
@@ -76,7 +52,7 @@ fn is_structural_line(trimmed: &str, ext: &str) -> bool {
                 || trimmed.starts_with("def ")
                 || trimmed.starts_with("async def ")
                 || trimmed.starts_with("class ")
-                || trimmed.starts_with("@")
+                || trimmed.starts_with('@')
         }
         "js" | "jsx" | "ts" | "tsx" => {
             trimmed.starts_with("import ")
@@ -87,7 +63,8 @@ fn is_structural_line(trimmed: &str, ext: &str) -> bool {
                 || trimmed.starts_with("interface ")
                 || trimmed.starts_with("type ")
                 || trimmed.starts_with("enum ")
-                || (trimmed.starts_with("const ") && (trimmed.contains("=>") || trimmed.contains("require(")))
+                || (trimmed.starts_with("const ")
+                    && (trimmed.contains("=>") || trimmed.contains("require(")))
         }
         "go" => {
             trimmed.starts_with("package ")
@@ -97,7 +74,8 @@ fn is_structural_line(trimmed: &str, ext: &str) -> bool {
         }
         "sh" | "bash" | "zsh" => {
             trimmed.starts_with("function ")
-                || (trimmed.ends_with("() {") || trimmed.ends_with("(){"))
+                || trimmed.ends_with("() {")
+                || trimmed.ends_with("(){")
                 || trimmed.starts_with("alias ")
         }
         _ => {
@@ -113,14 +91,13 @@ fn is_structural_line(trimmed: &str, ext: &str) -> bool {
 }
 
 fn squeeze_file(path: &Path, max_lines: usize) {
-    let bytes = match fs::read(path) {
-        Ok(b) => b,
+    let content = match read_lossy(path) {
+        Ok(c) => c,
         Err(e) => {
             eprintln!("ctx-squeeze: failed to read {}: {}", path.display(), e);
             return;
         }
     };
-    let content = String::from_utf8_lossy(&bytes);
     let ext = path
         .extension()
         .and_then(|e| e.to_str())
@@ -149,28 +126,6 @@ fn squeeze_file(path: &Path, max_lines: usize) {
     );
     for (ln, text) in hits {
         println!("{:>4}: {}", ln, text);
-    }
-}
-
-fn collect_files(dir: &Path, filter_exts: &[String], out: &mut Vec<PathBuf>) {
-    let entries = match fs::read_dir(dir) {
-        Ok(e) => e,
-        Err(_) => return,
-    };
-    let mut paths: Vec<PathBuf> = entries.filter_map(|e| e.ok().map(|x| x.path())).collect();
-    paths.sort();
-
-    for p in paths {
-        if p.is_dir() {
-            if let Some(name) = p.file_name().and_then(|n| n.to_str()) {
-                if SKIP_DIRS.contains(&name) || name.starts_with('.') {
-                    continue;
-                }
-            }
-            collect_files(&p, filter_exts, out);
-        } else if p.is_file() && is_supported_ext(&p, filter_exts) {
-            out.push(p);
-        }
     }
 }
 
@@ -227,7 +182,12 @@ fn main() {
         squeeze_file(&target, max_lines);
     } else if target.is_dir() {
         let mut files = Vec::new();
-        collect_files(&target, &filter_exts, &mut files);
+        let ext_refs: Vec<&str> = if filter_exts.is_empty() {
+            DEFAULT_EXTS.to_vec()
+        } else {
+            filter_exts.iter().map(|s| s.as_str()).collect()
+        };
+        collect_files(&target, &ext_refs, &mut files);
         for f in files {
             squeeze_file(&f, max_lines);
         }

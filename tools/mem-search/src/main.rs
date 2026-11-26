@@ -1,6 +1,6 @@
+use antigem_common::{collect_files, read_lossy, truncate_str};
 use std::env;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process;
 
 #[derive(Clone)]
@@ -9,45 +9,6 @@ struct Hit {
     path: PathBuf,
     line_num: usize,
     preview: String,
-}
-
-fn collect_memory_files(dir: &Path, out: &mut Vec<PathBuf>) {
-    let entries = match fs::read_dir(dir) {
-        Ok(e) => e,
-        Err(_) => return,
-    };
-    let mut paths: Vec<PathBuf> = entries.filter_map(|e| e.ok().map(|x| x.path())).collect();
-    paths.sort();
-
-    for p in paths {
-        if p.is_dir() {
-            if let Some(name) = p.file_name().and_then(|n| n.to_str()) {
-                if name == ".git" || name == ".system_generated" {
-                    continue;
-                }
-            }
-            collect_memory_files(&p, out);
-        } else if p.is_file() {
-            let ext = p
-                .extension()
-                .and_then(|e| e.to_str())
-                .unwrap_or("")
-                .to_lowercase();
-            if matches!(ext.as_str(), "md" | "txt" | "jsonl" | "json") {
-                out.push(p);
-            }
-        }
-    }
-}
-
-fn truncate_preview(s: &str, max_chars: usize) -> String {
-    let trimmed = s.trim();
-    if trimmed.chars().count() <= max_chars {
-        return trimmed.to_string();
-    }
-    let mut out: String = trimmed.chars().take(max_chars.saturating_sub(3)).collect();
-    out.push_str("...");
-    out
 }
 
 fn main() {
@@ -97,22 +58,20 @@ fn main() {
         eprintln!("mem-search: empty query");
         process::exit(1);
     }
-
     if !search_dir.exists() {
         eprintln!("mem-search: directory not found: {}", search_dir.display());
         process::exit(1);
     }
 
     let mut files = Vec::new();
-    collect_memory_files(&search_dir, &mut files);
+    collect_files(&search_dir, &["md", "txt", "jsonl", "json"], &mut files);
 
     let mut hits: Vec<Hit> = Vec::new();
     for file in files {
-        let bytes = match fs::read(&file) {
-            Ok(b) => b,
+        let content = match read_lossy(&file) {
+            Ok(c) => c,
             Err(_) => continue,
         };
-        let content = String::from_utf8_lossy(&bytes);
         let file_name_lower = file
             .file_name()
             .and_then(|n| n.to_str())
@@ -151,7 +110,7 @@ fn main() {
                 score,
                 path: file.clone(),
                 line_num: idx + 1,
-                preview: truncate_preview(line, 160),
+                preview: truncate_str(line, 160),
             });
         }
     }
