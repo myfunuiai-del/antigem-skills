@@ -30,11 +30,21 @@ You **MUST** first use the `ask_question` tool to force the user to specify thei
    - Options:
      - `সিন দেখে রিম্যাক স্ক্রিপ্ট ও ডায়ালগ তৈরি`
      - `ভিজ্যুয়াল স্টাইল, কালার গ্রেডিং, লাইটিং ও ক্যামেরা অ্যাঙ্গেল`
+     - `HTML5 Canvas Blueprint (জ্যামিতিক, গাণিতিক লজিক ও কোড-স্পেক)`
      - `AI ভিডিও জেনারেশন প্রম্পট (Runway / Kling / Luma-এর জন্য)`
      - `ক্যাপশন স্টাইল, ফন্ট ও এডিটিং/কাটিং রিদম`
      - `অডিও, ব্যাকগ্রাউন্ড মিউজিক (BPM) ও সাউন্ড ইফেক্ট`
 
-3. **Output Depth (Token Optimization):**
+3. **Target Style (Style Transfer):**
+   - Question: *"আউটপুট প্রম্পট বা ব্লুপ্রিন্ট কোন ভিজ্যুয়াল স্টাইলে তৈরি হবে?"*
+   - Options:
+     - `রেফারেন্স ভিডিওর নিজস্ব স্টাইল (Reference Style) (Recommended)`
+     - `Cardboard Animation স্টাইল`
+     - `Paint / Watercolor Animation স্টাইল`
+     - `Minimalist 2D / Motion Graphics স্টাইল`
+   *(Note: UI-এর `Other` অপশন ব্যবহার করে ইউজার যেকোনো ইনস্টল করা স্কিল বা কাস্টম স্টাইলের নাম লিখে দিতে পারবেন। যদি Reference Style ছাড়া অন্য কোনো স্টাইল বা কাস্টম স্কিল বেছে নেওয়া হয়, তবে ভিডিওর গল্প, টাইমিং, ক্যামেরা মুভমেন্ট ও লেআউট ঠিক রেখে ভিজ্যুয়াল স্টাইল ও প্রম্পটগুলো সেই টার্গেট স্টাইলে কনভার্ট করতে হবে।)*
+
+4. **Output Depth (Token Optimization):**
    - Question: *"আউটপুটের ধরন কেমন হবে?"*
    - Options:
      - `অতি সংক্ষিপ্ত ও পয়েন্ট-টু-পয়েন্ট (সর্বোচ্চ টোকেন সাশ্রয়ী) (Recommended)`
@@ -73,5 +83,6 @@ bash /data/user/0/ai.antigem/files/home/.gemini/config/skills/rea-video/scripts/
 
 Structure your final response strictly around what the user selected in **Step 1**:
 - **Production Type:** Briefly state whether shots are Live Action, AI-generated, 3D, Code Render (e.g., Remotion), or Mixed.
-- **Selected Deliverables:** Provide the exact Script, Style/Lighting, AI Prompts, Captions, or Audio breakdown requested.
+- **Selected Deliverables:** Provide the exact Script, Style/Lighting, HTML5 Canvas Blueprint, AI Prompts, Captions, or Audio breakdown requested.
+- **Custom Story Adaptation:** If the user provided a **new story/topic** in their prompt alongside the video, **directly adapt and generate the blueprint using that new story** (preserving the reference video's pacing, scene-by-scene structure, and the selected Target Style) instead of keeping the original story, and save it as `<story_title>_rea_video.md`.
 - **Cleanup:** Mention the temporary directory in `$TMPDIR` if any local slices were created so the user knows no storage was wasted.
