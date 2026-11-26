@@ -3,24 +3,65 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FULL_SETUP=false
+AUTO_YES=false
 
-if [ "$1" = "--full" ] || [ "$1" = "-f" ]; then
-    FULL_SETUP=true
-fi
+for arg in "$@"; do
+    case "$arg" in
+        --full|-f) FULL_SETUP=true ;;
+        --yes|-y)  AUTO_YES=true ;;
+    esac
+done
 
 echo "=================================================="
 echo "   AntiGem Skills & Environment Installer        "
 echo "=================================================="
 
-# 1. Install System Packages
-echo "[1/5] Checking and installing system packages..."
+# Function to prompt user confirmation before installing packages
+confirm_and_install() {
+    local pm="$1"
+    shift
+    local pkgs=("$@")
+
+    echo ""
+    echo "The following system packages are required:"
+    for p in "${pkgs[@]}"; do
+        echo "  - $p"
+    done
+    echo ""
+
+    if [ "$AUTO_YES" = true ]; then
+        echo "[*] Auto-confirmation enabled (--yes)."
+    else
+        read -r -p "Do you want to proceed with installing these packages? (y/N): " response
+        case "$response" in
+            [yY][eE][sS]|[yY])
+                echo "[*] Proceeding with installation..."
+                ;;
+            *)
+                echo "[!] Package installation skipped by user."
+                return 0
+                ;;
+        esac
+    fi
+
+    if [ "$pm" = "pkg" ]; then
+        pkg update -y || true
+        pkg install -y "${pkgs[@]}"
+    elif [ "$pm" = "apt" ]; then
+        sudo apt-get update -y || true
+        sudo apt-get install -y "${pkgs[@]}"
+    fi
+}
+
+# 1. Install System Packages (Interactive Confirmation)
+echo "[1/5] Checking required system packages..."
+CORE_PKGS="python python-pillow tesseract ffmpeg yt-dlp quickjs-ng git zsh rust ripgrep fd"
+APT_PKGS="python3 ffmpeg yt-dlp quickjs git zsh rustc cargo ripgrep fd-find"
+
 if command -v pkg >/dev/null 2>&1; then
-    pkg update -y || true
-    PACKAGES="python python-pillow tesseract ffmpeg yt-dlp quickjs-ng git zsh"
-    pkg install -y $PACKAGES
+    confirm_and_install "pkg" $CORE_PKGS
 elif command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get update -y || true
-    sudo apt-get install -y python3 ffmpeg yt-dlp quickjs git zsh
+    confirm_and_install "apt" $APT_PKGS
 fi
 
 # 2. Deploy Custom Binaries (fast-touch, auto-cut, etc.)
