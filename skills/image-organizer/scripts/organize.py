@@ -112,11 +112,15 @@ APP_TAG_MAP = {
 }
 
 OCR_TOPIC_KEYWORDS = {
+    'ID_and_Identity': ['national id', 'nid', 'date of birth', 'id no', 'passport', 'driving licence', 'driving license', 'birth certificate', 'student id', 'government of the people', 'জাতীয় পরিচয়পত্র', 'জন্ম নিবন্ধন', 'পাসপোর্ট', 'পরিচয়পত্র'],
+    'Banking_and_Payment': ['bkash', 'nagad', 'rocket', 'upay', 'bank', 'balance', 'transaction', 'payment', 'sent money', 'cash out', 'trxid', 'বিকাশ', 'নগদ', 'রকেট', 'টাকা', 'পেমেন্ট', 'লেনদেন', 'ব্যালেন্স'],
+    'Bills_and_Invoices': ['invoice', 'receipt', 'bill', 'electricity', 'desco', 'dpdc', 'nesco', 'wasa', 'gas', 'subtotal', 'vat', 'paid', 'বিল', 'রসিদ', 'ভাউচার'],
+    'Education_and_Certificates': ['certificate', 'result', 'gpa', 'cgpa', 'admit card', 'marksheet', 'transcript', 'exam', 'university', 'college', 'সার্টিফিকেট', 'ফলাফল', 'পরীক্ষা', 'অ্যাডমিট'],
     'Social_and_Chat': ['facebook', 'whatsapp', 'messenger', 'friend', 'profile', 'reply', 'comment', 'share', 'status', 'chat', 'message', 'inbox', 'লাইক', 'কমেন্ট', 'শেয়ার', 'ফলো', 'ইনবক্স', 'পোস্ট', 'বন্ধু'],
     'ECommerce_and_BuySell': ['marketplace', 'price', 'tk', 'bdt', 'taka', 'dam', 'daraz', 'bikroy', 'order', 'delivery', 'sell', 'discount', 'cart', 'buy', 'অর্ডার', 'দাম', 'ডেলিভারি', 'মূল্য', 'ডিসকাউন্ট', 'শপ', 'কিনুন'],
     'Tech_Code_Settings': ['termux', 'error', 'system', 'root', 'github', 'settings', 'storage', 'wifi', 'battery', 'device', 'android', 'ip', 'port', 'terminal', 'rust', 'cargo', 'python', 'কোড', 'সার্ভার', 'সেটিংস'],
     'Media_and_Entertainment': ['youtube', 'video', 'music', 'song', 'episode', 'game', 'play', 'stream', 'movie', 'ভিডিও', 'গান', 'মুভি', 'গেম'],
-    'Documents_and_Text': ['document', 'pdf', 'notice', 'form', 'account', 'invoice', 'receipt', 'bank', 'bkash', 'nagad', 'rocket', 'login', 'password', 'code', 'বিকাশ', 'নগদ', 'রকেট', 'টাকা', 'বিল', 'রসিদ', 'ফর্ম']
+    'Documents_and_Text': ['document', 'pdf', 'notice', 'form', 'account', 'application', 'ফর্ম', 'ডকুমেন্ট', 'আবেদন']
 }
 
 def get_tesseract_lang():
