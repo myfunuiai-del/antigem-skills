@@ -50,6 +50,15 @@ precmd() {
 # Terminal prompt: ➜ (in blue) foldername (branch) 
 PROMPT='%F{blue}➜%f %F{cyan}%1~%f${vcs_info_msg_0_} '
 
+# 3.5 Fast Cached Completion System (Required for Tab & Autosuggest completion strategy)
+autoload -Uz compinit
+if [[ -f "$HOME/.zcompdump" ]]; then
+  compinit -C -d "$HOME/.zcompdump"
+else
+  compinit -d "$HOME/.zcompdump"
+fi
+zstyle ':completion:*' rehash true
+
 # 4. Zsh Autosuggestions
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=244'
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
