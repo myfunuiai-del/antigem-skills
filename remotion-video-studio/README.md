@@ -10,29 +10,25 @@
 
 # Remotion Video Studio (Android / Termux)
 
-A complete studio setup for rendering deterministic, frame-by-frame `.mp4` videos on **Android (Termux)** using the **React + CSS + SVG + Three.js** ecosystem.
+A complete **one-command setup** to run **native `@remotion/renderer` + `@remotion/cli`** (with full parallel rendering, **no `proot`**, **no OS spoofing**) AND the lightweight React/HTML/SVG/Three.js studio on **Android (Termux / AntiGem)**.
 
 ---
 
 ## 1. What & Why?
-Unlike desktop OSes, `@remotion/renderer` does not run natively on Android (`Error: Unsupported OS: android, architecture: arm64`), and `/storage/emulated/0` does not support `pnpm` symlinks.
+Out of the box, `@remotion/renderer` fails on Android (`Error: Unsupported OS: android, architecture: arm64`) because it tries to resolve a desktop compositor package and download Linux `chrome-headless-shell`.
 
-This skill solves both limitations:
-- **100% React + CSS + SVG + Three.js** support.
-- **Zero frame drops:** Deterministic frame-by-frame rendering.
-- **Android-friendly:** Installs in `$HOME/remotion-studio` to avoid FUSE symlink permission errors.
-
----
-
-## 2. How It Works
-1. **`src/scene.html`:** Holds your React, CSS, SVG, or Three.js scene, controlled frame-by-frame via `window.setFrame(frame)`.
-2. **`render.mjs`:** Uses `puppeteer-core` with headless `chromium-browser` to capture each frame and pipes them directly into `ffmpeg` to produce `.mp4`.
+This installer solves all Android/Termux limitations automatically:
+- **Native `@remotion/renderer` & Remotion CLI:** Runs `@remotion/compositor-linux-arm64-gnu` directly via Termux's `glibc` dynamic linker (`ld-linux-aarch64.so.1`) using argument-safe wrappers in `~/remotion-studio/binaries/`.
+- **Native Termux Chromium:** Uses `browserExecutable` + `chromeMode: 'chrome-for-testing'` (`--headless=new`) + `gl: 'swangle'`.
+- **Full Parallel Rendering:** Multi-tab Chromium capture & parallel H.264 encoding directly on your phone.
+- **Zero Permission Errors:** Installs inside `$HOME/remotion-studio` (avoiding `/storage/emulated/0` FUSE symlink issues).
+- **Offline Bangla Fonts + `mkprompt` Studio:** Includes `HindSiliguriFixed` fonts, Mind-Map workflow UI, and lightweight `scene.html` + `render.mjs` fallback.
 
 ---
 
-## 3. One-Command Installation
+## 2. One-Command Installation
 
-Run this single command in Termux to automatically install all required system dependencies (`nodejs`, `pnpm`, `ffmpeg`, `chromium`) and set up `~/remotion-studio`:
+Run this single command in Termux/AntiGem to install all dependencies (`nodejs`, `pnpm`, `ffmpeg`, `chromium`, `glibc-repo`, `glibc-runner`), matching Remotion compositor binaries, wrappers, `remotion.config.ts`, fonts, and `mkprompt`:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/myfunuiai-del/antigem-skills/main/remotion-video-studio/install.sh | bash
@@ -40,15 +36,34 @@ curl -fsSL https://raw.githubusercontent.com/myfunuiai-del/antigem-skills/main/r
 
 ---
 
-## 4. Usage & Examples
+## 3. Usage & Examples
 
-Once installed, render the starter video:
+### A) Official Remotion CLI (`@remotion/renderer`) — Zero Extra Flags
 ```bash
 cd ~/remotion-studio
-node render.mjs
+./node_modules/.bin/remotion compositions src/index.ts
+./node_modules/.bin/remotion render src/index.ts TestVideo out/test.mp4
 ```
-Output will be saved to: `~/remotion-studio/out/output.mp4`
 
-### Customization:
-- **Edit the animation:** Modify `~/remotion-studio/src/scene.html`
-- **Change FPS / Resolution / Duration:** Update `FPS`, `TOTAL_FRAMES`, `WIDTH`, `HEIGHT` in `~/remotion-studio/render.mjs`
+### B) Programmatic `@remotion/renderer` Node.js API
+```bash
+cd ~/remotion-studio
+node render-remotion.mjs TestVideo out/test.mp4
+```
+
+Or reuse the Termux options in any other Node.js project:
+```js
+const termuxRemotionOpts = {
+  browserExecutable: `${process.env.PREFIX || '/data/user/0/ai.antigem/files/usr'}/bin/chromium-browser`,
+  chromeMode: 'chrome-for-testing',
+  binariesDirectory: `${process.env.HOME}/remotion-studio/binaries`,
+  chromiumOptions: { gl: 'swangle' },
+};
+```
+
+### C) Lightweight HTML/Puppeteer Mode & `mkprompt` Studio
+```bash
+cd ~/remotion-studio && node render.mjs
+# Or launch the visual Studio & Prompt Builder:
+mkprompt
+```

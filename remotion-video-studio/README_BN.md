@@ -10,29 +10,24 @@
 
 # Remotion Video Studio (Android / Termux)
 
-Android (Termux)-এ **React + CSS + SVG + Three.js** ইকোসিস্টেম ব্যবহার করে নির্ভুল ফ্রেম-বাই-ফ্রেম `.mp4` ভিডিও রেন্ডার করার পূর্ণাঙ্গ স্টুডিও সেটআপ।
+Android (Termux / AntiGem)-এ **কোনো `proot` বা OS spoof ছাড়াই সরাসরি আসল `@remotion/renderer` + `@remotion/cli`** (ফুল প্যারালাল রেন্ডারিংসহ) এবং React + CSS + SVG + Three.js স্টুডিও চালানোর পূর্ণাঙ্গ **ওয়ান-কমান্ড সেটআপ**।
 
 ---
 
-## ১. এটি কী এবং কেন?
-পিসির মতো Android-এ `@remotion/renderer` সরাসরি চলে না (`Error: Unsupported OS: android, architecture: arm64`) এবং `/storage/emulated/0` ফোল্ডারে `pnpm` symlink সাপোর্ট করে না।
+## ১. এটি কী এবং কীভাবে কাজ করে?
+সাধারণত Android-এ `@remotion/renderer` চালালে `Error: Unsupported OS: android, architecture: arm64` এরর আসে।
 
-এই স্কিলটি সেই সীমাবদ্ধতা দূর করে:
-- **১০০% React + CSS + SVG + Three.js** সাপোর্ট দেয়।
-- ফ্রেম-বাই-ফ্রেম রেন্ডারিংয়ের কারণে কোনো ফ্রেম ড্রপ বা ল্যাগ হয় না।
-- ফোনের `$HOME/remotion-studio`-তে সেটআপ হয়, তাই কোনো পারমিশন এরর আসে না।
-
----
-
-## ২. কীভাবে কাজ করে?
-1. **`src/scene.html`:** এখানে আপনার React, CSS, SVG বা Three.js সিন থাকে, যা `window.setFrame(frame)` ফাংশনের মাধ্যমে প্রতিটি ফ্রেমে আপডেট হয়।
-2. **`render.mjs`:** `puppeteer-core` ব্যবহার করে হেডলেস `chromium-browser`-এ প্রতিটি ফ্রেম রেন্ডার করে এবং সরাসরি `ffmpeg`-এ পাইপ করে `.mp4` তৈরি করে।
+এই ইনস্টলারটি সব বাধা অটোমেটিক সমাধান করে দেয়:
+- **নেটিভ `@remotion/renderer` ও Remotion CLI:** Termux-এর `glibc-runner`-এর `ld-linux-aarch64.so.1` লিংকার দিয়ে `@remotion/compositor-linux-arm64-gnu` সরাসরি নেটিভ স্পিডে চালায় (`~/remotion-studio/binaries/`-এ আর্গুমেন্ট-সেফ wrapper সহ)।
+- **Termux-এর নিজের Chromium:** `remotion.config.ts`-এ `browserExecutable` + `chromeMode: 'chrome-for-testing'` (`--headless=new`) + `gl: 'swangle'` অটো কনফিগার করা থাকে।
+- **ফুল প্যারালাল রেন্ডারিং:** একাধিক ট্যাব ও প্যারালাল H.264 এনকোডিং সরাসরি ফোনেই চলে।
+- **অফলাইন বাংলা ফন্ট ও `mkprompt` স্টুডিও:** `HindSiliguriFixed` ফন্ট, Mind-Map স্টুডিও এবং লাইটওয়েট `scene.html` + `render.mjs` মোডও সাথেই থাকে।
 
 ---
 
-## ৩. ওয়ান-কমান্ড ইনস্টলেশন (One-Command Setup)
+## ২. ওয়ান-কমান্ড ইনস্টলেশন (One-Click Setup)
 
-নিচের একটি কমান্ড চালালেই প্রয়োজনীয় সব সিস্টেম ডিপেন্ডেন্সি (`nodejs`, `pnpm`, `ffmpeg`, `chromium`) এবং `~/remotion-studio` অটোমেটিক সেটআপ হয়ে যাবে:
+নিচের একটি কমান্ড চালালেই সব সিস্টেম প্যাকেজ (`nodejs`, `pnpm`, `ffmpeg`, `chromium`, `glibc-repo`, `glibc-runner`), Remotion-এর ভার্সন-ম্যাচড compositor বাইনারি, wrapper, `remotion.config.ts`, ফন্ট ও `mkprompt` অটোমেটিক সেটআপ হয়ে যাবে:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/myfunuiai-del/antigem-skills/main/remotion-video-studio/install.sh | bash
@@ -40,15 +35,34 @@ curl -fsSL https://raw.githubusercontent.com/myfunuiai-del/antigem-skills/main/r
 
 ---
 
-## ৪. ব্যবহার ও উদাহরণ
+## ৩. ব্যবহার ও উদাহরণ
 
-সেটআপ শেষ হলে নিচের কমান্ডে টেস্ট ভিডিও রেন্ডার করুন:
+### ক) সরাসরি Remotion CLI (`@remotion/renderer`) — কোনো এক্সট্রা ফ্ল্যাগ ছাড়াই
 ```bash
 cd ~/remotion-studio
-node render.mjs
+./node_modules/.bin/remotion compositions src/index.ts
+./node_modules/.bin/remotion render src/index.ts TestVideo out/test.mp4
 ```
-আউটপুট তৈরি হবে: `~/remotion-studio/out/output.mp4`
 
-### কাস্টমাইজেশন:
-- **অ্যানিমেশন বদলাতে:** `~/remotion-studio/src/scene.html` এডিট করুন।
-- **FPS / রেজোলিউশন / সময় বদলাতে:** `~/remotion-studio/render.mjs`-এ `FPS`, `TOTAL_FRAMES`, `WIDTH`, `HEIGHT` পরিবর্তন করুন।
+### খ) Node.js থেকে সরাসরি `@remotion/renderer` API
+```bash
+cd ~/remotion-studio
+node render-remotion.mjs TestVideo out/test.mp4
+```
+
+যেকোনো অন্য প্রজেক্টেও শুধু এই অপশনগুলো পাস করলেই `@remotion/renderer` চলবে:
+```js
+const termuxRemotionOpts = {
+  browserExecutable: `${process.env.PREFIX || '/data/user/0/ai.antigem/files/usr'}/bin/chromium-browser`,
+  chromeMode: 'chrome-for-testing',
+  binariesDirectory: `${process.env.HOME}/remotion-studio/binaries`,
+  chromiumOptions: { gl: 'swangle' },
+};
+```
+
+### গ) লাইটওয়েট HTML/Puppeteer মোড ও `mkprompt` স্টুডিও
+```bash
+cd ~/remotion-studio && node render.mjs
+# অথবা Studio & Prompt Builder চালু করতে:
+mkprompt
+```
