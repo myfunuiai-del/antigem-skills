@@ -22,6 +22,8 @@ bash /data/user/0/ai.antigem/files/home/.gemini/config/skills/remotion-video-stu
 
 ## Rendering a Video
 1. Edit `$HOME/remotion-studio/src/scene.html` with the desired React/CSS/SVG/Three.js animation.
+   - **Bangla Font (Offline Pre-Installed):** Use `@font-face` pointing to `../fonts/HindSiliguriFixed-{Light,Regular,Medium,SemiBold,Bold}.ttf` (from `Hind Siliguri Fixed By Fahim`, also installed in `~/.local/share/fonts/`) and always `await document.fonts.ready` before capturing frames so Bengali conjuncts (যুক্তবর্ণ) render cleanly offline.
+   - **Frame-Pure Rule:** Never use CSS `@keyframes` or `transition`—drive 100% of motion mathematically from `window.setFrame(frame)`.
 2. Adjust `FPS`, `TOTAL_FRAMES`, `WIDTH`, `HEIGHT` in `$HOME/remotion-studio/render.mjs` if needed.
 3. Run:
 ```bash

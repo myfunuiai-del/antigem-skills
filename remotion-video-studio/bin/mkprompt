@@ -1,0 +1,44 @@
+#!/data/user/0/ai.antigem/files/usr/bin/bash
+PORT="${MKPROMPT_PORT:-4173}"
+URL="http://127.0.0.1:${PORT}"
+STUDIO_DIR="/data/user/0/ai.antigem/files/home/remotion-studio"
+PID_FILE="${TMPDIR:-/data/user/0/ai.antigem/files/usr/tmp}/mkprompt.pid"
+LOG_FILE="${TMPDIR:-/data/user/0/ai.antigem/files/usr/tmp}/mkprompt.log"
+
+if [ "$1" = "stop" ]; then
+  if [ -f "$PID_FILE" ]; then
+    kill "$(cat "$PID_FILE")" 2>/dev/null || true
+    rm -f "$PID_FILE"
+    echo "mkprompt server stopped."
+  else
+    echo "mkprompt server is not running."
+  fi
+  exit 0
+fi
+
+if ! curl -fsS "${URL}/api/health" >/dev/null 2>&1; then
+  if command -v setsid >/dev/null 2>&1; then
+    setsid node "${STUDIO_DIR}/server.mjs" >"${LOG_FILE}" 2>&1 </dev/null &
+  else
+    nohup node "${STUDIO_DIR}/server.mjs" >"${LOG_FILE}" 2>&1 </dev/null &
+  fi
+  echo $! > "${PID_FILE}"
+  for i in 1 2 3 4 5 6 7 8 9 10; do
+    sleep 0.2
+    if curl -fsS "${URL}/api/health" >/dev/null 2>&1; then
+      break
+    fi
+  done
+fi
+
+echo "=========================================="
+echo "  mkprompt Studio Running!"
+echo "  URL:  ${URL}"
+echo "  Stop: mkprompt stop"
+echo "=========================================="
+
+if command -v termux-open-url >/dev/null 2>&1; then
+  termux-open-url "${URL}" >/dev/null 2>&1 || true
+elif command -v am >/dev/null 2>&1; then
+  am start -a android.intent.action.VIEW -d "${URL}" >/dev/null 2>&1 || true
+fi

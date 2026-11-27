@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zero-Redundancy 4-Directional Video Studio Mind-Map</title>
+  <link rel="stylesheet" href="./dependency-modal.css" />
+  <style>
+    @font-face {
+      font-family: 'HindSiliguriFixed';
+      src: url('./fonts/HindSiliguriFixed-Regular.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'HindSiliguriFixed';
+      src: url('./fonts/HindSiliguriFixed-Medium.ttf') format('truetype');
+      font-weight: 500;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'HindSiliguriFixed';
+      src: url('./fonts/HindSiliguriFixed-SemiBold.ttf') format('truetype');
+      font-weight: 600;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'HindSiliguriFixed';
+      src: url('./fonts/HindSiliguriFixed-Bold.ttf') format('truetype');
+      font-weight: 700;
+      font-style: normal;
+    }
+    :root {
+      --bg: #0e1014;
+      --surface: #15181f;
+      --surface-2: #1d212b;
+      --border: #2c3240;
+      --border-opt: #3f485c;
+      --text: #eef0f4;
+      --muted: #8a92a1;
+      --accent: #e5a93c;
+      --accent-dim: rgba(229, 169, 60, 0.14);
+      --opt-color: #7dd3fc;
+      --opt-dim: rgba(125, 211, 252, 0.12);
+      --line: #303746;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'HindSiliguriFixed', system-ui, -apple-system, sans-serif;
+      padding: 14px;
+      line-height: 1.5;
+    }
+    .wrap {
+      max-width: 1020px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    header h1 {
+      font-size: 1.12rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .legend {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      font-size: 0.74rem;
+      color: var(--muted);
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .swatch {
+      width: 14px;
+      height: 10px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+    .swatch.core {
+      background: var(--surface-2);
+      border: 1.5px solid var(--accent);
+    }
+    .swatch.opt {
+      background: #141720;
+      border: 1.5px dashed var(--opt-color);
+    }
+
+    /* Large 4-Directional Canvas Card */
+    .canvas-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      position: relative;
+      height: 470px;
+      background-image: radial-gradient(#252a36 1px, transparent 1px);
+      background-size: 22px 22px;
+      overflow: hidden;
+    }
+    .canvas-viewport {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      cursor: grab;
+    }
+    .canvas-viewport:active {
+      cursor: grabbing;
+    }
+    .reset-btn {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      z-index: 10;
+      background: rgba(21, 24, 31, 0.94);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+    }
+    .reset-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .canvas-stage {
+      position: relative;
+      width: 1480px;
+      height: 860px;
+      transform-origin: 0 0;
+    }
+    .wing-label {
+      position: absolute;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      pointer-events: none;
+    }
+    svg.links {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .link-path {
+      fill: none;
+      stroke: var(--line);
+      stroke-width: 1.9;
+      transition: stroke 0.18s ease, stroke-width 0.18s ease;
+    }
+    .link-path.opt-line {
+      stroke-dasharray: 5 5;
+    }
+    .link-path.active {
+      stroke: var(--accent);
+      stroke-width: 2.6;
+      stroke-dasharray: none;
+    }
+    .link-path.opt-line.active {
+      stroke: var(--opt-color);
+    }
+
+    .t-node {
+      position: absolute;
+      background: var(--surface-2);
+      border: 1.3px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+      user-select: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .t-node:hover {
+      border-color: #556078;
+    }
+    .t-node.optional {
+      background: #141720;
+      border-style: dashed;
+      border-color: var(--border-opt);
+    }
+    .t-node.active {
+      border-color: var(--accent);
+      border-style: solid;
+      background: #232834;
+      box-shadow: 0 0 0 2px var(--accent-dim);
+    }
+    .t-node.optional.active {
+      border-color: var(--opt-color);
+      box-shadow: 0 0 0 2px var(--opt-dim);
+    }
+    .t-node.root {
+      background: #1a1f2a;
+      border: 1.6px solid var(--accent);
+      text-align: center;
+      padding: 12px;
+      cursor: default;
+    }
+    .t-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+    .t-title {
+      font-size: 0.83rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .opt-pill {
+      font-size: 0.62rem;
+      font-weight: 600;
+      color: var(--opt-color);
+      background: var(--opt-dim);
+      padding: 1px 5px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .t-sub {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Inspector Card */
+    .inspector {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .ins-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .ins-head h3 {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .tag {
+      font-size: 0.72rem;
+      font-family: monospace;
+      background: var(--accent-dim);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .tag.role {
+      background: #232834;
+      color: #cbd5e1;
+      font-family: inherit;
+    }
+    .tag.opt {
+      background: var(--opt-dim);
+      color: var(--opt-color);
+      font-family: inherit;
+    }
+    .inspector ul {
+      padding-left: 18px;
+      font-size: 0.86rem;
+      color: #c8cdd6;
+      margin-bottom: 12px;
+    }
+    .inspector li { margin-bottom: 5px; }
+    .prompt-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 13px;
+    }
+    .prompt-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 7px;
+    }
+    .prompt-label {
+      font-size: 0.74rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .copy-btn {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .copy-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .prompt-text {
+      font-size: 0.84rem;
+      color: var(--text);
+      line-height: 1.58;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>মাস্টার ভিডিও স্টুডিও মাইন্ড-ম্যাপ</h1>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch core"></span> Core</span>
+        <span class="legend-item"><span class="swatch opt"></span> Optional</span>
+        <button type="button" class="dep-open-btn" id="openDepModalBtn">ভিডিও ডিপেন্ডেন্সি</button>
+      </div>
+    </header>
+
+    <div class="canvas-card">
+      <button class="reset-btn" onclick="resetCanvas()">Reset</button>
+      <div class="canvas-viewport" id="viewport">
+        <div class="canvas-stage" id="stage">
+          <div class="wing-label" style="left: 590px; top: 18px;">▲ চ্যানেল ফাউন্ডেশন (Optional / একবার সেটআপ)</div>
+          <div class="wing-label" style="left: 335px; top: 205px;">◀ প্রি-প্রোডাকশন (ধাপ ১–৪)</div>
+          <div class="wing-label" style="left: 890px; top: 205px;">প্রোডাকশন, রেন্ডার ও ভাইরাল (ধাপ ৫–৮) ▶</div>
+          <div class="wing-label" style="left: 555px; top: 825px;">▼ পোস্ট-পাবলিশ গ্রোথ ও অডিট লুপ (Optional / আপলোডের পর)</div>
+          <svg class="links" id="linksSvg" viewBox="0 0 1480 860"></svg>
+          <div id="nodesLayer"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="inspector" id="inspector"></div>
+  </div>
+
+  <script>
+    // Consolidated Zero-Loss Architecture: Every single skill & technical guard preserved inside unified prompts!
+    const wings = {
+      top: {
+        id: 'strat',
+        title: '০. চ্যানেল ফাউন্ডেশন',
+        sub: 'voice.md + yt-plan',
+        role: 'Channel Architect',
+        tool: 'voice.md + yt-plan',
+        optional: true,
+        x: 615, y: 162, w: 250, h: 52,
+        points: [
+          'একবার চ্যানেলের ভয়েস স্টাইল (voice.md) ও সাপ্তাহিক ক্যালেন্ডার (yt-plan) সেটআপ করার জন্য—প্রতি ভিডিওতে করতে হয় না।',
+          'একবার সেট করলে বাকি সব ১১টি yt-* স্কিল আপনার নিজের টোনে কাজ করে।'
+        ],
+        prompt: 'আমার YouTube চ্যানেলের ফাউন্ডেশন সেটআপ করো। আগে অপশন দিয়ে ফোর্স করে জেনে নাও আমি কি voice.md (আমার বলার ধরন লক) করব, নাকি yt-plan দিয়ে মাসিক কনটেন্ট ক্যালেন্ডার (১টি Anchor Long + ৩টি Shorts) বানাব।',
+        children: [
+          {
+            id: 'strat_voice',
+            title: '০.১ ভয়েস প্রোফাইল (voice.md)',
+            sub: '~/.gemini/config/youtube/voice.md',
+            role: 'Brand Director',
+            tool: 'voice.md',
+            optional: true,
+            x: 425, y: 50, w: 295, h: 56,
+            points: [
+              'আপনার ২–৩টি প্রিয়/নিজের ভিডিওর বলার ধরন বিশ্লেষণ করে voice.md পূরণ করে।',
+              'এরপর সব yt-* স্কিল হুবহু আপনার নিজস্ব টোন ও শব্দচয়ন ফলো করে।'
+            ],
+            prompt: 'আমার দেওয়া ২–৩টি স্যাম্পল স্ক্রিপ্ট বা ভিডিওর ধরন বিশ্লেষণ করে ~/.gemini/config/youtube/voice.md আপডেট করো। আগে অপশন দিয়ে জেনে নাও আমার টোন কেমন (গম্ভীর ডকুমেন্টারি / বন্ধুভাবাপন্ন গল্পকার / ফাস্ট ফ্যাক্টস / ব্যঙ্গাত্মক), পছন্দের শব্দ এবং কোন ক্লিশে কথা বাদ দিতে হবে।'
+          },
+          {
+            id: 'strat_plan',
+            title: '০.২ কনটেন্ট ক্যালেন্ডার (yt-plan)',
+            sub: '১টি Anchor Long + ৩টি Shorts ব্যাচ প্ল্যান',
+            role: 'Content Producer',
+            tool: 'yt-plan',
+            optional: true,
+            x: 760, y: 50, w: 295, h: 56,
+            points: [
+              'আপনার সাপ্তাহিক ফ্রি সময় অনুযায়ী বার্নআউট ছাড়া আপলোড ক্যালেন্ডার ও সিরিজ প্ল্যান বানায়।'
+            ],
+            prompt: 'yt-plan স্কিল ব্যবহার করে আগামী ১ মাসের কনটেন্ট ক্যালেন্ডার বানাও। আগে অপশন দিয়ে জেনে নাও: ১) সপ্তাহে কত ঘণ্টা কাজ করতে পারব, ২) লং + Shorts অনুপাত কী চাই, এবং ৩) কোন ৩টি সিরিজ চালাব।'
+          }
+        ]
+      },
+
+      bottom: {
+        id: 'growth',
+        title: '৯. পোস্ট-পাবলিশ গ্রোথ লুপ',
+        sub: 'yt-comment + retention.py + yt-audit',
+        role: 'Growth Director',
+        tool: 'yt-retention + yt-audit',
+        optional: true,
+        x: 615, y: 642, w: 250, h: 52,
+        points: [
+          'আপলোডের পর কমেন্ট ট্রায়াজ, ৪৮-ঘণ্টার রিটেনশন ফরেনসিকস ও মাসিক চ্যানেল অডিট—যার ডেটা পরের ভিডিওকে দ্বিগুণ শক্তিশালী করে।'
+        ],
+        prompt: 'আমার আপলোড করা ভিডিওর পারফরম্যান্স বিশ্লেষণ করো। আগে অপশন দিয়ে জেনে নাও এখন কোনটা করব: ১) yt-comment (রিপ্লাই + নেক্সট আইডিয়া), ২) yt-retention (retention.py অডিট), নাকি ৩) yt-audit (চ্যানেলের সবচেয়ে বড় ১টি ফিক্স)।',
+        children: [
+          {
+            id: 'growth_comment',
+            title: '৯.১ কমেন্ট ট্রায়াজ (yt-comment)',
+            sub: 'রিপ্লাই + পিন + নেক্সট ভিডিও আইডিয়া',
+            role: 'Community Manager',
+            tool: 'yt-comment',
+            optional: true,
+            x: 290, y: 752, w: 280, h: 56,
+            points: [
+              'কমেন্টগুলো ৪ ভাগে ট্রায়াজ করে পিন-যোগ্য কমেন্ট, আপনার টোনে রিপ্লাই এবং দর্শকের প্রশ্ন থেকে নেক্সট ৩টি ভাইরাল আইডিয়া বের করে।'
+            ],
+            prompt: 'yt-comment স্কিল ও ~/.gemini/config/youtube/voice.md দিয়ে আমার পেস্ট করা কমেন্টগুলো ৪ ভাগে ট্রায়াজ করো: ১) কোন কমেন্ট পিন করলে এনগেজমেন্ট বাড়বে, ২) জরুরি কমেন্টগুলোর জন্য আমার টোনে শর্ট রিপ্লাই, এবং ৩) দর্শকের প্রশ্ন থেকে পরের ভিডিওর সেরা ৩টি আইডিয়া।'
+          },
+          {
+            id: 'growth_retention',
+            title: '৯.২ ৪৮-ঘণ্টা রিটেনশন (retention.py)',
+            sub: 'Hook Leak, Cliff ও Slide ফরেনসিকস',
+            role: 'Retention Analyst',
+            tool: 'retention.py',
+            optional: true,
+            x: 600, y: 752, w: 280, h: 56,
+            points: [
+              'YouTube Studio-র Audience Retention CSV-তে retention.py চালিয়ে ঠিক কোন সেকেন্ডে ও কোন লাইনে দর্শক চলে গেছে তা ধরে দেয়।'
+            ],
+            prompt: 'আমার দেওয়া YouTube Studio Audience Retention CSV এবং .srt-এর ওপর ~/.gemini/config/skills/yt-retention/retention.py চালাও। রিপোর্ট দাও: ১) Hook Leak কত %, ২) ঠিক কোন সেকেন্ডে ও কোন কথায় বড় ড্রপ (Cliff) হয়েছে, এবং ৩) পরের ভিডিওতে কোন ৩টি পরিবর্তন আনলে রিটেনশন ২০%+ বাড়বে।'
+          },
+          {
+            id: 'growth_audit',
+            title: '৯.৩ চ্যানেল ডক্টর (yt-audit)',
+            sub: '২০টা নয়—সবচেয়ে জরুরি ১টি গ্রোথ ফিক্স',
+            role: 'Channel Doctor',
+            tool: 'yt-audit',
+            optional: true,
+            x: 910, y: 752, w: 280, h: 56,
+            points: [
+              'শেষ ১০–১৫টি ভিডিওর প্যাকেজিং, কনসিস্টেন্সি ও প্রথম ১৫ সেকেন্ড অডিট করে সবচেয়ে বড় যে ১টি ফিক্স চ্যানেল আনলক করবে তা বলে দেয়।'
+            ],
+            prompt: 'yt-audit স্কিল দিয়ে আমার চ্যানেল (বা শেষ ১০টি ভিডিও) অডিট করে প্যাকেজিং, কনসিস্টেন্সি ও প্রথম ১৫ সেকেন্ড যাচাই করো—এবং ২০টা এলোমেলো টিপস নয়, সবচেয়ে জরুরি ১টি মেইন ফিক্স বলো যা আগামী ৩০ দিনে সবচেয়ে বড় গ্রোথ আনবে।'
+          }
+        ]
+      },
+
+      left: [
+        {
+          id: 'style',
+          title: '১. রেফারেন্স ও স্টাইল বাইবেল',
+          sub: 'rea-video → project/style-bible.json',
+          role: 'Visual & Art Director',
+          tool: 'rea-video + Style JSON',
+          optional: true,
+          y: 238,
+          points: [
+            'আগে ১.১ ও ১.২ আলাদা ছিল—এখন এক প্রম্পটেই প্রথম ১৫ সেকেন্ডের ভিজ্যুয়াল ডিএনএ (HEX, ক্যামেরা, লাইটিং, কাট পেসিং) বের করে সরাসরি project/style-bible.json লক করে।',
+            'অফলাইন HindSiliguriFixed ফন্ট ও 16:9 / 9:16 সেফ-জোন স্বয়ংক্রিয়ভাবে সেভ হয়ে যায় (আগে থেকেই স্টাইল লক থাকলে স্কিপ করা যাবে)।'
+          ],
+          prompt: 'এই রেফারেন্স ভিডিওতে rea koro (অথবা রেফারেন্স ছাড়াই নতুন স্টাইল বানাও) এবং একসাথেই স্থায়ী ফাইল project/style-bible.json তৈরি ও সেভ করো!\n১) কাজ শুরুর আগে অপশন দিয়ে ফোর্স করে জেনে নাও: টাইমরেঞ্জ (যেমন প্রথম ১৫ সেকেন্ড), ফরম্যাট (16:9 YouTube / 9:16 Reels-Shorts / দুটোই), আর্ট স্টাইল (Cardboard / Claymation / Painting / Editorial Collage / 2D / 3D) এবং কালার মুড।\n২) রেফারেন্স থেকে HEX কালার, ক্যামেরা মুভমেন্ট, লাইটিংয়ের দিক, কাট পেসিং ও টেক্সচার বের করো।\n৩) সব ডেটা project/style-bible.json-এ লক করো—যেখানে বাধ্যতামূলকভাবে থাকবে: palette (HEX), typography (অফলাইন বাংলা ফন্ট: ~/remotion-studio/fonts/HindSiliguriFixed-*.ttf + stroke/shadow), lightingDirection, textureRules, springConfig (damping/stiffness) এবং 16:9 / 9:16 safeZones (px)।',
+          children: []
+        },
+        {
+          id: 'script',
+          title: '২. ভাইরাল রিসার্চ, স্ক্রিপ্ট ও অডিট',
+          sub: 'swipe.py + hookscore.py → script.md',
+          role: 'Viral Producer & Writer',
+          tool: 'yt-viral + yt-script',
+          optional: false,
+          y: 334,
+          points: [
+            'আগের ২.১ ও ২.২ একীভূত: লাইভ YouTube Outlier রিসার্চ (swipe.py --min 2.0) + ২১ হুক ফর্মুলা (hooks.json) + hookscore.py স্কোরিং + রিটেনশন/Re-Hook অডিট সব এক প্রম্পটেই!',
+            'চূড়ান্ত পোলিশড স্ক্রিপ্ট সরাসরি project/script.md ফাইলে সেভ হয়।'
+          ],
+          prompt: 'আমার এই গল্পটিকে yt-viral ও yt-script দিয়ে ১০০% ডেটা-ড্রিভেন ভাইরাল স্ক্রিপ্টে রূপান্তর করে project/script.md-এ সেভ করো—অনুমান করে কিছু লিখবে না!\n১) ফোর্সড প্রশ্ন: আগে অপশন দিয়ে জেনে নাও জনরা, প্ল্যাটফর্ম (16:9 / 9:16), ভাষা ও আনুমানিক দৈর্ঘ্য (এবং ~/.gemini/config/youtube/voice.md থাকলে তা পড়ো)।\n২) লাইভ Outlier রিসার্চ: yt-dlp দিয়ে নিশের সাম্প্রতিক ভিডিও ডেটা এনে ~/.gemini/config/skills/yt-viral/swipe.py --min 2.0 চালিয়ে ২x+ Outlier ভিডিও ও কন্টেন্ট গ্যাপ বের করো।\n৩) ২১ হুক ফর্মুলা ও স্কোরিং: ~/.gemini/config/skills/yt-script/hooks.json থেকে প্রথম ৩ সেকেন্ডের ৫টি হুক লিখে hookscore.py দিয়ে স্কোর করো ও সেরাটা নাও।\n৪) রিরাইট + রিটেনশন অডিট: সেরা হুক দিয়ে গল্প রিরাইট করো, ধীর/বোরিং লাইন কেটে দাও, প্রতি ১৫–২০ সেকেন্ডে একটি Re-Hook/Open Loop বসাও এবং শেষে শক্তিশালী Payoff/Loop দিয়ে project/script.md সেভ করো।',
+          children: []
+        },
+        {
+          id: 'storyboard',
+          title: '৩. বিট-সিঙ্ক স্টোরিবোর্ড',
+          sub: 'deadair.py + beat-sync → storyboard.json',
+          role: 'Edit & Rhythm Architect',
+          tool: 'beat-sync + deadair.py',
+          optional: false,
+          y: 430,
+          points: [
+            'deadair.py দিয়ে .srt-এর নীরবতা শনাক্ত + ffprobe দিয়ে এক্স্যাক্ট totalFrames = Math.ceil(duration * 30) লক।',
+            'beat-sync-editing-এর BPM→Frame ম্যাথ (cumulative rounding), Establish→Develop→Climax→Resolve আর্ক, Hard/Match/J/L-Cut ও Speed Rampসহ project/storyboard.json সেভ করে।'
+          ],
+          prompt: 'beat-sync-editing ও yt-edit (deadair.py) ব্যবহার করে আমার ভয়েসওভার অডিও, BGM (যদি থাকে) ও .srt ফাইল থেকে project/storyboard.json তৈরি ও সেভ করো।\n১) ~/.gemini/config/skills/yt-edit/deadair.py চালিয়ে .srt-এর Dead Air ও গ্যাপ চিহ্নিত করো এবং ffprobe দিয়ে এক্স্যাক্ট totalFrames = Math.ceil(duration * 30) লক করো।\n২) BGM থাকলে beat-sync-editing নিয়মে BPM ও beat-1 offset বের করে frames_per_beat = (60 / BPM) * 30 (cumulative rounding) হিসাব করো; সব বিটে নয়—২/৪/৮ বিটের Phrase-এ কাট বসাও এবং সবচেয়ে বড় ভিজ্যুয়াল ড্রপে ল্যান্ড করাও।\n৩) ফ্ল্যাট পেসিং নয়—Establish → Develop → Climax → Resolve আর্ক বানাও (কোনো সিন ৪ সেকেন্ডের বেশি স্থির থাকবে না, ক্লাইম্যাক্সে শট ছোট হবে, শেষে হোল্ড থাকবে)।\n৪) JSON-এ প্রতিটি সিনের জন্য লক করো: sceneId, startFrame, endFrame, shotType, cutType (90% Hard Cut, প্রয়োজনে Match Cut / J-Cut [-4 to -12f] / L-Cut [+12 to +24f] / Speed Ramp), cameraMove, captionText এবং sfxEvents।',
+          children: [
+            {
+              id: 'voice_tone',
+              title: '৩.১ ভয়েস টোন ও ইমোশন গাইড',
+              sub: 'শুধু ভয়েস এখনো রেকর্ড না করে থাকলে',
+              role: 'Voice Director',
+              tool: 'Delivery Script',
+              optional: true,
+              y: 430,
+              points: [
+                'ভয়েসওভার আগে থেকেই রেকর্ড করা থাকলে এটি স্কিপ করুন।',
+                'না থাকলে project/script.md-এর প্রতিটি লাইনে [Pause], [Whisper], [Speed] ও এনার্জি ট্যাগ বসিয়ে দেয়।'
+              ],
+              prompt: 'project/script.md-কে একটি প্রফেশনাল ভয়েসওভার ডিরেকশন শিটে রূপান্তর করো। আগে অপশন দিয়ে ভয়েস স্টাইল (Deep Dramatic / Friendly Storyteller / Fast Viral / Documentary) জেনে প্রতিটি লাইনের পাশে [Pause], [Emphasis], [Speed] ও [Tone Shift] মার্ক করে দাও।'
+            }
+          ]
+        },
+        {
+          id: 'art',
+          title: '৪. হাইব্রিড আর্ট ও অ্যাসেট',
+          sub: 'নিজস্ব ছবি + Z-Depth → assets-map.json',
+          role: 'Editorial Art Director',
+          tool: 'Hybrid + svg-gen',
+          optional: false,
+          y: 526,
+          points: [
+            'আগের ৪.১ ও ৪.৩ একীভূত: আপনার নিজস্ব লিড ক্যারেক্টার (অরিজিনাল লক) + সংগৃহীত ছবি (পেপার কাটআউট/শ্যাডো ব্লেন্ডিং) + মিসিং সিনের BG/MID/FG ট্রান্সপারেন্ট লেয়ার—সব একসাথে project/assets-map.json-এ লক করে!'
+          ],
+          prompt: 'project/storyboard.json ও project/style-bible.json পড়ে project/assets-map.json তৈরি করো এবং মিসিং অ্যাসেটগুলো বানিয়ে নাও।\n১) ফোর্সড প্রশ্ন: শুরুতে অপশন দিয়ে জেনে নাও—আমার নিজস্ব কোন লিড ক্যারেক্টার (PNG/SVG) আছে, কোন সিনের ছবি আমার সংগ্রহে আছে, এবং মিসিং সিনগুলো svg-generator নাকি image-generator দিয়ে বানাব।\n২) কঠোর নিয়ম (Negative Constraints):\n- নিজস্ব লিড ক্যারেক্টার: কখনোই বদলাবে না—শুধু বাড়তি পোজ/এক্সপ্রেশন লাগলে হুবহু একই স্টাইলে এক্সট্রা বানাবে।\n- সংগৃহীত ছবি: AI দিয়ে রিপ্লেস করবে না; প্রয়োজনে ব্যাকগ্রাউন্ড মাস্কিং করে style-bible.json অনুযায়ী পেপার কাটআউট বর্ডার, শ্যাডো ও কালার গ্রেড দেবে।\n- মিসিং সিন: শুধু যেগুলো নেই সেগুলোর জন্য ৩টি আলাদা ট্রান্সপারেন্ট Z-Depth লেয়ার (BG, MID, FG) বানিয়ে সব পাথ project/assets-map.json-এ সেভ করবে।',
+          children: [
+            {
+              id: 'art_map',
+              title: '৪.১ রিয়েল GeoJSON ম্যাপ ও কোলাজ',
+              sub: 'শুধু গল্পে ম্যাপ/ঐতিহাসিক চরিত্র থাকলে',
+              role: 'Documentary Designer',
+              tool: 'GeoJSON + Collage',
+              optional: true,
+              y: 526,
+              points: [
+                'গল্পে চীন→জাপান ম্যাপ বা হিটলারের মতো ঐতিহাসিক রেফারেন্স থাকলেই এটি ব্যবহার করবেন।',
+                'কখনোই AI আন্দাজে ম্যাপ আঁকবে না—আসল GeoJSON/Wikimedia SVG পাথে stroke-dashoffset রুট ও ডকুমেন্টারি কাটআউট বানাবে।'
+              ],
+              prompt: 'গল্পে যেসব রিয়েল ম্যাপ (যেমন চীন থেকে জাপান রুট) বা বিখ্যাত ঐতিহাসিক ব্যক্তিত্ব/ঘটনা আছে, সেগুলো নিচের কঠোর নিয়মে তৈরি করো:\n১) ম্যাপ ও রুট (Negative Constraint): কখনোই AI ইমেজ জেনারেটর বা নিজের আন্দাজে হাতের SVG কোডে দেশের ম্যাপ আঁকবে না! সবসময় আসল ভৌগোলিক GeoJSON / Natural Earth / Wikimedia Commons-এর নির্ভুল SVG পাথ ব্যবহার করে stroke-dashoffset দিয়ে অ্যানিমেটেড রুট অ্যারো, পিন ড্রপ ও ক্যামেরা প্যান-জুম কোড করবে।\n২) ঐতিহাসিক ব্যক্তিত্ব ও আর্কাইভ ছবি: মনোক্রোম/সেপিয়া টোন + ছেঁড়া কাগজের এজ + অ্যাকসেন্ট হাইলাইট + ফোরগ্রাউন্ড কাটআউট বানাবে এবং project/style-bible.json-এর একই কালার গ্রেডে ব্লেন্ড করে project/assets-map.json-এ যোগ করবে।'
+            }
+          ]
+        }
+      ],
+
+      right: [
+        {
+          id: 'sound',
+          title: '৫. real-sfx প্রো সাউন্ড ডিজাইন',
+          sub: '৭২+৭৮ রিয়েল লাইব্রেরি + critique + swap',
+          role: 'Sound Designer & QC',
+          tool: 'real-sfx (All-in-One)',
+          optional: false,
+          y: 238,
+          points: [
+            'আগের ৫.১ ও ৫.২ একীভূত: setup.py check → beats.py → from_cues.py (Stay-Quiet রুল, কখনোই সিন্থেসাইজ নয়) → mix.py (--voice-safe --duck --snap-beats -14 LUFS) → verify.py & critique.py স্কোরবোর্ড সব এক প্রম্পটেই!',
+            'কোনো সাউন্ড ভিডিওর সাথে না মানালে পুরো ভিডিও রি-রেন্ডার না করে sheet.py set/drop ও taste.json দিয়ে ১ সেকেন্ডে বদলে নেওয়া যায়।'
+          ],
+          prompt: '~/.gemini/config/skills/real-sfx দিয়ে আমাদের ভিডিওর পূর্ণাঙ্গ প্রো সাউন্ড ডিজাইন ও মিক্সিং করো (কখনোই নকল সিন্থেসাইজড সাউন্ড বানাবে না!):\n১) আগে python3 scripts/setup.py check এবং BGM থাকলে scripts/beats.py চালিয়ে Kick/Beat গ্রিড বের করো; অপশন দিয়ে জেনে নাও --ui library নাকি --ui auto (uisfx সহ) চাই।\n২) project/storyboard.json-এর ইভেন্টগুলো scripts/from_cues.py ও scripts/search.py --paths দিয়ে আমাদের ৭২ রিয়েল সাউন্ড + ৭৮ uisfx লাইব্রেরি থেকে ম্যাপ করো। মানানসই সাউন্ড না থাকলে জোর করে বাজে কিছু বসাবে না—নীরব (Quiet) রেখে রিপোর্টে জানাবে।\n৩) python3 scripts/mix.py work/cues.json --out result/film_sfx.mp4 --voice-safe --duck --snap-beats --target-lufs -14 চালিয়ে নতুন MP4 + আলাদা SFX WAV বানাও (শুধু SFX ভিডিও হলে bed.py দিয়ে -54 dBFS অ্যাম্বিয়েন্স বেড দাও)।\n৪) বাধ্যতামূলকভাবে verify.py ও critique.py চালিয়ে ১–১০ স্কোরবোর্ড ও রিস্কি ৩–৫টি মুহূর্তের Listen List দেখাও; আমি শুনে কোনো সাউন্ড অপছন্দ করলে scripts/sheet.py set/drop ও taste.json (ban/love) দিয়ে ১ সেকেন্ডে বদলে রি-মিক্স করে দেবে।',
+          children: []
+        },
+        {
+          id: 'motion',
+          title: '৬. সিনেমাটিক মোশন ও বাংলা ক্যাপশন',
+          sub: 'remotion-video-studio + HindSiliguriFixed',
+          role: 'Motion & Finishing Engineer',
+          tool: 'React + SVG + Three.js',
+          optional: false,
+          y: 334,
+          points: [
+            'আগের ৬.১ ও ৬.২ একীভূত: একই src/scene.html-এ Frame-Pure Math (কোনো CSS @keyframes নয়), spring physics, BG/MID/FG প্যারালাক্স, Ken Burns ব্রিদিং ও window.readyPromise ইমেজ গার্ড।',
+            'সাথে অফলাইন HindSiliguriFixed @font-face + await document.fonts.ready, .srt ওয়ার্ড-বাই-ওয়ার্ড কাইনেটিক ক্যাপশন ও ৫% ফিল্ম গ্রেইন!'
+          ],
+          prompt: 'project/style-bible.json, project/storyboard.json ও project/assets-map.json পড়ে remotion-video-studio-এর src/scene.html-এ পুরো সিনেমাটিক অ্যানিমেশন ও ক্যাপশন একসাথে কোড করো।\nকঠোর টেকনিক্যাল নিয়ম (Negative Constraints):\n১) Frame-Pure Math: কখনোই CSS @keyframes, CSS transition বা setTimeout ব্যবহার করবে না—১০০% অ্যানিমেশন গাণিতিকভাবে শুধু window.setFrame(frame) দিয়ে চলবে!\n২) মোশন কোয়ালিটি: সব এন্ট্রান্স ও কাট (Hard/Match/Speed Ramp)-এ spring physics (overshoot & settle) বা cubic-bezier ব্যবহার করো (কোনো linear lerp নয়), BG/MID/FG-তে Z-depth প্যারালাক্স ও হালকা Ken Burns ক্যামেরা ব্রিদিং দাও।\n৩) অফলাইন বাংলা ফন্ট ও ইমেজ গার্ড: ~/remotion-studio/fonts/ ফোল্ডারের HindSiliguriFixed-{Regular,SemiBold,Bold}.ttf @font-face দিয়ে লোড করো এবং window.readyPromise রাখো যাতে document.fonts.ready ও সব img.complete হওয়ার আগে কোনো ফ্রেম রেন্ডার না হয়।\n৪) ফিনিশিং: .srt অনুযায়ী safeZones-এর ভেতরে ওয়ার্ড-বাই-ওয়ার্ড হাইলাইটেড ক্যাপশন এবং পুরো ক্যানভাসে ৫% frame-driven ফিল্ম গ্রেইন ও ভিনিয়েট যোগ করো।',
+          children: []
+        },
+        {
+          id: 'qc_render',
+          title: '৭. ৪-পয়েন্ট স্টিল QC → ফাইনাল রেন্ডার',
+          sub: 'Still PNG Audit → CRF 18 output.mp4',
+          role: 'QC & Render Engineer',
+          tool: 'verify + render.mjs',
+          optional: false,
+          y: 430,
+          points: [
+            'আগের ৭.১ ও ৭.২ একীভূত: অন্ধের মতো রেন্ডার না করে আগে ৪ ধরনের স্টিল ফ্রেম (Hook, Mid, বড় বাংলা যুক্তবর্ণ, Transition/End) PNG দেখাবে।',
+            'আপনি OK বললেই ffprobe-এর এক্স্যাক্ট TOTAL_FRAMES = Math.ceil(audio*FPS) লক করে CRF 18, yuv420p কোয়ালিটিতে output.mp4 রেন্ডার করে দেবে।'
+          ],
+          prompt: '২-ধাপের সেফ রেন্ডার চালাও (প্রথমে QC অডিট, তারপর আমার OK পেলে ফাইনাল রেন্ডার):\nধাপ ক (৪-পয়েন্ট স্টিল QC): পুরো ভিডিও রেন্ডার করার আগে ৪ ধরনের স্টিল PNG রেন্ডার করে আমাকে চ্যাটে দেখাও—১) Frame 15 (Hook), ২) প্রতিটি সিনের মাঝখানের ১টি ফ্রেম, ৩) সবচেয়ে বড় বাংলা যুক্তবর্ণ ক্যাপশন ফ্রেম, এবং ৪) ট্রানজিশন ও শেষ ফ্রেম। নিজেও অডিট করে জানাও বাংলা যুক্তবর্ণ, ছবি ও safeZones ঠিক আছে কিনা।\nধাপ খ (ফাইনাল রেন্ডার — আমার OK পাওয়ার পর): অপশন দিয়ে রেজোলিউশন জেনে নাও (1920x1080 16:9 / 1080x1920 9:16 / 720p Preview)। তারপর ffprobe দিয়ে অডিওর এক্স্যাক্ট ডিউরেশন নিয়ে render.mjs-এ TOTAL_FRAMES = Math.ceil(audioDuration * FPS) ও Promise.all([document.fonts.ready, window.readyPromise]) সেট করে CRF 18, yuv420p ও -c:a aac -b:a 192k -shortest দিয়ে ফাইনাল output.mp4 রেন্ডার করো।',
+          children: []
+        },
+        {
+          id: 'pack',
+          title: '৮. ভাইরাল প্যাকেজিং ও পাবলিশ প্যাক',
+          sub: 'থাম্বনেইল + title.py + chapters.py + SEO',
+          role: 'Growth & CTR Strategist',
+          tool: 'yt-package + chapters.py',
+          optional: false,
+          y: 526,
+          points: [
+            'আগের ৮.১ ও ৮.২ একীভূত: থাম্বনেইল ও টাইটেল একসাথে ডিজাইন না করলে শব্দ রিপিট হয়—তাই লাইভ Outlier স্ক্যান + ৩ থাম্বনেইল কনসেপ্ট (image-gen প্রম্পটসহ) + title.py লিন্টেড ৫ A/B টাইটেল + chapters.py চ্যাপ্টার + ডিবেট পিনড কমেন্ট সব একসাথে!'
+          ],
+          prompt: 'yt-package, yt-chapters ও yt-seo ব্যবহার করে ১০০% ডেটা-ড্রিভেন ভাইরাল প্যাকেজিং প্যাক তৈরি করো—আন্দাজে কিছু লিখবে না!\n১) ফোর্সড প্রশ্ন: আগে অপশন দিয়ে জেনে নাও প্ল্যাটফর্ম (YouTube Long / Shorts / FB Reels), ভাষা ও অডিয়েন্স (BD / IN / Global)।\n২) লাইভ রিসার্চ: project/script.md ও .srt পড়ো এবং yt-viral (swipe.py) / search_web দিয়ে নিশের সাম্প্রতিক Outlier ভিডিওর থাম্বনেইল ও টাইটেল প্যাটার্ন দেখো।\n৩) থাম্বনেইল + টাইটেল সিনার্জি: ভিড়ের মধ্যে আলাদা চোখে পড়ার মতো ৩টি থাম্বনেইল কনসেপ্ট (২–৪ শব্দের পাওয়ার টেক্সট + image-generator প্রম্পট) এবং ৫টি ভিন্ন অ্যাঙ্গেলের A/B টাইটেল বানাও। প্রতিটি টাইটেল+থাম্বনেইল পেয়ার ~/.gemini/config/skills/yt-package/title.py --title "..." --thumb "..." চালিয়ে স্কোর ও লিন্ট (রিপিটেশন ও ৬০-অক্ষর চেক) করে সেরাগুলো দাও।\n৪) পাবলিশ কিট: প্রথম ২ লাইনে সার্চ-হুক ডেসক্রিপশন + ~/.gemini/config/skills/yt-chapters/chapters.py দিয়ে ভ্যালিডেটেড চ্যাপ্টার + ২টি ডিবেট-বেসড পিনড কমেন্ট ও হাই-ইন্টেন্ট ট্যাগ দাও।',
+          children: [
+            {
+              id: 'pack_shorts',
+              title: '৮.১ yt-shorts ক্লিপ এক্সট্র্যাকশন',
+              sub: 'শুধু লং ভিডিও (16:9) থেকে ৩টি Shorts কাটতে',
+              role: 'Shorts Producer',
+              tool: 'yt-shorts',
+              optional: true,
+              y: 526,
+              points: [
+                'শুধু লং ভিডিও বানালেই এটি ব্যবহার করবেন—একই ভিডিও থেকে ৩টি ভাইরাল Shorts বের হয়ে যাবে।',
+                'প্রতিটি ক্লিপের এক্স্যাক্ট টাইমকোড ও নতুন ১ম লাইন (স্ক্রল-স্টপিং হুক) লিখে দেয়।'
+              ],
+              prompt: 'yt-shorts স্কিল ব্যবহার করে আমার লং ভিডিওর .srt ট্রান্সক্রিপ্ট ও project/script.md থেকে সবচেয়ে স্বয়ংসম্পূর্ণ ৩টি ভাইরাল Shorts ক্লিপ খুঁজে বের করো। প্রতিটির জন্য দাও: ১) এক্স্যাক্ট Start–End টাইমকোড (৩০–৫৫ সেকেন্ড), ২) আলাদাভাবে কাজ করার মতো নতুন ১ম লাইন (Hook), এবং ৩) 9:16 রি-ফ্রেম ক্যাপশন ও টাইটেল।'
+            }
+          ]
+        }
+      ]
+    };
+
+    const nodesLayer = document.getElementById('nodesLayer');
+    const linksSvg = document.getElementById('linksSvg');
+    const nodeMap = {};
+
+    // Center Root
+    const ROOT = { x: 640, y: 392, w: 200, h: 74 };
+    const rootCX = ROOT.x + ROOT.w / 2;
+    const rootCY = ROOT.y + ROOT.h / 2;
+
+    const rootEl = document.createElement('div');
+    rootEl.className = 't-node root';
+    rootEl.style.left = ROOT.x + 'px';
+    rootEl.style.top = ROOT.y + 'px';
+    rootEl.style.width = ROOT.w + 'px';
+    rootEl.style.height = ROOT.h + 'px';
+    rootEl.innerHTML = `<div class="t-title" style="font-size:0.92rem;">স্টুডিও মাস্টার কোর</div><div class="t-sub">৮ ফাস্ট ধাপ • সব লজিক লকড</div>`;
+    nodesLayer.appendChild(rootEl);
+
+    let svgHTML = '';
+
+    function createNodeEl(item, x, y, w, h) {
+      const el = document.createElement('div');
+      el.className = 't-node' + (item.optional ? ' optional' : '');
+      el.id = 'n-' + item.id;
+      el.dataset.id = item.id;
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      el.style.width = w + 'px';
+      el.style.height = h + 'px';
+      el.innerHTML = `
+        <div class="t-top">
+          <div class="t-title">${item.title}</div>
+          ${item.optional ? '<span class="opt-pill">Optional</span>' : ''}
+        </div>
+        <div class="t-sub">${item.sub}</div>
+      `;
+      nodesLayer.appendChild(el);
+    }
+
+    // 1. TOP Wing
+    const topB = wings.top;
+    createNodeEl(topB, topB.x, topB.y, topB.w, topB.h);
+    nodeMap[topB.id] = { ...topB, parentId: null, childIds: topB.children.map(c => c.id) };
+    svgHTML += `<path id="p-${topB.id}" class="link-path opt-line" d="M ${rootCX} ${ROOT.y} L ${rootCX} ${topB.y + topB.h}" />`;
+
+    topB.children.forEach(sub => {
+      createNodeEl(sub, sub.x, sub.y, sub.w, sub.h);
+      nodeMap[sub.id] = { ...sub, parentId: topB.id, childIds: [] };
+      const sx = sub.x + sub.w / 2, sy = sub.y + sub.h;
+      const bx = rootCX, by = topB.y, my = (by + sy) / 2;
+      svgHTML += `<path id="p-${sub.id}" class="link-path opt-line" d="M ${bx} ${by} C ${bx} ${my}, ${sx} ${my}, ${sx} ${sy}" />`;
+    });
+
+    // 2. BOTTOM Wing
+    const botB = wings.bottom;
+    createNodeEl(botB, botB.x, botB.y, botB.w, botB.h);
+    nodeMap[botB.id] = { ...botB, parentId: null, childIds: botB.children.map(c => c.id) };
+    svgHTML += `<path id="p-${botB.id}" class="link-path opt-line" d="M ${rootCX} ${ROOT.y + ROOT.h} L ${rootCX} ${botB.y}" />`;
+
+    botB.children.forEach(sub => {
+      createNodeEl(sub, sub.x, sub.y, sub.w, sub.h);
+      nodeMap[sub.id] = { ...sub, parentId: botB.id, childIds: [] };
+      const sx = sub.x + sub.w / 2, sy = sub.y;
+      const bx = rootCX, by = botB.y + botB.h, my = (by + sy) / 2;
+      svgHTML += `<path id="p-${sub.id}" class="link-path opt-line" d="M ${bx} ${by} C ${bx} ${my}, ${sx} ${my}, ${sx} ${sy}" />`;
+    });
+
+    // 3. LEFT Wing
+    const L_SUB_X = 24, L_SUB_W = 255, L_BR_X = 335, L_BR_W = 255, H = 56;
+    wings.left.forEach(br => {
+      createNodeEl(br, L_BR_X, br.y, L_BR_W, H);
+      nodeMap[br.id] = { ...br, parentId: null, childIds: br.children.map(c => c.id) };
+      const bCY = br.y + H / 2;
+      const x1 = ROOT.x, x2 = L_BR_X + L_BR_W, mx = (x1 + x2) / 2;
+      svgHTML += `<path id="p-${br.id}" class="link-path${br.optional ? ' opt-line' : ''}" d="M ${x1} ${rootCY} C ${mx} ${rootCY}, ${mx} ${bCY}, ${x2} ${bCY}" />`;
+
+      br.children.forEach(sub => {
+        createNodeEl(sub, L_SUB_X, sub.y, L_SUB_W, H);
+        nodeMap[sub.id] = { ...sub, parentId: br.id, childIds: [] };
+        const sCY = sub.y + H / 2;
+        const sx1 = L_BR_X, sx2 = L_SUB_X + L_SUB_W, smx = (sx1 + sx2) / 2;
+        svgHTML += `<path id="p-${sub.id}" class="link-path opt-line" d="M ${sx1} ${bCY} C ${smx} ${bCY}, ${smx} ${sCY}, ${sx2} ${sCY}" />`;
+      });
+    });
+
+    // 4. RIGHT Wing
+    const R_BR_X = 890, R_BR_W = 255, R_SUB_X = 1200, R_SUB_W = 255;
+    wings.right.forEach(br => {
+      createNodeEl(br, R_BR_X, br.y, R_BR_W, H);
+      nodeMap[br.id] = { ...br, parentId: null, childIds: br.children.map(c => c.id) };
+      const bCY = br.y + H / 2;
+      const x1 = ROOT.x + ROOT.w, x2 = R_BR_X, mx = (x1 + x2) / 2;
+      svgHTML += `<path id="p-${br.id}" class="link-path${br.optional ? ' opt-line' : ''}" d="M ${x1} ${rootCY} C ${mx} ${rootCY}, ${mx} ${bCY}, ${x2} ${bCY}" />`;
+
+      br.children.forEach(sub => {
+        createNodeEl(sub, R_SUB_X, sub.y, R_SUB_W, H);
+        nodeMap[sub.id] = { ...sub, parentId: br.id, childIds: [] };
+        const sCY = sub.y + H / 2;
+        const sx1 = R_BR_X + R_BR_W, sx2 = R_SUB_X, smx = (sx1 + sx2) / 2;
+        svgHTML += `<path id="p-${sub.id}" class="link-path opt-line" d="M ${sx1} ${bCY} C ${smx} ${bCY}, ${smx} ${sCY}, ${sx2} ${sCY}" />`;
+      });
+    });
+
+    linksSvg.innerHTML = svgHTML;
+
+    function selectNode(id) {
+      const data = nodeMap[id];
+      if (!data) return;
+
+      document.querySelectorAll('.t-node').forEach(n => n.classList.remove('active'));
+      document.querySelectorAll('.link-path').forEach(p => p.classList.remove('active'));
+
+      const el = document.getElementById('n-' + id);
+      if (el) el.classList.add('active');
+
+      if (data.parentId) {
+        const pEl = document.getElementById('n-' + data.parentId);
+        if (pEl) pEl.classList.add('active');
+        const l1 = document.getElementById('p-' + data.parentId);
+        const l2 = document.getElementById('p-' + id);
+        if (l1) l1.classList.add('active');
+        if (l2) l2.classList.add('active');
+      } else {
+        const l1 = document.getElementById('p-' + id);
+        if (l1) l1.classList.add('active');
+        data.childIds.forEach(cid => {
+          const lc = document.getElementById('p-' + cid);
+          if (lc) lc.classList.add('active');
+        });
+      }
+
+      document.getElementById('inspector').innerHTML = `
+        <div class="ins-head">
+          <h3>${data.title}</h3>
+          <div class="tags">
+            <span class="tag ${data.optional ? 'opt' : ''}">${data.optional ? 'Optional (ঐচ্ছিক)' : 'Core (আবশ্যিক)'}</span>
+            <span class="tag role">${data.role}</span>
+            <span class="tag">${data.tool}</span>
+          </div>
+        </div>
+        <ul>${data.points.map(p => `<li>${p}</li>`).join('')}</ul>
+        <div class="prompt-box">
+          <div class="prompt-top">
+            <span class="prompt-label">মাস্টার প্রম্পট (সব লজিক ইন্টিগ্রেটেড • কপি করুন)</span>
+            <button class="copy-btn" onclick="copyPrompt(this)">Copy</button>
+          </div>
+          <div class="prompt-text">${data.prompt}</div>
+        </div>
+      `;
+    }
+
+    function copyPrompt(btn) {
+      const text = btn.closest('.prompt-box').querySelector('.prompt-text').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 1400);
+      });
+    }
+
+    // Pan & 2-Finger Pinch-Zoom Engine
+    let scale = 0.5, panX = 0, panY = 0;
+    const vp = document.getElementById('viewport');
+    const stage = document.getElementById('stage');
+
+    function applyTransform() {
+      stage.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+    }
+
+    function resetCanvas() {
+      const fitW = (vp.clientWidth - 16) / 1480;
+      const fitH = (vp.clientHeight - 16) / 860;
+      scale = Math.max(0.24, Math.min(0.68, +Math.min(fitW, fitH).toFixed(3)));
+      panX = Math.round((vp.clientWidth - 1480 * scale) / 2);
+      panY = Math.round((vp.clientHeight - 860 * scale) / 2);
+      applyTransform();
+    }
+
+    let startDist = 0, startScale = 1;
+    let isDragging = false, moved = false;
+    let startX = 0, startY = 0, lastX = 0, lastY = 0;
+    let tapTarget = null;
+
+    vp.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) {
+        isDragging = false;
+        tapTarget = null;
+        startDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        startScale = scale;
+      } else if (e.touches.length === 1) {
+        isDragging = true;
+        moved = false;
+        startX = lastX = e.touches[0].clientX;
+        startY = lastY = e.touches[0].clientY;
+        tapTarget = e.target.closest('.t-node[data-id]');
+      }
+    }, { passive: false });
+
+    vp.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (e.touches.length === 2) {
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        scale = Math.min(2.2, Math.max(0.22, +(startScale * (dist / startDist)).toFixed(3)));
+        applyTransform();
+      } else if (e.touches.length === 1 && isDragging) {
+        const dx = e.touches[0].clientX - lastX;
+        const dy = e.touches[0].clientY - lastY;
+        if (Math.hypot(e.touches[0].clientX - startX, e.touches[0].clientY - startY) > 8) {
+          moved = true;
+        }
+        panX += dx;
+        panY += dy;
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+        applyTransform();
+      }
+    }, { passive: false });
+
+    vp.addEventListener('touchend', () => {
+      if (!moved && tapTarget) {
+        selectNode(tapTarget.dataset.id);
+      }
+      isDragging = false;
+      tapTarget = null;
+    });
+
+    vp.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      moved = false;
+      startX = lastX = e.clientX;
+      startY = lastY = e.clientY;
+      tapTarget = e.target.closest('.t-node[data-id]');
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      if (Math.hypot(e.clientX - startX, e.clientY - startY) > 6) moved = true;
+      panX += e.clientX - lastX;
+      panY += e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      applyTransform();
+    });
+    window.addEventListener('mouseup', () => {
+      if (isDragging && !moved && tapTarget) {
+        selectNode(tapTarget.dataset.id);
+      }
+      isDragging = false;
+      tapTarget = null;
+    });
+    vp.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      scale = Math.min(2.2, Math.max(0.22, +(scale + (e.deltaY < 0 ? 0.08 : -0.08)).toFixed(2)));
+      applyTransform();
+    }, { passive: false });
+
+    resetCanvas();
+    selectNode('sound');
+  </script>
+  <script src="./dependency-modal.js"></script>
+</body>
+</html>
