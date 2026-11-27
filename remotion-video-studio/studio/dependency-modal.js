@@ -161,9 +161,9 @@
             <span class="dep-sec-label">অ্যানিমেশন স্টাইল ও অ্যানিমেশন স্কিল (বাকি সব স্কিল অটো-ডিটেক্ট হবে)</span>
             <div class="dep-grid-2">
               <select id="depStyle" class="dep-select">
+                <option value="">— রেফারেন্স স্টাইল: ফাঁকা (ঐচ্ছিক) —</option>
                 <option value="Follow REA Style File in Folder (VIDEO.md / style-bible.json)">ফোল্ডারের REA স্টাইল ফাইল অনুযায়ী</option>
                 <option value="Match Reference Video Style (via rea-video)">রেফারেন্স ভিডিও অনুযায়ী (rea-video)</option>
-                <option value="Custom">কাস্টম স্টাইল / স্কিল লিখুন (যেমন: puppet-skill)</option>
                 <option value="Editorial Documentary Collage">ডকুমেন্টারি কোলাজ (Vox/Harris)</option>
                 <option value="Cardboard Cutout 2.5D">কার্ডবোর্ড কাটআউট (2.5D)</option>
                 <option value="Claymation Stop-Motion">ক্লে-মেশন (Claymation)</option>
@@ -171,10 +171,11 @@
                 <option value="2D Vector + Three.js Motion">2D ভেক্টর + Three.js</option>
               </select>
               <select id="depAnimSkill" class="dep-select">
-                <option value="">অ্যানিমেশন স্কিল: অটো (remotion-video-studio)</option>
+                <option value="">অ্যানিমেশন স্কিল: ডিফল্ট (remotion + svg)</option>
+                <option value="__custom__">কাস্টম স্কিল লিখুন...</option>
               </select>
             </div>
-            <input type="text" id="depCustomStyle" class="dep-input" style="margin-top:7px;" placeholder="(Optional) কাস্টম অ্যানিমেশন স্টাইল বা স্কিলের নাম লিখুন (যেমন: puppet-skill, origami)" />
+            <input type="text" id="depCustomStyle" class="dep-input" style="margin-top:7px;display:none;" placeholder="কাস্টম অ্যানিমেশন স্কিলের নাম লিখুন (যেমন: puppet-skill, origami-skill)" />
           </div>
 
           <!-- Extra Feature Toggles -->
@@ -325,17 +326,26 @@
     'yt-plan', 'yt-retention', 'yt-script', 'yt-seo', 'yt-shorts', 'yt-viral'
   ]);
 
+  function syncCustomAnimInput() {
+    const sel = document.getElementById('depAnimSkill');
+    const customBox = document.getElementById('depCustomStyle');
+    if (!sel || !customBox) return;
+    customBox.style.display = sel.value === '__custom__' ? 'block' : 'none';
+  }
+
   function renderAnimSkillDropdown() {
     const sel = document.getElementById('depAnimSkill');
     if (!sel) return;
     const prev = sel.value || depState.savedAnimSkill || '';
-    const animSkills = depState.installedSkills.filter(s => !NON_ANIM_SKILLS.has(s));
+    const animSkills = depState.installedSkills.filter(s => !NON_ANIM_SKILLS.has(s) && s !== 'remotion-video-studio' && s !== 'svg-generator');
     const opts = [
-      `<option value="">অ্যানিমেশন স্কিল: অটো (remotion-video-studio + svg-generator)</option>`,
-      ...animSkills.map(s => `<option value="${s}">${s}</option>`)
+      `<option value="">অ্যানিমেশন স্কিল: ডিফল্ট (remotion + svg)</option>`,
+      ...animSkills.map(s => `<option value="${s}">${s}</option>`),
+      `<option value="__custom__">কাস্টম স্কিল লিখুন...</option>`
     ];
     sel.innerHTML = opts.join('');
-    if (prev && animSkills.includes(prev)) sel.value = prev;
+    if (prev === '__custom__' || (prev && animSkills.includes(prev))) sel.value = prev;
+    syncCustomAnimInput();
   }
 
   async function checkServerAndLoadSkills() {
@@ -510,10 +520,10 @@
     const customStyle = document.getElementById('depCustomStyle').value.trim();
     const f = depState.files;
 
-    // Resolve final style string
+    // Resolve optional Reference Style (Box 1 can be blank!)
     let finalStyle = styleSel;
-    if (customStyle) {
-      finalStyle = styleSel === 'Custom' ? customStyle : `${styleSel} + Custom: ${customStyle}`;
+    if (!styleSel) {
+      finalStyle = 'None (follow selected Animation Skill default style)';
     } else if (styleSel.includes('REA Style File') && f.reaStyle.found) {
       finalStyle = `Follow existing REA style file (${f.reaStyle.names.join(', ')})`;
     }
@@ -571,11 +581,11 @@
     if (f.reaStyle.found) present.push(`REA Style File: ${f.reaStyle.names.join(', ') || 'present'}`);
     if (f.storyboard.found) present.push(`Existing State: ${f.storyboard.names.join(', ') || 'present'}`);
 
-    // Auto-detect ONLY the workflow skills required by user's inputs + user's chosen Animation Skill
-    const animSkill = document.getElementById('depAnimSkill')?.value || '';
-    const activeSkills = new Set(['beat-sync-editing', 'remotion-video-studio', 'yt-package', 'yt-chapters']);
-    if (animSkill) activeSkills.add(animSkill);
-    else activeSkills.add('svg-generator');
+    // ALWAYS include remotion-video-studio & svg-generator + user's chosen/custom Animation Skill (Box 2 / Box 3)
+    const animSkillRaw = document.getElementById('depAnimSkill')?.value || '';
+    const chosenAnimSkill = animSkillRaw === '__custom__' ? customStyle : animSkillRaw;
+    const activeSkills = new Set(['remotion-video-studio', 'svg-generator', 'beat-sync-editing', 'yt-package', 'yt-chapters']);
+    if (chosenAnimSkill) activeSkills.add(chosenAnimSkill);
     if ((f.refVideo.found || refUrl) && !f.reaStyle.found) activeSkills.add('rea-video');
     if (depState.storyMode === 'topic' || (depState.storyMode === 'story' && !f.storyboard.found)) {
       activeSkills.add('yt-viral');
@@ -584,7 +594,6 @@
     if (f.srt.found) activeSkills.add('yt-edit');
     if (depState.opts.realsfx) activeSkills.add('real-sfx');
     if (depState.opts.shorts) activeSkills.add('yt-shorts');
-    if (customStyle && /skill/i.test(customStyle)) activeSkills.add(customStyle);
 
     // Core Guardrails
     const rules = [
@@ -750,7 +759,10 @@ ${execBlock}`;
 
     ['depFolderPath', 'depRefUrl', 'depStoryText', 'depVisualNotes', 'depGenre', 'depTopicInput', 'depFormat', 'depQuality', 'depLang', 'depStyle', 'depAnimSkill', 'depCustomStyle'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.addEventListener('change', saveLocalState);
+      if (el) el.addEventListener('change', () => {
+        if (id === 'depAnimSkill') syncCustomAnimInput();
+        saveLocalState();
+      });
     });
 
     genBtn.addEventListener('click', async () => {
