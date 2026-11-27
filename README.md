@@ -41,6 +41,7 @@
 | **`chisle-ponytail-efficiency`** | Developer Rules | AntiGem / Claude | Extreme token economy, YAGNI-first code, concise communication. |
 | **`svg-generator`** | Visual Design | AntiGem / Claude | AI-driven vector/SVG graphics creation and raster-to-SVG conversion. |
 | **`image-organizer`** | Storage & Media | AntiGem / Claude | Zero-heat, zero-deletion offline screenshot/image classifier with fast scaled OCR & auto-dependency prompt. |
+| [**`remotion-video-studio`**](./remotion-video-studio/README.md) | Programmatic Video | AntiGem / Claude | Render high-quality MP4 videos on Android/Termux using React + CSS + SVG + Three.js via headless Chromium & FFmpeg. |
 
 ---
 
