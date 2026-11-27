@@ -2,52 +2,53 @@
   <img src="assets/logo.svg" width="120" alt="Remotion Video Studio Logo" />
 </p>
 
+<div align="right">
+
+**🌐 Language / ভাষা:** &nbsp; **English** &nbsp;|&nbsp; **[🇧🇩 বাংলা সংস্করণ (README_BN.md)](./README_BN.md)**
+
+</div>
+
 # Remotion Video Studio (Android / Termux)
 
-Android (Termux)-এ **React + CSS + SVG + Three.js** ইকোসিস্টেম ব্যবহার করে নির্ভুল ফ্রেম-বাই-ফ্রেম `.mp4` ভিডিও রেন্ডার করার পূর্ণাঙ্গ স্টুডিও সেটআপ।
+A complete studio setup for rendering deterministic, frame-by-frame `.mp4` videos on **Android (Termux)** using the **React + CSS + SVG + Three.js** ecosystem.
 
 ---
 
-## ১. এটি কী এবং কেন?
-পিসির মতো Android-এ `@remotion/renderer` সরাসরি চলে না (`Error: Unsupported OS: android, architecture: arm64`) এবং `/storage/emulated/0` ফোল্ডারে `pnpm` symlink সাপোর্ট করে না।
+## 1. What & Why?
+Unlike desktop OSes, `@remotion/renderer` does not run natively on Android (`Error: Unsupported OS: android, architecture: arm64`), and `/storage/emulated/0` does not support `pnpm` symlinks.
 
-এই স্কিলটি সেই সীমাবদ্ধতা দূর করে:
-- **১০০% React + CSS + SVG + Three.js** সাপোর্ট দেয়।
-- ফ্রেম-বাই-ফ্রেম রেন্ডারিংয়ের কারণে কোনো ফ্রেম ড্রপ বা ল্যাগ হয় না।
-- ফোনের `$HOME/remotion-studio`-তে সেটআপ হয়, তাই কোনো পারমিশন এরর আসে না।
-
----
-
-## ২. কীভাবে কাজ করে?
-1. **`src/scene.html`:** এখানে আপনার React, CSS, SVG বা Three.js সিন থাকে, যা `window.setFrame(frame)` ফাংশনের মাধ্যমে প্রতিটি ফ্রেমে আপডেট হয়।
-2. **`render.mjs`:** `puppeteer-core` ব্যবহার করে হেডলেস `chromium-browser`-এ প্রতিটি ফ্রেম রেন্ডার করে এবং সরাসরি `ffmpeg`-এ পাইপ করে `.mp4` তৈরি করে।
+This skill solves both limitations:
+- **100% React + CSS + SVG + Three.js** support.
+- **Zero frame drops:** Deterministic frame-by-frame rendering.
+- **Android-friendly:** Installs in `$HOME/remotion-studio` to avoid FUSE symlink permission errors.
 
 ---
 
-## ৩. ওয়ান-কমান্ড ইনস্টলেশন (One-Command Setup)
+## 2. How It Works
+1. **`src/scene.html`:** Holds your React, CSS, SVG, or Three.js scene, controlled frame-by-frame via `window.setFrame(frame)`.
+2. **`render.mjs`:** Uses `puppeteer-core` with headless `chromium-browser` to capture each frame and pipes them directly into `ffmpeg` to produce `.mp4`.
 
-GitHub থেকে ক্লোন করে অথবা সরাসরি নিচের কমান্ডটি চালিয়ে পুরো স্টুডিও সেটআপ করুন:
+---
 
-```bash
-bash ~/.gemini/config/skills/remotion-video-studio/install.sh
-```
+## 3. One-Command Installation
 
-*(GitHub-এ আপলোড করার পর সরাসরি চালাতে পারবেন:)*
+Run this single command in Termux to automatically install all required system dependencies (`nodejs`, `pnpm`, `ffmpeg`, `chromium`) and set up `~/remotion-studio`:
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/myfunuiai-del/antigem-skills/main/remotion-video-studio/install.sh | bash
 ```
 
 ---
 
-## ৪. ব্যবহার ও উদাহরণ
+## 4. Usage & Examples
 
-সেটআপ শেষ হলে নিচের কমান্ডে টেস্ট ভিডিও রেন্ডার করুন:
+Once installed, render the starter video:
 ```bash
 cd ~/remotion-studio
 node render.mjs
 ```
-আউটপুট তৈরি হবে: `~/remotion-studio/out/output.mp4`
+Output will be saved to: `~/remotion-studio/out/output.mp4`
 
-### কাস্টমাইজেশন:
-- **অ্যানিমেশন বদলাতে:** `~/remotion-studio/src/scene.html` এডিট করুন।
-- **FPS / রেজোলিউশন / সময় বদলাতে:** `~/remotion-studio/render.mjs`-এ `FPS`, `TOTAL_FRAMES`, `WIDTH`, `HEIGHT` পরিবর্তন করুন।
+### Customization:
+- **Edit the animation:** Modify `~/remotion-studio/src/scene.html`
+- **Change FPS / Resolution / Duration:** Update `FPS`, `TOTAL_FRAMES`, `WIDTH`, `HEIGHT` in `~/remotion-studio/render.mjs`
