@@ -1,8 +1,20 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { bundle } from '@remotion/bundler';
-import { renderMedia, selectComposition } from '@remotion/renderer';
+import { createRequire } from 'node:module';
+
+// Resolve @remotion/bundler & @remotion/renderer even under strict pnpm hoisting (via @remotion/cli)
+const require = createRequire(import.meta.url);
+function loadRemotionPkg(pkg) {
+  try {
+    return require(pkg);
+  } catch {
+    const cliEntry = require.resolve('@remotion/cli/package.json');
+    return createRequire(cliEntry)(pkg);
+  }
+}
+const { bundle } = loadRemotionPkg('@remotion/bundler');
+const { renderMedia, selectComposition } = loadRemotionPkg('@remotion/renderer');
 
 const prefix = process.env.PREFIX || '/data/user/0/ai.antigem/files/usr';
 const compositionId = process.argv[2] || 'TestVideo';
