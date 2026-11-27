@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>অ্যানিমেশন স্টাইল লাইভ প্রিভিউ (১০টি স্টাইল)</title>
+  <style>
+    @font-face { font-family: 'HindSiliguriFixed'; src: url('./fonts/HindSiliguriFixed-Regular.ttf') format('truetype'); font-weight: 400; }
+    @font-face { font-family: 'HindSiliguriFixed'; src: url('./fonts/HindSiliguriFixed-SemiBold.ttf') format('truetype'); font-weight: 600; }
+    @font-face { font-family: 'HindSiliguriFixed'; src: url('./fonts/HindSiliguriFixed-Bold.ttf') format('truetype'); font-weight: 700; }
+    :root {
+      --bg: #0b0f14;
+      --panel: #131a23;
+      --border: rgba(255,255,255,0.1);
+      --text: #eef3f8;
+      --muted: #8ea0b5;
+      --accent: #f5b942;
+      --green: #22c55e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'HindSiliguriFixed', system-ui, sans-serif;
+      padding: 16px;
+      min-height: 100vh;
+    }
+    .top {
+      max-width: 1120px;
+      margin: 0 auto 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .top h1 { font-size: 1.25rem; font-weight: 700; }
+    .top p { font-size: 0.82rem; color: var(--muted); }
+    .controls { display: flex; gap: 8px; align-items: center; }
+    .btn {
+      background: #1d2735;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 13px;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn.primary { background: var(--accent); color: #111; border-color: transparent; }
+    .btn.green { background: var(--green); color: #052010; border-color: transparent; }
+    .grid {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform .15s, border-color .15s;
+    }
+    .card:hover { transform: translateY(-2px); border-color: rgba(245,185,66,0.55); }
+    .canvas-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      background: #000;
+      cursor: pointer;
+    }
+    .canvas-wrap canvas { width: 100%; height: 100%; display: block; }
+    .badge {
+      position: absolute;
+      top: 8px; left: 8px;
+      background: rgba(0,0,0,0.68);
+      color: #fde68a;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 99px;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .card-body { padding: 11px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .card-title { font-size: 0.95rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+    .card-cmd { font-size: 0.72rem; color: #7dd3fc; font-family: monospace; }
+    .card-desc { font-size: 0.76rem; color: var(--muted); line-height: 1.38; flex: 1; }
+    .card-actions { display: flex; gap: 6px; margin-top: 4px; }
+    .card-actions .btn { flex: 1; padding: 6px 8px; font-size: 0.74rem; text-align: center; }
+
+    /* Fullscreen Interactive Player Modal */
+    .modal-bg {
+      position: fixed; inset: 0;
+      background: rgba(5,8,12,0.86);
+      display: none; align-items: center; justify-content: center;
+      padding: 14px; z-index: 99;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+      width: 100%; max-width: 680px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .modal-top {
+      padding: 12px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-stage { width: 100%; aspect-ratio: 16 / 10; background: #000; }
+    .modal-stage canvas { width: 100%; height: 100%; display: block; }
+    .modal-bar {
+      padding: 10px 14px;
+      display: flex; gap: 10px; align-items: center;
+      background: #0e141c;
+      border-top: 1px solid var(--border);
+    }
+    .modal-bar input[type=range] { flex: 1; accent-color: var(--accent); }
+    .modal-info { padding: 12px 16px; font-size: 0.8rem; color: var(--muted); line-height: 1.45; }
+    .modal-info strong { color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div>
+      <h1>🎬 অ্যানিমেশন স্টাইল লাইভ প্রিভিউ</h1>
+      <p>animation-styles স্কিলের ১০টি স্টাইল লাইভ অ্যানিমেট অবস্থায় দেখুন — যেকোনো স্টাইলে ট্যাপ করে বড় প্রিভিউ ও সিলেক্ট করুন।</p>
+    </div>
+    <div class="controls">
+      <button class="btn" id="toggleAllBtn">⏸ পজ করুন</button>
+      <a class="btn" href="/" id="backBtn">← মাইন্ড-ম্যাপ</a>
+    </div>
+  </div>
+
+  <div class="grid" id="styleGrid"></div>
+
+  <div class="modal-bg" id="playerModal">
+    <div class="modal">
+      <div class="modal-top">
+        <div>
+          <strong id="mTitle" style="font-size:1rem;"></strong>
+          <span id="mCmd" style="font-family:monospace;font-size:0.78rem;color:#7dd3fc;margin-left:8px;"></span>
+        </div>
+        <button class="btn" id="mClose" style="padding:5px 10px;">✕</button>
+      </div>
+      <div class="modal-stage"><canvas id="mCanvas" width="640" height="400"></canvas></div>
+      <div class="modal-bar">
+        <button class="btn" id="mPlay" style="padding:6px 12px;">⏸</button>
+        <input type="range" id="mScrub" min="0" max="600" value="0" />
+        <span id="mTime" style="font-size:0.76rem;min-width:44px;color:var(--muted);">0.0s</span>
+        <button class="btn green" id="mSelect">✓ সিলেক্ট করুন</button>
+      </div>
+      <div class="modal-info" id="mInfo"></div>
+    </div>
+  </div>
+
+  <script>
+    const rand = s => { let t = (s * 2654435761 + 0x6D2B79F5) >>> 0; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+
+    const STYLES = [
+      {
+        id: 'kurzgesagt',
+        name: 'Kurzgesagt Style',
+        cmd: '/kurzgesagt',
+        tag: 'Science Vector',
+        value: 'Kurzgesagt style (/kurzgesagt — bold flat vector, rich gradients, rim light & glow)',
+        desc: 'রিচ গ্রেডিয়েন্ট, রিম লাইট, স্পেস গ্লো এবং স্মুথ অরবিটিং ফ্ল্যাট ভেক্টর।',
+        must: 'ফ্ল্যাট ভেক্টর + রিম লাইট আর্ক + রেডিয়াল গ্লো + স্যাচুরেটেড ব্যাকগ্রাউন্ড।',
+        draw(ctx, W, H, t) {
+          const g = ctx.createLinearGradient(0, 0, W, H);
+          g.addColorStop(0, '#070b1e'); g.addColorStop(1, '#181038');
+          ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+          for (let i = 0; i < 36; i++) {
+            const x = rand(i * 11) * W, y = rand(i * 23) * H;
+            const a = 0.35 + 0.55 * Math.sin(t * 2.5 + i);
+            ctx.fillStyle = `rgba(255,245,220,${a.toFixed(2)})`;
+            ctx.beginPath(); ctx.arc(x, y, 1 + rand(i * 7) * 1.8, 0, 7); ctx.fill();
+          }
+          const cx = W * 0.5, cy = H * 0.53, r = H * 0.27;
+          // Sun flare top-right
+          const sx = cx + r * 0.72, sy = cy - r * 0.74;
+          const sg = ctx.createRadialGradient(sx, sy, 2, sx, sy, r * 1.15);
+          sg.addColorStop(0, 'rgba(255,245,210,0.95)'); sg.addColorStop(0.28, 'rgba(255,180,90,0.45)'); sg.addColorStop(1, 'rgba(255,140,60,0)');
+          ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, sy, r * 1.15, 0, 7); ctx.fill();
+          // Orbit dashed ring
+          ctx.save(); ctx.strokeStyle = 'rgba(120,210,255,0.35)'; ctx.setLineDash([6, 6]); ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.ellipse(cx, cy, r * 1.7, r * 0.56, -0.22, 0, 7); ctx.stroke(); ctx.restore();
+          // Planet glow + body
+          const pg = ctx.createRadialGradient(cx, cy, r * 0.4, cx, cy, r * 1.4);
+          pg.addColorStop(0, 'rgba(56,189,248,0.42)'); pg.addColorStop(1, 'rgba(56,189,248,0)');
+          ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(cx, cy, r * 1.4, 0, 7); ctx.fill();
+          const bg = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+          bg.addColorStop(0, '#38bdf8'); bg.addColorStop(1, '#0f4c81');
+          ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill();
+          // Continents scrolling smoothly
+          ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.clip();
+          const dx = ((t * 28) % (r * 2.4)) - r * 1.2;
+          ctx.fillStyle = '#8cc072';
+          ctx.beginPath(); ctx.ellipse(cx + dx - 10, cy - 8, r * 0.48, r * 0.28, 0.25, 0, 7); ctx.fill();
+          ctx.fillStyle = '#d4aa6a';
+          ctx.beginPath(); ctx.ellipse(cx + dx + r * 0.55, cy + 16, r * 0.35, r * 0.22, -0.3, 0, 7); ctx.fill();
+          // Night shadow terminator
+          const ns = ctx.createLinearGradient(cx - r, cy + r, cx + r * 0.5, cy - r * 0.6);
+          ns.addColorStop(0, 'rgba(4,8,24,0.82)'); ns.addColorStop(0.55, 'rgba(4,8,24,0)');
+          ctx.fillStyle = ns; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+          ctx.restore();
+          // Rim light arc
+          ctx.strokeStyle = '#9be7ff'; ctx.lineWidth = 4;
+          ctx.beginPath(); ctx.arc(cx, cy, r - 2, -Math.PI * 0.85, Math.PI * 0.15); ctx.stroke();
+          // Orbiting satellite moon
+          const ang = t * 1.7;
+          const mx = cx + Math.cos(ang) * r * 1.7 * Math.cos(-0.22) - Math.sin(ang) * r * 0.56 * Math.sin(-0.22);
+          const my = cy + Math.cos(ang) * r * 1.7 * Math.sin(-0.22) + Math.sin(ang) * r * 0.56 * Math.cos(-0.22);
+          ctx.fillStyle = '#fde68a'; ctx.beginPath(); ctx.arc(mx, my, 8, 0, 7); ctx.fill();
+        }
+      },
+      {
+        id: 'paper-cutout',
+        name: 'Paper Cut-out',
+        cmd: '/papercut',
+        tag: 'Pop-up Craft',
+        value: 'Paper Cut-out (/papercut — torn paper edges, layered drop shadows, pop-up motion)',
+        desc: 'ছিঁড়া রঙিন কাগজ, প্রতিটি লেয়ারে সফট ড্রপ শ্যাডো ও পপ-আপ হিঞ্জ অ্যানিমেশন।',
+        must: 'অসমান ছিঁড়া কাগজের এজ + লেয়ার ড্রপ শ্যাডো + পেপার টেক্সচার + হিঞ্জ পপ-আপ।',
+        draw(ctx, W, H, t) {
+          ctx.fillStyle = '#8fd3f4'; ctx.fillRect(0, 0, W, H);
+          const st = Math.floor(t * 12) / 12; // 12fps handmade feel
+          const paperLayer = (pts, col) => {
+            ctx.save(); ctx.shadowColor = 'rgba(20,15,10,0.34)'; ctx.shadowBlur = 14; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 7;
+            ctx.fillStyle = col; ctx.beginPath();
+            pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+            ctx.closePath(); ctx.fill(); ctx.restore();
+          };
+          // Sun cutout rotating stepped
+          ctx.save(); ctx.translate(W * 0.78, H * 0.25); ctx.rotate(st * 0.5);
+          ctx.shadowColor = 'rgba(20,15,10,0.28)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 6;
+          ctx.fillStyle = '#f9c74f'; ctx.beginPath(); ctx.arc(0, 0, H * 0.13, 0, 7); ctx.fill(); ctx.restore();
+          // Clouds drifting
+          const cx = ((st * 36) % (W + 140)) - 70;
+          ctx.save(); ctx.shadowColor = 'rgba(20,15,10,0.22)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 5;
+          ctx.fillStyle = '#f8f5eb';
+          ctx.beginPath(); ctx.arc(cx, H * 0.28, 26, 0, 7); ctx.arc(cx + 24, H * 0.24, 32, 0, 7); ctx.arc(cx + 52, H * 0.28, 24, 0, 7); ctx.fill(); ctx.restore();
+          // Layered torn hills
+          const hill = (yBase, amp, seed, col) => {
+            const pts = [[0, H]];
+            for (let x = 0; x <= W; x += 22) {
+              const y = yBase + Math.sin(x * 0.012 + seed) * amp + (rand(x + seed) - 0.5) * 6;
+              pts.push([x, y]);
+            }
+            pts.push([W, H]); paperLayer(pts, col);
+          };
+          hill(H * 0.62, 24, 2, '#6ab04c');
+          // Pop-up paper house hinging up
+          const pop = Math.min(1, Math.max(0.1, Math.sin(st * 1.4) * 0.15 + 0.92));
+          ctx.save(); ctx.translate(W * 0.48, H * 0.72); ctx.scale(1, pop);
+          paperLayer([[-42, 0], [-42, -62], [42, -62], [42, 0]], '#f2e8cf');
+          paperLayer([[-52, -60], [0, -102], [52, -60]], '#e76f51');
+          ctx.fillStyle = '#3d405b'; ctx.fillRect(-12, -36, 24, 36);
+          ctx.restore();
+          hill(H * 0.78, 18, 9, '#388e3c');
+        }
+      },
+      {
+        id: 'claymation',
+        name: 'Claymation',
+        cmd: '/claymation',
+        tag: 'Stop Motion',
+        value: 'Claymation (/claymation — plasticine stop-motion, 12fps squash & stretch, warm studio lighting)',
+        desc: 'প্লাস্টিসিন ক্লে টেক্সচার, ১২ fps স্টপ-মোশন এবং স্কোয়াশ-স্ট্রেচ বাউন্স।',
+        must: 'হাতে গড়া নরম ক্লে শেইপ + স্টুডিও রিম লাইট + ১২ fps স্টপ-মোশন বাউন্স।',
+        draw(ctx, W, H, t) {
+          const st = Math.floor(t * 12) / 12;
+          const bg = ctx.createRadialGradient(W * 0.5, H * 0.4, 20, W * 0.5, H * 0.5, W * 0.7);
+          bg.addColorStop(0, '#f3d5b5'); bg.addColorStop(1, '#a9714b');
+          ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+          ctx.fillStyle = '#8b5e3c'; ctx.fillRect(0, H * 0.74, W, H * 0.26);
+          const bounce = Math.abs(Math.sin(st * 3.8));
+          const sy = 1 + (bounce < 0.2 ? -0.18 : bounce * 0.12);
+          const sx = 1 / sy;
+          const y = H * 0.66 - bounce * H * 0.22;
+          // Ground shadow
+          ctx.fillStyle = 'rgba(40,20,8,0.32)';
+          ctx.beginPath(); ctx.ellipse(W * 0.5, H * 0.78, 56 * (1 - bounce * 0.3), 13, 0, 0, 7); ctx.fill();
+          // Clay character body
+          ctx.save(); ctx.translate(W * 0.5, y); ctx.scale(sx, sy);
+          const cg = ctx.createRadialGradient(-18, -22, 6, 0, 0, 58);
+          cg.addColorStop(0, '#ff9f87'); cg.addColorStop(0.55, '#e05a47'); cg.addColorStop(1, '#8c281c');
+          ctx.fillStyle = cg; ctx.beginPath();
+          for (let a = 0; a < Math.PI * 2; a += 0.25) {
+            const rr = 48 + Math.sin(a * 5 + st * 4) * 2.2;
+            const px = Math.cos(a) * rr, py = Math.sin(a) * rr;
+            a === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+          }
+          ctx.closePath(); ctx.fill();
+          // Glossy clay fingerprint sheen + bead eyes
+          ctx.fillStyle = 'rgba(255,255,255,0.28)'; ctx.beginPath(); ctx.ellipse(-16, -20, 14, 7, -0.5, 0, 7); ctx.fill();
+          ctx.fillStyle = '#1b1414';
+          ctx.beginPath(); ctx.arc(-14, -6, 6, 0, 7); ctx.arc(14, -6, 6, 0, 7); ctx.fill();
+          ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(-12, -8, 2, 0, 7); ctx.arc(16, -8, 2, 0, 7); ctx.fill();
+          ctx.strokeStyle = '#4a120b'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.arc(0, 8, 12, 0.2, Math.PI - 0.2); ctx.stroke();
+          ctx.restore();
+        }
+      },
+      {
+        id: 'anime-watercolor',
+        name: 'Anime Watercolor',
+        cmd: '/anime',
+        tag: 'Ghibli / Wash',
+        value: 'Anime Watercolor (/anime — dreamy watercolour sky, soft painted clouds, drifting petals)',
+        desc: 'স্বপ্নময় অ্যানিমে আকাশ, সফট ওয়াটারকালার ক্লাউড আর উড়ে যাওয়া সাকুরা পাপড়ি।',
+        must: 'ওয়াটারকালার ব্লুম আকাশ + পেইন্টেড ক্লাউড + ভাসমান পাপড়ি + স্নিগ্ধ আলো।',
+        draw(ctx, W, H, t) {
+          const g = ctx.createLinearGradient(0, 0, 0, H);
+          g.addColorStop(0, '#2c5da9'); g.addColorStop(0.5, '#7cb7e8'); g.addColorStop(0.85, '#fce3c2'); g.addColorStop(1, '#f7b7a3');
+          ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+          // Painted cumulus clouds
+          const drift = Math.sin(t * 0.5) * 18;
+          const cloud = (cx, cy, r, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill(); };
+          cloud(W * 0.35 + drift, H * 0.58, 62, 'rgba(255,244,232,0.85)');
+          cloud(W * 0.48 + drift, H * 0.52, 74, 'rgba(255,250,245,0.92)');
+          cloud(W * 0.62 + drift, H * 0.58, 56, 'rgba(255,235,220,0.84)');
+          cloud(W * 0.5 + drift, H * 0.64, 88, 'rgba(186,204,232,0.45)');
+          // Distant silhouette ridge
+          ctx.fillStyle = '#3b577d'; ctx.beginPath(); ctx.moveTo(0, H); ctx.quadraticCurveTo(W * 0.35, H * 0.72, W, H * 0.84); ctx.lineTo(W, H); ctx.fill();
+          // Drifting pink sakura petals
+          for (let i = 0; i < 18; i++) {
+            const px = ((rand(i * 19) * W + t * (42 + i * 2)) % (W + 40)) - 20;
+            const py = ((rand(i * 31) * H + t * (26 + (i % 5) * 5) + Math.sin(t * 2 + i) * 14) % (H + 20)) - 10;
+            ctx.save(); ctx.translate(px, py); ctx.rotate(t * 2 + i);
+            ctx.fillStyle = 'rgba(255,192,208,0.88)';
+            ctx.beginPath(); ctx.ellipse(0, 0, 7, 3.5, 0, 0, 7); ctx.fill(); ctx.restore();
+          }
+        }
+      },
+      {
+        id: 'stickman',
+        name: 'Stickman',
+        cmd: '/stickman',
+        tag: 'Expressive Doodle',
+        value: 'Stickman (/stickman — expressive hand-wobbled ink stick figures on warm paper, snappy timing)',
+        desc: 'কাগজের ওপর প্রাণবন্ত ডুডল স্টিকম্যান, এক্সপ্রেসিভ ভঙ্গি ও স্ন্যাপি মোশন।',
+        must: 'হ্যান্ড-ওবলড কালি লাইন + ওয়ার্ম পেপার + স্পষ্ট জয়েন্ট ও এক্সপ্রেসিভ অ্যাকশন।',
+        draw(ctx, W, H, t) {
+          ctx.fillStyle = '#f8f5ec'; ctx.fillRect(0, 0, W, H);
+          // Subtle notebook grid
+          ctx.strokeStyle = 'rgba(120,160,210,0.16)'; ctx.lineWidth = 1;
+          for (let y = 24; y < H; y += 24) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+          ctx.strokeStyle = '#1b1d21'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+          // Ground line
+          ctx.beginPath(); ctx.moveTo(24, H * 0.8); ctx.lineTo(W - 24, H * 0.8); ctx.stroke();
+          // Running / waving stickman
+          const x = W * 0.5 + Math.sin(t * 1.4) * 45;
+          const run = Math.sin(t * 7);
+          const hipY = H * 0.62 - Math.abs(run) * 8;
+          // Head
+          ctx.beginPath(); ctx.arc(x, hipY - 58, 18, 0, 7); ctx.stroke();
+          // Torso
+          ctx.beginPath(); ctx.moveTo(x, hipY - 40); ctx.lineTo(x - 4, hipY); ctx.stroke();
+          // Jointed Arms (shoulder -> elbow -> hand!)
+          const armA = Math.sin(t * 6) * 0.7;
+          ctx.beginPath(); ctx.moveTo(x - 2, hipY - 30); ctx.lineTo(x + 22, hipY - 22 + armA * 18); ctx.lineTo(x + 42, hipY - 42 + armA * 10); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(x - 2, hipY - 30); ctx.lineTo(x - 24, hipY - 12 - armA * 14); ctx.lineTo(x - 36, hipY + 4 - armA * 12); ctx.stroke();
+          // Jointed Legs
+          ctx.beginPath(); ctx.moveTo(x - 4, hipY); ctx.lineTo(x + run * 20, hipY + 26); ctx.lineTo(x + run * 28 - 6, H * 0.8); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(x - 4, hipY); ctx.lineTo(x - run * 20, hipY + 26); ctx.lineTo(x - run * 28 + 6, H * 0.8); ctx.stroke();
+          // Red accent idea spark
+          ctx.strokeStyle = '#e63946'; ctx.lineWidth = 3;
+          const sp = 0.6 + 0.4 * Math.sin(t * 8);
+          for (let i = 0; i < 5; i++) {
+            const a = -Math.PI * 0.85 + i * 0.35;
+            ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * 26, hipY - 58 + Math.sin(a) * 26);
+            ctx.lineTo(x + Math.cos(a) * (34 + 6 * sp), hipY - 58 + Math.sin(a) * (34 + 6 * sp)); ctx.stroke();
+          }
+        }
+      },
+      {
+        id: 'ink-wash',
+        name: 'Ink Wash (Sumi-e)',
+        cmd: '/inkwash',
+        tag: 'Brush Art',
+        value: 'Ink Wash (/inkwash — sumi-e ink brush painting on rice paper, misty mountains, red seal)',
+        desc: 'রাইস পেপারে চাইনিজ/জাপানিজ কালি-তুলির আঁকা, কুয়াশাচ্ছন্ন পাহাড় ও লাল সিল।',
+        must: 'কালো-ধূসর ইঙ্ক ওয়াশ গ্রেডিয়েন্ট + খালি রাইস পেপার স্পেস + লাল সিল।',
+        draw(ctx, W, H, t) {
+          ctx.fillStyle = '#efe9da'; ctx.fillRect(0, 0, W, H);
+          const mtn = (yBase, amp, col, offset) => {
+            ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, H);
+            for (let x = 0; x <= W; x += 12) ctx.lineTo(x, yBase - Math.abs(Math.sin(x * 0.008 + offset)) * amp);
+            ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+          };
+          mtn(H * 0.68, 72, 'rgba(55,60,65,0.28)', 0.5);
+          mtn(H * 0.78, 56, 'rgba(30,34,38,0.52)', 2.1);
+          // Mist drift
+          const mg = ctx.createLinearGradient(0, H * 0.52, 0, H * 0.85);
+          mg.addColorStop(0, 'rgba(239,233,218,0)'); mg.addColorStop(0.6, 'rgba(239,233,218,0.72)'); mg.addColorStop(1, 'rgba(239,233,218,0)');
+          ctx.fillStyle = mg; ctx.fillRect(0, H * 0.5, W, H * 0.35);
+          // Flying ink crane / bird
+          const bx = ((t * 55) % (W + 80)) - 40, by = H * 0.3 + Math.sin(t * 3) * 14;
+          const flap = Math.sin(t * 9) * 10;
+          ctx.strokeStyle = '#181a1c'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(bx - 18, by - flap); ctx.quadraticCurveTo(bx - 6, by - 10, bx, by);
+          ctx.quadraticCurveTo(bx + 6, by - 10, bx + 18, by - flap); ctx.stroke();
+          // Red Hanko seal stamp
+          ctx.fillStyle = '#b91c1c'; ctx.fillRect(W - 44, 22, 22, 28);
+          ctx.strokeStyle = '#efe9da'; ctx.lineWidth = 1.6; ctx.strokeRect(W - 40, 26, 14, 20);
+        }
+      },
+      {
+        id: 'voxel-art',
+        name: 'Voxel Art',
+        cmd: '/voxel',
+        tag: 'Isometric Blocks',
+        value: 'Voxel Art (/voxel — crisp isometric 3D block world, sunlit top faces, playful block builds)',
+        desc: 'আইসোমেট্রিক ৩ডি ভক্সেল কিউব ওয়ার্ল্ড, স্পষ্ট আলো-ছায়া ও ব্লক বিল্ড অ্যানিমেশন।',
+        must: 'আইসোমেট্রিক কিউব গ্রিড + ৩-টোন শেডিং (টপ/লেফট/রাইট) + পপ-ইন ব্লক।',
+        draw(ctx, W, H, t) {
+          ctx.fillStyle = '#1a2433'; ctx.fillRect(0, 0, W, H);
+          const cube = (cx, cy, s, cTop, cL, cR) => {
+            const dx = s * 0.86, dy = s * 0.5;
+            ctx.fillStyle = cTop; ctx.beginPath(); ctx.moveTo(cx, cy - s); ctx.lineTo(cx + dx, cy - dy); ctx.lineTo(cx, cy); ctx.lineTo(cx - dx, cy - dy); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = cL; ctx.beginPath(); ctx.moveTo(cx - dx, cy - dy); ctx.lineTo(cx, cy); ctx.lineTo(cx, cy + s); ctx.lineTo(cx - dx, cy + dy); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = cR; ctx.beginPath(); ctx.moveTo(cx + dx, cy - dy); ctx.lineTo(cx, cy); ctx.lineTo(cx, cy + s); ctx.lineTo(cx + dx, cy + dy); ctx.closePath(); ctx.fill();
+          };
+          const s = 22, ox = W * 0.5, oy = H * 0.54;
+          for (let gx = -2; gx <= 2; gx++) {
+            for (let gy = -2; gy <= 2; gy++) {
+              const wave = Math.sin(t * 3 + gx * 0.8 + gy * 0.8) * 14;
+              const px = ox + (gx - gy) * s * 0.88;
+              const py = oy + (gx + gy) * s * 0.5 + wave;
+              const isCenter = gx === 0 && gy === 0;
+              cube(px, py, s, isCenter ? '#fde047' : '#4ade80', isCenter ? '#ca8a04' : '#16a34a', isCenter ? '#eab308' : '#22c55e');
+            }
+          }
+        }
+      },
+      {
+        id: '1930s-cartoon',
+        name: '1930s Cartoon',
+        cmd: '/cartoon1930',
+        tag: 'Rubber Hose',
+        value: '1930s Cartoon (/cartoon1930 — vintage rubber-hose animation, pie-cut eyes, sepia film flicker)',
+        desc: 'ভিনটেজ ১৯৩০-এর রাবার-হোজ কার্টুন, পাই-কাট চোখ, বাউন্সিং তালে ফিল্ম গ্রেইন।',
+        must: 'ক্রিম-সেপিয়া মোনোক্রোম + পাই-কাট চোখ + রাবার-হোজ বাউন্স + ফিল্ম স্ক্র্যাচ।',
+        draw(ctx, W, H, t) {
+          const flick = 0.94 + Math.sin(t * 48) * 0.04;
+          ctx.fillStyle = `rgb(${232 * flick},${222 * flick},${196 * flick})`; ctx.fillRect(0, 0, W, H);
+          const b = Math.abs(Math.sin(t * 5.2));
+          const cx = W * 0.5, cy = H * 0.56 - b * 24;
+          // Rubber hose legs
+          ctx.strokeStyle = '#181512'; ctx.lineWidth = 8; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(cx - 12, cy + 22); ctx.quadraticCurveTo(cx - 26, cy + 48, cx - 18, H * 0.82); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx + 12, cy + 22); ctx.quadraticCurveTo(cx + 26, cy + 48, cx + 18, H * 0.82); ctx.stroke();
+          // Round vintage cartoon head + ears
+          ctx.fillStyle = '#181512';
+          ctx.beginPath(); ctx.arc(cx - 32, cy - 34, 18, 0, 7); ctx.arc(cx + 32, cy - 34, 18, 0, 7); ctx.arc(cx, cy, 38, 0, 7); ctx.fill();
+          ctx.fillStyle = '#f2e8cf'; ctx.beginPath(); ctx.ellipse(cx, cy + 8, 28, 22, 0, 0, 7); ctx.fill();
+          // Pie-cut eyes
+          const pieEye = ex => {
+            ctx.fillStyle = '#181512'; ctx.beginPath(); ctx.ellipse(ex, cy - 2, 7, 13, 0, 0, 7); ctx.fill();
+            ctx.fillStyle = '#f2e8cf'; ctx.beginPath(); ctx.moveTo(ex, cy - 2); ctx.lineTo(ex + 9, cy - 8); ctx.lineTo(ex + 9, cy + 2); ctx.closePath(); ctx.fill();
+          };
+          pieEye(cx - 11); pieEye(cx + 11);
+          // Film vertical scratch + vignette
+          ctx.strokeStyle = 'rgba(30,25,18,0.18)'; ctx.lineWidth = 1.5;
+          const sx = (rand(Math.floor(t * 16)) * W); ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, H); ctx.stroke();
+          const vg = ctx.createRadialGradient(W / 2, H / 2, W * 0.25, W / 2, H / 2, W * 0.65);
+          vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(20,14,8,0.45)');
+          ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+        }
+      },
+      {
+        id: '3d-movie',
+        name: '3D Movie Style',
+        cmd: '/movie3d',
+        tag: 'Glossy 3D',
+        value: '3D Movie style (/movie3d — Pixar-like glossy 3D lighting, specular rim, Three.js depth)',
+        desc: 'পিক্সার-স্টাইল গ্লসি ৩ডি লাইটিং, সফট স্পেকুলার হাইলাইট ও Three.js ডেপথ।',
+        must: 'সফট ৩ডি শেডিং + স্টুডিও রিম লাইট + ফ্লোর রিফ্লেকশন + স্মুথ ক্যামেরা।',
+        draw(ctx, W, H, t) {
+          const g = ctx.createLinearGradient(0, 0, 0, H);
+          g.addColorStop(0, '#172540'); g.addColorStop(0.68, '#28436b'); g.addColorStop(1, '#101826');
+          ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+          // Glossy studio floor
+          const fg = ctx.createLinearGradient(0, H * 0.68, 0, H);
+          fg.addColorStop(0, '#1e304d'); fg.addColorStop(1, '#0b1220');
+          ctx.fillStyle = fg; ctx.fillRect(0, H * 0.68, W, H * 0.32);
+          const y = H * 0.46 + Math.sin(t * 2.4) * 12;
+          // Floor shadow & reflection
+          ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.beginPath(); ctx.ellipse(W * 0.5, H * 0.78, 56, 14, 0, 0, 7); ctx.fill();
+          // Glossy 3D Hero Orb + orbiting 3D capsule
+          const sg = ctx.createRadialGradient(W * 0.44, y - 22, 6, W * 0.5, y, 64);
+          sg.addColorStop(0, '#ffffff'); sg.addColorStop(0.18, '#7dd3fc'); sg.addColorStop(0.62, '#2563eb'); sg.addColorStop(1, '#0c1c47');
+          ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(W * 0.5, y, 56, 0, 7); ctx.fill();
+          ctx.strokeStyle = 'rgba(255,214,140,0.75)'; ctx.lineWidth = 3.5;
+          ctx.beginPath(); ctx.arc(W * 0.5, y, 55, -0.7, 0.9); ctx.stroke();
+          // Secondary glossy sphere
+          const ox = W * 0.5 + Math.cos(t * 1.8) * 95, oy = y + Math.sin(t * 1.8) * 24;
+          const s2 = ctx.createRadialGradient(ox - 5, oy - 6, 2, ox, oy, 18);
+          s2.addColorStop(0, '#fff'); s2.addColorStop(0.3, '#fb923c'); s2.addColorStop(1, '#7c2d12');
+          ctx.fillStyle = s2; ctx.beginPath(); ctx.arc(ox, oy, 16, 0, 7); ctx.fill();
+        }
+      },
+      {
+        id: 'ascii-art',
+        name: 'ASCII Art',
+        cmd: '/ascii',
+        tag: 'Terminal Retro',
+        value: 'ASCII Art (/ascii — retro phosphor terminal character art, CRT scanlines, monospace motion)',
+        desc: 'ফসফর গ্রিন টার্মিনাল ASCII ক্যারেক্টার অ্যানিমেশন ও রেট্রো CRT স্ক্যানলাইন।',
+        must: 'মনোস্পেস ASCII ক্যারেক্টার গ্রিড + ফসফর গ্লো + CRT স্ক্যানলাইন।',
+        draw(ctx, W, H, t) {
+          ctx.fillStyle = '#06110a'; ctx.fillRect(0, 0, W, H);
+          const chars = ' .:-=+*#%@';
+          ctx.font = 'bold 13px monospace';
+          const cw = 12, ch = 15;
+          for (let y = 16; y < H; y += ch) {
+            for (let x = 8; x < W; x += cw) {
+              const dx = (x - W / 2) / 55, dy = (y - H / 2) / 45;
+              const v = Math.sin(Math.hypot(dx, dy) * 3 - t * 4) * 0.5 + 0.5;
+              const idx = Math.floor(v * (chars.length - 1));
+              ctx.fillStyle = idx > 6 ? '#86efac' : '#22c55e';
+              ctx.fillText(chars[idx], x, y);
+            }
+          }
+          // Subtle CRT scanlines
+          ctx.fillStyle = 'rgba(0,0,0,0.22)';
+          for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1.5);
+        }
+      }
+    ];
+
+    const grid = document.getElementById('styleGrid');
+    const cardCanvases = [];
+    let playingAll = true;
+    let activeModalStyle = null;
+    let modalPlaying = true;
+    let modalTime = 0;
+
+    function selectStyle(st) {
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'SELECT_ANIM_STYLE', style: st }, '*');
+        } else {
+          localStorage.setItem('mkprompt_picked_style', JSON.stringify(st));
+          window.location.href = '/?pickedStyle=' + encodeURIComponent(st.id);
+        }
+      } catch {
+        localStorage.setItem('mkprompt_picked_style', JSON.stringify(st));
+      }
+    }
+
+    STYLES.forEach(st => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="canvas-wrap">
+          <canvas width="320" height="200"></canvas>
+          <span class="badge">${st.tag}</span>
+        </div>
+        <div class="card-body">
+          <div class="card-title"><span>${st.name}</span><span class="card-cmd">${st.cmd}</span></div>
+          <div class="card-desc">${st.desc}</div>
+          <div class="card-actions">
+            <button class="btn open-btn">👁️ বড় প্রিভিউ</button>
+            <button class="btn primary pick-btn">✓ সিলেক্ট</button>
+          </div>
+        </div>
+      `;
+      const cvs = card.querySelector('canvas');
+      cardCanvases.push({ st, ctx: cvs.getContext('2d'), w: cvs.width, h: cvs.height });
+      const openModal = () => {
+        activeModalStyle = st;
+        modalTime = 0; modalPlaying = true;
+        document.getElementById('mTitle').textContent = st.name;
+        document.getElementById('mCmd').textContent = st.cmd;
+        document.getElementById('mInfo').innerHTML = `<strong>বৈশিষ্ট্য:</strong> ${st.must}<br><strong>প্রম্পটে যা বসবে:</strong> <code>${st.value}</code> + স্কিল: <code>animation-styles</code>`;
+        document.getElementById('mPlay').textContent = '⏸';
+        document.getElementById('playerModal').classList.add('open');
+      };
+      card.querySelector('.canvas-wrap').addEventListener('click', openModal);
+      card.querySelector('.open-btn').addEventListener('click', openModal);
+      card.querySelector('.pick-btn').addEventListener('click', () => selectStyle(st));
+      grid.appendChild(card);
+    });
+
+    const mCtx = document.getElementById('mCanvas').getContext('2d');
+    const mScrub = document.getElementById('mScrub');
+    const mTime = document.getElementById('mTime');
+
+    document.getElementById('toggleAllBtn').addEventListener('click', e => {
+      playingAll = !playingAll;
+      e.target.textContent = playingAll ? '⏸ পজ করুন' : '▶ প্লে করুন';
+    });
+    document.getElementById('mClose').addEventListener('click', () => {
+      document.getElementById('playerModal').classList.remove('open');
+      activeModalStyle = null;
+    });
+    document.getElementById('mPlay').addEventListener('click', e => {
+      modalPlaying = !modalPlaying;
+      e.target.textContent = modalPlaying ? '⏸' : '▶';
+    });
+    mScrub.addEventListener('input', () => {
+      modalPlaying = false;
+      document.getElementById('mPlay').textContent = '▶';
+      modalTime = Number(mScrub.value) / 100;
+    });
+    document.getElementById('mSelect').addEventListener('click', () => {
+      if (activeModalStyle) selectStyle(activeModalStyle);
+    });
+    if (window.parent && window.parent !== window) {
+      document.getElementById('backBtn').style.display = 'none';
+    }
+
+    let last = performance.now(), globalT = 0;
+    function loop(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (playingAll) globalT += dt;
+      cardCanvases.forEach(c => c.st.draw(c.ctx, c.w, c.h, globalT));
+      if (activeModalStyle) {
+        if (modalPlaying) {
+          modalTime = (modalTime + dt) % 6;
+          mScrub.value = Math.round(modalTime * 100);
+        }
+        mTime.textContent = modalTime.toFixed(1) + 's';
+        activeModalStyle.draw(mCtx, 640, 400, modalTime);
+      }
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

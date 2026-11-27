@@ -158,15 +158,26 @@
           </div>
 
           <div>
-            <span class="dep-sec-label">অ্যানিমেশন স্টাইল ও অ্যানিমেশন স্কিল (বাকি সব স্কিল অটো-ডিটেক্ট হবে)</span>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+              <span class="dep-sec-label" style="margin:0;">অ্যানিমেশন স্টাইল ও অ্যানিমেশন স্কিল (বাকি সব স্কিল অটো-ডিটেক্ট হবে)</span>
+              <button type="button" class="dep-sc-btn" id="depOpenPreviewBtn" style="padding:4px 10px;font-size:0.74rem;color:#fde68a;border-color:rgba(245,185,66,0.45);background:rgba(245,185,66,0.1);">🎬 ১০টি লাইভ প্রিভিউ</button>
+            </div>
             <div class="dep-grid-2">
               <select id="depStyle" class="dep-select">
                 <option value="">— রেফারেন্স স্টাইল: ফাঁকা (ঐচ্ছিক) —</option>
                 <option value="Follow REA Style File in Folder (VIDEO.md / style-bible.json)">ফোল্ডারের REA স্টাইল ফাইল অনুযায়ী</option>
                 <option value="Match Reference Video Style (via rea-video)">রেফারেন্স ভিডিও অনুযায়ী (rea-video)</option>
+                <option value="Kurzgesagt style (/kurzgesagt — bold flat vector, rich gradients, rim light & glow)">Kurzgesagt Style (/kurzgesagt)</option>
+                <option value="Paper Cut-out (/papercut — torn paper edges, layered drop shadows, pop-up motion)">Paper Cut-out (/papercut)</option>
+                <option value="Claymation (/claymation — plasticine stop-motion, 12fps squash & stretch, warm studio lighting)">Claymation (/claymation)</option>
+                <option value="Anime Watercolor (/anime — dreamy watercolour sky, soft painted clouds, drifting petals)">Anime Watercolor (/anime)</option>
+                <option value="Stickman (/stickman — expressive hand-wobbled ink stick figures on warm paper, snappy timing)">Stickman (/stickman)</option>
+                <option value="Ink Wash (/inkwash — sumi-e ink brush painting on rice paper, misty mountains, red seal)">Ink Wash (/inkwash)</option>
+                <option value="Voxel Art (/voxel — crisp isometric 3D block world, sunlit top faces, playful block builds)">Voxel Art (/voxel)</option>
+                <option value="1930s Cartoon (/cartoon1930 — vintage rubber-hose animation, pie-cut eyes, sepia film flicker)">1930s Cartoon (/cartoon1930)</option>
+                <option value="3D Movie style (/movie3d — Pixar-like glossy 3D lighting, specular rim, Three.js depth)">3D Movie Style (/movie3d)</option>
+                <option value="ASCII Art (/ascii — retro phosphor terminal character art, CRT scanlines, monospace motion)">ASCII Art (/ascii)</option>
                 <option value="Editorial Documentary Collage">ডকুমেন্টারি কোলাজ (Vox/Harris)</option>
-                <option value="Cardboard Cutout 2.5D">কার্ডবোর্ড কাটআউট (2.5D)</option>
-                <option value="Claymation Stop-Motion">ক্লে-মেশন (Claymation)</option>
                 <option value="Hand-Drawn Painting / Scribble">পেইন্টিং / হ্যান্ড-ড্রন স্কেচ</option>
                 <option value="2D Vector + Three.js Motion">2D ভেক্টর + Three.js</option>
               </select>
@@ -598,8 +609,8 @@
     // Core Guardrails
     const rules = [
       `Inspect existing assets in ${folder} first; NEVER replace user's Lead Character or collected photos (blend photos via editorial cutout/shadow/grade).`,
-      `Modular Per-Scene SVG Assets (NO single-file art cramming): For every missing vector scene, create a dedicated high-detail file (${folder}/assets/scene1.svg..sceneN.svg) matching reference style/proportions with depth blur, multi-stop gradients, rim lighting, and named animatable <g id="..."> parts (head, eyes, mouth, arms, bg-layer, fg-layer)—NEVER cram all scenes inline inside one file!`,
-      `In src/scene.html, mount/inline the modular scene SVGs and drive TRUE part-by-part vector animation (RMS lip-sync, eye blinks, gestures, Z-depth parallax) with 100% Frame-Pure Math via window.setFrame(frame) (NO CSS @keyframes/transitions) + window.readyPromise preload guard.`,
+      `Modular Per-Scene Assets (NO single-file art cramming): For every missing vector scene, create a dedicated high-detail file (${folder}/assets/scene1.svg..sceneN.svg) or style-specific Canvas/Three.js scene module matching reference style/proportions with depth blur, multi-stop gradients, rim lighting, and nested bone-rigged animatable <g id="..."> parts (torso -> shoulder -> forearm -> curved hand, eyelid mask blink, RMS lip-sync).`,
+      `Fast Native Rendering: Native @remotion/renderer + @remotion/cli is ACTIVE on Android via ~/remotion-studio/remotion.config.ts (glibc binaries + swangle)—prefer official Remotion CLI/Renderer for parallel React/SVG rendering, or animation-styles/scripts/render.mjs (with live preview HTML player) when animation-styles is selected.`,
       `For videos > 60s, render in safe 30s chunks (part1.mp4..partN.mp4) and merge via ffmpeg concat (-c copy) to avoid Android overheating/OOM and allow fast single-chunk re-renders.`
     ];
     if (depState.opts.banglaFont) rules.push(`Offline Bangla font: load ~/remotion-studio/fonts/HindSiliguriFixed-{Regular,SemiBold,Bold}.ttf via @font-face and await document.fonts.ready.`);
@@ -679,6 +690,62 @@ ${execBlock}`;
     const searchInput = document.getElementById('depFolderSearch');
     const genBtn = document.getElementById('depGenBtn');
     const copyBtn = document.getElementById('depCopyBtn');
+    const openPreviewBtn = document.getElementById('depOpenPreviewBtn');
+
+    // Live 10-Style Animation Preview Drawer Overlay
+    const previewOverlay = document.createElement('div');
+    previewOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(4,7,11,0.92);z-index:2000;display:none;flex-direction:column;padding:12px;';
+    previewOverlay.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <strong style="color:#fde68a;font-size:0.95rem;">🎬 ১০টি অ্যানিমেশন স্টাইল — লাইভ প্রিভিউ</strong>
+        <button type="button" id="depClosePreviewBtn" style="background:#1f2937;color:#fff;border:1px solid rgba(255,255,255,0.16);border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:700;">✕ বন্ধ করুন</button>
+      </div>
+      <iframe id="depPreviewFrame" style="flex:1;width:100%;border:1px solid rgba(255,255,255,0.12);border-radius:14px;background:#0b0f14;"></iframe>
+    `;
+    document.body.appendChild(previewOverlay);
+
+    function applyPickedStyle(st) {
+      if (!st || !st.value) return;
+      const styleSel = document.getElementById('depStyle');
+      const animSel = document.getElementById('depAnimSkill');
+      if (styleSel) styleSel.value = st.value;
+      if (animSel) {
+        if (!Array.from(animSel.options).some(o => o.value === 'animation-styles')) {
+          const opt = document.createElement('option');
+          opt.value = 'animation-styles';
+          opt.textContent = 'animation-styles';
+          animSel.insertBefore(opt, animSel.lastElementChild);
+        }
+        animSel.value = 'animation-styles';
+        syncCustomAnimInput();
+      }
+      saveLocalState();
+      previewOverlay.style.display = 'none';
+    }
+
+    if (openPreviewBtn) {
+      openPreviewBtn.addEventListener('click', () => {
+        const frame = document.getElementById('depPreviewFrame');
+        if (!frame.src) frame.src = `${apiBase()}/style-preview.html`;
+        previewOverlay.style.display = 'flex';
+      });
+    }
+    document.getElementById('depClosePreviewBtn').addEventListener('click', () => {
+      previewOverlay.style.display = 'none';
+    });
+    window.addEventListener('message', (ev) => {
+      if (ev.data && ev.data.type === 'SELECT_ANIM_STYLE') {
+        applyPickedStyle(ev.data.style);
+      }
+    });
+    try {
+      const pickedRaw = localStorage.getItem('mkprompt_picked_style');
+      if (pickedRaw && new URLSearchParams(location.search).has('pickedStyle')) {
+        localStorage.removeItem('mkprompt_picked_style');
+        backdrop.classList.add('open');
+        setTimeout(() => applyPickedStyle(JSON.parse(pickedRaw)), 120);
+      }
+    } catch {}
 
     if (openBtn) {
       openBtn.addEventListener('click', () => {
