@@ -28,7 +28,7 @@ if [ ! -f "package.json" ]; then
   pnpm init >/dev/null
 fi
 
-pnpm add puppeteer-core react react-dom
+pnpm add remotion @remotion/cli puppeteer-core react react-dom
 
 if [ -f "$SKILL_DIR/templates/scene.html" ]; then
   cp "$SKILL_DIR/templates/scene.html" "$STUDIO_DIR/src/scene.html"
