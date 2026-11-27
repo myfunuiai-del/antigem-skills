@@ -20,7 +20,7 @@ Out of the box, `@remotion/renderer` fails on Android (`Error: Unsupported OS: a
 This installer solves all Android/Termux limitations automatically:
 - **Native `@remotion/renderer` & Remotion CLI:** Runs `@remotion/compositor-linux-arm64-gnu` directly via Termux's `glibc` dynamic linker (`ld-linux-aarch64.so.1`) using argument-safe wrappers in `~/remotion-studio/binaries/`.
 - **Native Termux Chromium:** Uses `browserExecutable` + `chromeMode: 'chrome-for-testing'` (`--headless=new`) + `gl: 'swangle'`.
-- **Full Parallel Rendering:** Multi-tab Chromium capture & parallel H.264 encoding directly on your phone.
+- **Full Parallel Rendering & Termux Speed Tuning:** Pre-tuned with `concurrency: 4`, `jpeg` (`q=90`) frame capture, `x264Preset: 'veryfast'`, `devtool: false`, and a `TermuxWebpackCacheFixPlugin` that fixes Android `/data/user/0` `EACCES` cache errors (cutting warm re-bundle time by ~50%).
 - **Zero Permission Errors:** Installs inside `$HOME/remotion-studio` (avoiding `/storage/emulated/0` FUSE symlink issues).
 - **Offline Bangla Fonts + `mkprompt` Studio:** Includes `HindSiliguriFixed` fonts, Mind-Map workflow UI, and lightweight `scene.html` + `render.mjs` fallback.
 

@@ -20,7 +20,7 @@ Android (Termux / AntiGem)-এ **কোনো `proot` বা OS spoof ছাড়�
 এই ইনস্টলারটি সব বাধা অটোমেটিক সমাধান করে দেয়:
 - **নেটিভ `@remotion/renderer` ও Remotion CLI:** Termux-এর `glibc-runner`-এর `ld-linux-aarch64.so.1` লিংকার দিয়ে `@remotion/compositor-linux-arm64-gnu` সরাসরি নেটিভ স্পিডে চালায় (`~/remotion-studio/binaries/`-এ আর্গুমেন্ট-সেফ wrapper সহ)।
 - **Termux-এর নিজের Chromium:** `remotion.config.ts`-এ `browserExecutable` + `chromeMode: 'chrome-for-testing'` (`--headless=new`) + `gl: 'swangle'` অটো কনফিগার করা থাকে।
-- **ফুল প্যারালাল রেন্ডারিং:** একাধিক ট্যাব ও প্যারালাল H.264 এনকোডিং সরাসরি ফোনেই চলে।
+- **ফুল প্যারালাল রেন্ডারিং ও স্পিড টিউনিং:** ফোনের বেঞ্চমার্ক অনুযায়ী `concurrency: 4`, `jpeg (q=90)` ক্যাপচার, `x264Preset: 'veryfast'`, `devtool: false` এবং `TermuxWebpackCacheFixPlugin` (যা Android `/data/user/0` `EACCES` ক্যাশ এরর ফিক্স করে ওয়ার্ম বান্ডলিং সময় অর্ধেকে নামায়) আগে থেকেই কনফিগার করা থাকে।
 - **অফলাইন বাংলা ফন্ট ও `mkprompt` স্টুডিও:** `HindSiliguriFixed` ফন্ট, Mind-Map স্টুডিও এবং লাইটওয়েট `scene.html` + `render.mjs` মোডও সাথেই থাকে।
 
 ---

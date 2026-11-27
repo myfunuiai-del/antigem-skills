@@ -17,6 +17,7 @@ This setup bypasses both cleanly and runs **real `@remotion/renderer` natively w
   - `Config.setChromeMode('chrome-for-testing')` (uses `--headless=new` for modern Chromium)
   - `Config.setBinariesDirectory('$HOME/remotion-studio/binaries')`
   - `Config.setChromiumOpenGlRenderer('swangle')`
+  - **Termux Speed Tuning:** `imageFormat: 'jpeg'` (`quality: 90`), `x264Preset: 'veryfast'`, `concurrency: 4`, `devtool: false`, and `TermuxWebpackCacheFixPlugin` (fixes Android `/data/user/0` `EACCES` snapshot error so Webpack persistent cache works and halves warm bundle time; use `remotion bundle src/index.ts --out-dir=build` + `remotion render build ...` for 0s bundling on repeat/data-only renders).
 
 ## One-Command Setup (If Not Installed)
 ```bash
