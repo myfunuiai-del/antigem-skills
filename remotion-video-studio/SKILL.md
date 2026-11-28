@@ -50,3 +50,12 @@ cd "$HOME/remotion-studio" && node render-remotion.mjs TestVideo out/output.mp4
 ```bash
 cd "$HOME/remotion-studio" && node render.mjs
 ```
+
+## Core Motion Logic & Kinetic Modules (Zero-Dependency & Context-Aware)
+Located at `animation-assets/modules/` (deployed directly to `$HOME/remotion-studio/animation-assets/modules/`):
+- **`bm-typography.js`:** Kinetic bracket parser. In scripts, write `[গুরুত্বপূর্ণ শব্দ]` — the engine automatically renders spring scale pops, accent colors, soft glow, and dynamic SVG hand-drawn scribbles/underlines without writing raw CSS animations.
+- **`camera-shake.js`:** Physics-based spring-dampened oscillation matrix ($D(t) = A \cdot e^{-\lambda t} \cos(\omega t)$). Triggers on sound hits / beat drops for realistic impact feedback.
+- **`device-mockup.js`:** CSS 3D hardware bezels (Phone / Laptop / Browser) with 3D tilt, internal auto-scroll, and 3D card lift (`crop & lift`).
+- **Context Filtering Rule:** Only trigger kinetic text/camera shake when the narrative context demands it (action/impact/promo). Keep calm in emotional/nature scenes.
+- **Interactive Visualizer:** Accessible live via `http://127.0.0.1:4173/modules-preview.html`.
+
