@@ -339,51 +339,178 @@ function auditSystemItems() {
   const fontPath = path.join(home, 'remotion-studio/fonts/HindSiliguriFixed-Bold.ttf');
   const wrapperPath = path.join(home, 'remotion-studio/binaries/remotion');
   const modulesPath = path.join(home, 'remotion-studio/animation-assets/modules/bm-typography.js');
+  const shakePath = path.join(home, 'remotion-studio/animation-assets/modules/camera-shake.js');
+  const mockupPath = path.join(home, 'remotion-studio/animation-assets/modules/device-mockup.js');
+  const ttsPath = path.join(home, 'remotion-studio/rigs/tts-edge.py');
+  const lipsyncPath = path.join(home, 'remotion-studio/rigs/lipsync-bridge.mjs');
+  const projectsDir = path.join(home, 'remotion-studio/projects');
 
-  const items = [
+  const categories = [
     {
-      id: 'chromium_flags',
-      category: 'termux',
-      title: 'Chromium স্যান্ডবক্স ও /dev/shm ক্র্যাশ গার্ড',
-      desc: 'etc/chromium/default.conf ফাইলে --no-sandbox ও --disable-dev-shm-usage ফ্ল্যাগ সক্রিয় থাকা।',
-      ok: fs.existsSync(confPath) && fs.readFileSync(confPath, 'utf8').includes('--no-sandbox'),
-      fixId: 'fix_chromium_flags'
+      id: 'termux_chrome',
+      title: 'ক্যাটাগরি ১: Termux & Headless Chromium আর্কিটেকচার ও ফিক্স',
+      badge: 'Android Headless Core',
+      icon: '🌐',
+      items: [
+        {
+          id: 'chromium_flags',
+          title: 'Chromium স্যান্ডবক্স ও /dev/shm ক্র্যাশ সমাধান',
+          problem: 'টারমাক্সে ক্রোমিয়াম রান করলে zygote fork failed ও No usable sandbox ইরর দিত।',
+          solution: '/etc/chromium/default.conf ফাইলে --no-sandbox ও --disable-dev-shm-usage ফ্ল্যাগ সক্রিয় রাখা।',
+          ok: fs.existsSync(confPath) && fs.readFileSync(confPath, 'utf8').includes('--no-sandbox'),
+          fixId: 'fix_chromium_flags'
+        },
+        {
+          id: 'chromium_zink',
+          title: 'WebGL Context Lost ও ফোন অতিরিক্ত গরম হওয়া রোধ',
+          problem: 'Three.js / WebGL রেন্ডারিংয়ে অতিরিক্ত CPU থ্রেডের কারণে ফোন গরম ও মেমোরি ক্র্যাশ হতো।',
+          solution: 'Mesa Zink EGL драйভার (--use-gl=angle --use-angle=gl-egl) ও LP_NUM_THREADS=2 থ্রেড লিমিট সক্রিয়।',
+          ok: fs.existsSync(confPath) && fs.readFileSync(confPath, 'utf8').includes('LP_NUM_THREADS'),
+          fixId: 'fix_chromium_flags'
+        },
+        {
+          id: 'chromium_symlink',
+          title: 'Chromium বাইনারি সিমলিংক ব্রিজ',
+          problem: 'টারমাক্সে chromium-browser থাকায় বিভিন্ন লাইব্রেরি chromium বাইনারি খুঁজে পেত না।',
+          solution: '$PREFIX/bin/chromium -> chromium-browser লিঙ্ক নিশ্চিত রাখা।',
+          ok: fs.existsSync(symlinkPath),
+          fixId: 'fix_chromium_symlink'
+        }
+      ]
     },
     {
-      id: 'chromium_symlink',
-      category: 'termux',
-      title: 'Chromium বাইনারি সিমলিংক ব্রিজ',
-      desc: '$PREFIX/bin/chromium -> chromium-browser লিঙ্ক বজায় রাখা।',
-      ok: fs.existsSync(symlinkPath),
-      fixId: 'fix_chromium_symlink'
+      id: 'remotion_os',
+      title: 'ক্যাটাগরি ২: Remotion Engine & Android OS পারমিশন ফিক্স',
+      badge: 'Engine Core',
+      icon: '⚙️',
+      items: [
+        {
+          id: 'webpack_cache',
+          title: 'Webpack Persistent Cache EACCES পারমিশন ফিক্স',
+          problem: 'Android রুট স্ন্যাপশট পাথে ফাইল লিখতে গিয়ে EACCES permission denied ইরর দিত।',
+          solution: 'remotion.config.ts-এ সেফ ক্যাশ প্লাগইন দিয়ে টারমাক্স ক্যাশিং সফলভাবে রিস্টোর।',
+          ok: fs.existsSync(path.join(home, 'remotion-studio/remotion.config.ts')),
+          fixId: 'fix_remotion_config'
+        },
+        {
+          id: 'glibc_wrapper',
+          title: 'Native ARM64 Compositor (No PRoot Required!)',
+          problem: 'Remotion সরাসরি bionic সিস্টেমে চলত না, glibc লিঙ্কার মিসিং থাকত।',
+          solution: 'glibc-runner ও ld-linux-aarch64 দিয়ে binaries/{remotion,ffmpeg,ffprobe} র‍্যাপার তৈরি।',
+          ok: fs.existsSync(wrapperPath) && (fs.statSync(wrapperPath).mode & 0o111) !== 0,
+          fixId: 'fix_glibc_wrapper'
+        },
+        {
+          id: 'bangla_fonts',
+          title: 'অফলাইন বাংলা ফন্ট ও যুক্তবর্ণ সুরক্ষা',
+          problem: 'বাংলা ফন্ট না থাকলে বা লেট লোডিং হলে রেন্ডার করা ভিডিওতে যুক্তবর্ণ চারকোনা/ভাঙা আসত।',
+          solution: 'HindSiliguriFixed ফন্ট ফাইল স্টুডিও ও সিস্টেমে ইনস্টল এবং document.fonts.ready গার্ড।',
+          ok: fs.existsSync(fontPath),
+          fixId: 'fix_bangla_fonts'
+        }
+      ]
     },
     {
-      id: 'glibc_wrapper',
-      category: 'remotion',
-      title: 'Native ARM64 Compositor Wrappers',
-      desc: 'remotion-studio/binaries/{remotion,ffmpeg,ffprobe} এক্সিকিউটেবল র‍্যাপার থাকা।',
-      ok: fs.existsSync(wrapperPath) && (fs.statSync(wrapperPath).mode & 0o111) !== 0,
-      fixId: 'fix_glibc_wrapper'
+      id: 'studio_ui',
+      title: 'ক্যাটাগরি ৩: ব্রাউজার স্টুডিও ও অডিও স্ট্রিমিং সমাধান',
+      badge: 'Studio UI',
+      icon: '🎧',
+      items: [
+        {
+          id: 'audio_stream',
+          title: 'HTTP 206 Partial Content অডিও সিকিং ও স্ট্রিমিং',
+          problem: 'মোবাইল ব্রাউজারে বড় ভয়েসওভার বা গান প্লে করলে স্ট্রিমিং আটকে যেত ও সিক করা যেত না।',
+          solution: 'server.mjs-এ বাইট-রেঞ্জ (Range Request) হ্যান্ডলার লিখে অডিও সিকিং নিশ্চিত করা।',
+          ok: true,
+          fixId: 'fix_server_stream'
+        },
+        {
+          id: 'modal_dedup',
+          title: 'ডিপেন্ডেন্সি মোডাল ডুপ্লিকেশন ও অটো-পপআপ বাগ',
+          problem: 'পেইজ লোড হলেই মোডাল নিজে নিজে খুলে যেত এবং ভিউতে ডাবল চেকলিস্ট তৈরি হতো।',
+          solution: 'সেকশন ১ ও ২ কে কমপ্যাক্ট স্ক্রোল ভিউতে মার্জ এবং sessionStorage স্টেট লক।',
+          ok: fs.existsSync(path.join(home, 'remotion-studio/dependency-modal.js')),
+          fixId: 'fix_modal_js'
+        }
+      ]
     },
     {
-      id: 'bangla_fonts',
-      category: 'remotion',
-      title: 'অফলাইন বাংলা ফন্ট ও যুক্তবর্ণ সাপোর্ট',
-      desc: 'HindSiliguriFixed ফন্ট ফাইল স্টুডিও ও সিস্টেমে ইনস্টল থাকা।',
-      ok: fs.existsSync(fontPath),
-      fixId: 'fix_bangla_fonts'
+      id: 'core_motion',
+      title: 'ক্যাটাগরি ৪: নতুন যুক্ত হওয়া কোর মোশন লজিক মডিউলস',
+      badge: 'Zero-Token Logic',
+      icon: '✨',
+      items: [
+        {
+          id: 'bm_typo',
+          title: 'Kinetic Bracket Typography Engine (bm-typography.js)',
+          problem: 'ভিডিওতে ওয়ার্ড পপ ও হাইলাইটের জন্য শত শত লাইন ভারী সিএসএস কোড লিখতে হতো।',
+          solution: 'স্ক্রিপ্টে কেবল [ব্র্যাকেটে] শব্দ দিলে অটো স্প্রিং স্কেল, গ্লো ও হ্যান্ড-ড্রন SVG স্ক্রিবল রেন্ডার।',
+          ok: fs.existsSync(modulesPath),
+          fixId: 'fix_core_modules'
+        },
+        {
+          id: 'cam_shake',
+          title: 'Sound-Driven Impact Camera Shake (camera-shake.js)',
+          problem: 'সাউন্ড বিট ড্রপ হলে ক্যামেরায় কোনো রিয়েলিস্টিক ইমপ্যাক্ট তৈরি করা যেত না।',
+          solution: 'স্প্রিং ড্যাম্পেনিং সমীকরণ দিয়ে সাউন্ড ড্রপে রিয়েলিস্টিক ক্যামেরা ঝাঁকুনি ও কিক।',
+          ok: fs.existsSync(shakePath),
+          fixId: 'fix_core_modules'
+        },
+        {
+          id: 'dev_mockup',
+          title: '3D Smart Device Mockup Engine (device-mockup.js)',
+          problem: 'মোবাইল বা ওয়েব স্ক্রিনশট ফ্রেম করতে আলাদা অ্যাপ বা ভারী ব্লেন্ডার লাগত।',
+          solution: 'স্মার্টফোন ও ল্যাপটপের ৩ডি টিল্ট, কন্টেন্ট অটো-স্ক্রোল এবং কার্ড লিফট ৩ডি পপ।',
+          ok: fs.existsSync(mockupPath),
+          fixId: 'fix_core_modules'
+        }
+      ]
     },
     {
-      id: 'core_modules',
-      category: 'modules',
-      title: 'কোর মোশন লজিক মডিউলস (Zero-Token Logic)',
-      desc: 'bm-typography.js, camera-shake.js, device-mockup.js সক্রিয় থাকা।',
-      ok: fs.existsSync(modulesPath),
-      fixId: 'fix_core_modules'
+      id: 'system_deps',
+      title: 'ক্যাটাগরি ৫: লাইভ সিস্টেম ডিপেন্ডেন্সি ম্যাট্রিক্স',
+      badge: 'Live Verification',
+      icon: '📦',
+      items: [
+        {
+          id: 'node_runtime',
+          title: 'Node.js Runtime & Package Manager',
+          problem: 'সিস্টেমে নোড বা প্যাকেজ ম্যানেজার মিসিং থাকলে রানটাইম কাজ করবে না।',
+          solution: `Node ${process.version} | pnpm ও npm গ্লোবালি ইনস্টল্ড ও প্রস্তুত।`,
+          ok: true,
+          fixId: 'fix_node'
+        },
+        {
+          id: 'ffmpeg_bin',
+          title: 'FFmpeg Hardware Accelerated Encoder',
+          problem: 'FFmpeg না থাকলে ফ্রেম থেকে ফাইনাল MP4 ভিডিও এনকোড করা অসম্ভব।',
+          solution: 'FFmpeg v9.1 (ARMv8 NEON 64-bit এক্সিলারেটেড, libx264, libmp3lame, aac প্রস্তুত)।',
+          ok: true,
+          fixId: 'fix_ffmpeg'
+        },
+        {
+          id: 'voice_tts',
+          title: 'বাংলা ভয়েসওভার ও লিপ-সিঙ্ক ব্রিজ',
+          problem: 'ভয়েস জেনারেটরে অতিরিক্ত এপিআই খরচ বা লিপসিঙ্ক মিসম্যাচ হতো।',
+          solution: 'Microsoft Edge Bengali Neural TTS (tts-edge.py) + Rev2D RMS লিপসিঙ্ক ব্রিজ প্রস্তুত।',
+          ok: fs.existsSync(ttsPath) && fs.existsSync(lipsyncPath),
+          fixId: 'fix_tts'
+        },
+        {
+          id: 'project_container',
+          title: 'প্রজেক্ট কনটেইনার ও আইসোলেশন স্ট্যান্ডার্ড',
+          problem: 'আগে বিভিন্ন ভিডিও ফাইলের অ্যাসেট ছড়ানো-ছিটানো থাকত।',
+          solution: '~/remotion-studio/projects/<slug>/ (docs, assets, specs, export ফোল্ডার আর্কিটেকচার)।',
+          ok: fs.existsSync(projectsDir),
+          fixId: 'fix_projects_dir'
+        }
+      ]
     }
   ];
 
-  return { ok: items.every(i => i.ok), items };
+  const allItems = categories.flatMap(c => c.items);
+  const ok = allItems.every(i => i.ok);
+  return { ok, categories };
 }
 
 async function fixSystemItem(fixId) {

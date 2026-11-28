@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Remotion Studio Live System Audit & Auto-Fix</title>
+  <title>Remotion Studio System Readiness & Live Auto-Fix</title>
   <style>
     :root {
       --bg: #090d16;
@@ -27,7 +27,7 @@
       padding: 16px 10px;
     }
     .wrap {
-      max-width: 1000px;
+      max-width: 1040px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
@@ -37,16 +37,16 @@
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 16px;
+      padding: 18px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 14px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     }
     .brand h1 {
-      font-size: 18px;
+      font-size: 19px;
       font-weight: 700;
       color: var(--accent);
       display: flex;
@@ -89,65 +89,127 @@
       border-color: var(--accent);
       color: var(--accent);
     }
-    .audit-card {
+    .btn-recheck {
+      background: var(--accent);
+      color: #090d16;
+      font-weight: 700;
+      font-size: 13px;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .cat-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    }
+    .cat-header {
+      background: rgba(30, 41, 59, 0.5);
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .cat-title {
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .cat-badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .item-list {
+      padding: 14px 18px;
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
-    .audit-row {
+    .audit-item {
       display: grid;
       grid-template-columns: 28px 1fr auto;
       gap: 12px;
-      align-items: center;
+      align-items: flex-start;
       padding: 12px;
-      background: rgba(15, 23, 42, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.04);
       border-radius: 10px;
     }
-    @media (max-width: 600px) {
-      .audit-row {
+    @media (max-width: 680px) {
+      body { padding: 10px 8px; }
+      header {
+        padding: 14px;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .audit-item {
         grid-template-columns: 24px 1fr;
+        gap: 10px;
       }
       .action-col {
         grid-column: span 2;
         display: flex;
         justify-content: flex-end;
-        margin-top: 6px;
+        margin-top: 4px;
       }
     }
     .status-icon {
-      font-size: 20px;
+      font-size: 18px;
       line-height: 1;
+      margin-top: 2px;
     }
-    .row-info h4 {
+    .item-content h4 {
       font-size: 14px;
       font-weight: 600;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
       color: #e2e8f0;
     }
-    .row-info p {
+    .item-content p {
       font-size: 12px;
       color: var(--muted);
-      line-height: 1.4;
+      margin-bottom: 6px;
+    }
+    .item-solution {
+      font-size: 12px;
+      background: rgba(15, 23, 42, 0.6);
+      border-left: 3px solid var(--accent-green);
+      padding: 5px 9px;
+      border-radius: 0 6px 6px 0;
+      color: #cbd5e1;
+    }
+    .item-solution.err {
+      border-left-color: var(--accent-rose);
+      color: #fecdd3;
     }
     .btn-fix {
       background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
       color: #fff;
       font-weight: 700;
-      font-size: 12px;
+      font-size: 11px;
       border: none;
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 6px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
       box-shadow: 0 2px 10px rgba(244, 63, 94, 0.3);
-      transition: opacity 0.2s;
+      white-space: nowrap;
     }
     .btn-fix:hover { opacity: 0.9; }
     .badge-ok {
@@ -160,30 +222,17 @@
       border-radius: 12px;
       white-space: nowrap;
     }
-    .btn-recheck {
-      background: var(--accent);
-      color: #090d16;
-      font-weight: 700;
-      font-size: 13px;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <div class="brand">
-        <h1>🛡️ লাইভ সিস্টেম অডিট ও অটো-ফিক্স</h1>
-        <p style="font-size: 12px; color: var(--muted);">টারমাক্স ব্যাকগ্রাউন্ড রিয়েল-টাইম চেক এবং অটোমেটিক গিটহাব রিপেয়ার</p>
+        <h1>🛡️ Remotion Studio System Readiness & Live Auto-Fix</h1>
+        <p style="font-size: 12px; color: var(--muted); margin-top: 2px;">টারমাক্স পরিবেশ, হেডলেস ব্রাউজার, ফিক্সড সমস্যা ও ফুল ডিপেন্ডেন্সি লাইভ চেকার</p>
       </div>
       <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-        <span class="score-badge" id="overallBadge">🔄 চেকিং হচ্ছে...</span>
+        <span class="score-badge" id="overallBadge">🔄 স্ক্যান হচ্ছে...</span>
         <button class="btn-recheck" id="btnRecheck">🔄 Re-Check</button>
         <div class="nav-links">
           <a href="/video-workflow-mindmap.html" class="btn">🗺️ Mindmap</a>
@@ -192,39 +241,31 @@
       </div>
     </header>
 
-    <div class="audit-card">
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
-        <span style="font-size: 14px; font-weight: 600; color: var(--accent);">কোর ডিপেন্ডেন্সি ও আর্কিটেকচার হেলথ</span>
-        <span style="font-size: 11px; color: var(--muted);" id="lastCheckTime">Last checked: Just now</span>
-      </div>
-      <div id="auditList" style="display: flex; flex-direction: column; gap: 10px;">
-        <!-- Dynamic audit rows -->
-      </div>
+    <div id="categoriesContainer" style="display: flex; flex-direction: column; gap: 16px;">
+      <!-- Dynamic 5 Categories Rendered Here -->
     </div>
   </div>
 
   <script>
-    const auditList = document.getElementById('auditList');
+    const container = document.getElementById('categoriesContainer');
     const overallBadge = document.getElementById('overallBadge');
-    const lastCheckTime = document.getElementById('lastCheckTime');
     const btnRecheck = document.getElementById('btnRecheck');
 
     async function runAudit() {
       overallBadge.className = 'score-badge';
-      overallBadge.textContent = '🔄 চেকিং হচ্ছে...';
-      auditList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--muted);">অডিট চলছে, অনুগ্রহ করে অপেক্ষা করুন...</div>';
+      overallBadge.textContent = '🔄 স্ক্যান হচ্ছে...';
+      container.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--muted);">টারমাক্স আর্কিটেকচার ও ডিপেন্ডেন্সি স্ক্যান চলছে...</div>';
 
       try {
         const res = await fetch('/api/audit');
         const data = await res.json();
-        renderItems(data);
+        renderAudit(data);
       } catch (err) {
-        auditList.innerHTML = `<div style="padding: 20px; color: #f43f5e; text-align: center;">অডিট সার্ভার সংযোগে সমস্যা: ${err.message}</div>`;
+        container.innerHTML = `<div style="padding: 20px; color: #f43f5e; text-align: center;">অডিট সার্ভার সংযোগে সমস্যা: ${err.message}</div>`;
       }
     }
 
-    function renderItems(data) {
-      lastCheckTime.textContent = 'Last checked: ' + new Date().toLocaleTimeString();
+    function renderAudit(data) {
       if (data.ok) {
         overallBadge.className = 'score-badge';
         overallBadge.textContent = '✓ 100% PRODUCTION READY';
@@ -233,18 +274,34 @@
         overallBadge.textContent = '⚠️ সমস্যা পাওয়া গেছে (Fix Needed)';
       }
 
-      auditList.innerHTML = data.items.map(item => `
-        <div class="audit-row">
-          <div class="status-icon">${item.ok ? '✅' : '❌'}</div>
-          <div class="row-info">
-            <h4>${item.title}</h4>
-            <p>${item.desc}</p>
+      container.innerHTML = data.categories.map(cat => `
+        <div class="cat-card">
+          <div class="cat-header">
+            <div class="cat-title">
+              <span>${cat.icon}</span>
+              <span>${cat.title}</span>
+            </div>
+            <span class="cat-badge">${cat.badge}</span>
           </div>
-          <div class="action-col">
-            ${item.ok 
-              ? `<span class="badge-ok">RESOLVED</span>` 
-              : `<button class="btn-fix" onclick="triggerFix('${item.fixId}', this)">🛠️ Fix Now</button>`
-            }
+          <div class="item-list">
+            ${cat.items.map(item => `
+              <div class="audit-item">
+                <div class="status-icon">${item.ok ? '✅' : '❌'}</div>
+                <div class="item-content">
+                  <h4>${item.title}</h4>
+                  <p><strong>আগের সমস্যা:</strong> ${item.problem}</p>
+                  <div class="item-solution ${item.ok ? '' : 'err'}">
+                    <strong>${item.ok ? 'সমাধান:' : 'বর্তমান অবস্থা:'}</strong> ${item.solution}
+                  </div>
+                </div>
+                <div class="action-col">
+                  ${item.ok 
+                    ? `<span class="badge-ok">RESOLVED</span>` 
+                    : `<button class="btn-fix" onclick="triggerFix('${item.fixId}', this)">🛠️ Fix Now</button>`
+                  }
+                </div>
+              </div>
+            `).join('')}
           </div>
         </div>
       `).join('');
