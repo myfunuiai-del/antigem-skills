@@ -586,10 +586,10 @@
           optional: false,
           y: 334,
           points: [
-            'আগের ৬.১ ও ৬.২ একীভূত: একই src/scene.html-এ Frame-Pure Math (কোনো CSS @keyframes নয়), spring physics, BG/MID/FG প্যারালাক্স, Ken Burns ব্রিদিং ও window.readyPromise ইমেজ গার্ড।',
-            'সাথে অফলাইন HindSiliguriFixed @font-face + await document.fonts.ready, .srt ওয়ার্ড-বাই-ওয়ার্ড কাইনেটিক ক্যাপশন ও ৫% ফিল্ম গ্রেইন!'
+            'কোর মোশন লজিক ইন্টিগ্রেটেড: bm-typography ([শব্দ] -> অটো স্প্রিং স্কেল, গ্লো ও SVG স্ক্রিবল), camera-shake (সাউন্ড বিট ড্রপে ক্যামেরা কিক) এবং device-mockup (৩ডি ফোন/ল্যাপটপ স্ক্রোল ও পপ কার্ড)।',
+            'Frame-Pure Math (কোনো CSS @keyframes নয়), BG/MID/FG প্যারালাক্স, অফলাইন HindSiliguriFixed ফন্ট এবং এন্টি-বোরডম লেআউট ভ্যারাইটি!'
           ],
-          prompt: 'project/style-bible.json, project/storyboard.json ও project/assets-map.json পড়ে remotion-video-studio-এর src/scene.html-এ পুরো সিনেমাটিক অ্যানিমেশন ও ক্যাপশন একসাথে কোড করো।\nকঠোর টেকনিক্যাল নিয়ম (Negative Constraints):\n১) Frame-Pure Math: কখনোই CSS @keyframes, CSS transition বা setTimeout ব্যবহার করবে না—১০০% অ্যানিমেশন গাণিতিকভাবে শুধু window.setFrame(frame) দিয়ে চলবে!\n২) মোশন কোয়ালিটি: সব এন্ট্রান্স ও কাট (Hard/Match/Speed Ramp)-এ spring physics (overshoot & settle) বা cubic-bezier ব্যবহার করো (কোনো linear lerp নয়), BG/MID/FG-তে Z-depth প্যারালাক্স ও হালকা Ken Burns ক্যামেরা ব্রিদিং দাও।\n৩) অফলাইন বাংলা ফন্ট ও ইমেজ গার্ড: ~/remotion-studio/fonts/ ফোল্ডারের HindSiliguriFixed-{Regular,SemiBold,Bold}.ttf @font-face দিয়ে লোড করো এবং window.readyPromise রাখো যাতে document.fonts.ready ও সব img.complete হওয়ার আগে কোনো ফ্রেম রেন্ডার না হয়।\n৪) ফিনিশিং: .srt অনুযায়ী safeZones-এর ভেতরে ওয়ার্ড-বাই-ওয়ার্ড হাইলাইটেড ক্যাপশন এবং পুরো ক্যানভাসে ৫% frame-driven ফিল্ম গ্রেইন ও ভিনিয়েট যোগ করো।',
+          prompt: 'project/style-bible.json, project/storyboard.json ও project/assets-map.json পড়ে remotion-video-studio-এর src/scene.html-এ পুরো সিনেমাটিক অ্যানিমেশন ও ক্যাপশন একসাথে কোড করো।\nকোর মোশন ও টেকনিক্যাল নিয়ম:\n১) টোকেন সেভার কাইনেটিক ব্র্যাকেট: স্ক্রিপ্টের মূল শব্দগুলোতে [ব্র্যাকেট] ব্যবহার করো (bm-typography.js)—স্বয়ংক্রিয়ভাবে স্প্রিং স্কেল, নিওন গ্লো ও SVG স্ক্রিবল রেন্ডার হবে (অপ্রয়োজনীয় কোড লিখতে হবে না)।\n২) সাউন্ড-ড্রিভেন ক্যামেরা শেক: সাউন্ড ড্রপ বা ইমপ্যাক্ট ফ্রেমে camera-shake.js ট্রিগার করো (ফিজিক্যাল স্প্রিং ড্যাম্পেনিং)। তবে শান্ত সিন হলে শেক বন্ধ রাখবে (Context-Aware)।\n৩) স্মার্ট ৩ডি মকআপ: কোনো অ্যাপ/ওয়েব স্ক্রিনশট থাকলে device-mockup.js দিয়ে ৩ডি টিল্ট ও অটো-স্ক্রোল ফ্রেম আনবে।\n৪) Frame-Pure Math: কোনো CSS @keyframes নয়—সব মুভমেন্ট window.setFrame(frame) দিয়ে চলবে।\n৫) অফলাইন বাংলা ফন্ট: fonts/HindSiliguriFixed-{Regular,SemiBold,Bold}.ttf ও document.fonts.ready নিশ্চিত করে রেন্ডার করবে।',
           children: []
         },
         {
