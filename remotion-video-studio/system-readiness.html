@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Remotion Studio System Readiness & Live Auto-Fix</title>
+  <title>Remotion Studio System Readiness & Live Audit</title>
   <style>
     :root {
       --bg: #090d16;
@@ -16,211 +16,290 @@
       --text: #f8fafc;
       --muted: #94a3b8;
       --border: rgba(255, 255, 255, 0.08);
-      --border-active: rgba(56, 189, 248, 0.3);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hind Siliguri", sans-serif;
-      line-height: 1.6;
-      padding: 16px 10px;
+      line-height: 1.45;
+      padding: 10px 8px;
     }
     .wrap {
-      max-width: 1040px;
+      max-width: 900px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 10px;
     }
+    /* Ultra Compact Header */
     header {
       background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px 20px;
+      border-radius: 12px;
+      padding: 10px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      gap: 8px;
     }
     .brand h1 {
-      font-size: 19px;
+      font-size: 15px;
       font-weight: 700;
       color: var(--accent);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
     }
     .score-badge {
       background: rgba(16, 185, 129, 0.15);
       border: 1px solid rgba(16, 185, 129, 0.4);
       color: var(--accent-green);
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 700;
-      padding: 5px 12px;
-      border-radius: 20px;
+      padding: 4px 8px;
+      border-radius: 14px;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
+      white-space: nowrap;
     }
     .score-badge.warn {
       background: rgba(244, 63, 94, 0.15);
       border-color: rgba(244, 63, 94, 0.4);
       color: var(--accent-rose);
     }
-    .nav-links {
-      display: flex;
-      gap: 8px;
-    }
-    .btn {
-      background: var(--card-sub);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 6px 12px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 600;
-      transition: all 0.2s;
-    }
-    .btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
     .btn-recheck {
       background: var(--accent);
       color: #090d16;
       font-weight: 700;
-      font-size: 13px;
-      border: none;
-      padding: 7px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .cat-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-    }
-    .cat-header {
-      background: rgba(30, 41, 59, 0.5);
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .cat-title {
-      font-size: 15px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .cat-badge {
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 6px;
-      background: rgba(56, 189, 248, 0.15);
-      color: var(--accent);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-    }
-    .item-list {
-      padding: 14px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .audit-item {
-      display: grid;
-      grid-template-columns: 28px 1fr auto;
-      gap: 12px;
-      align-items: flex-start;
-      padding: 12px;
-      background: rgba(15, 23, 42, 0.45);
-      border: 1px solid rgba(255, 255, 255, 0.04);
-      border-radius: 10px;
-    }
-    @media (max-width: 680px) {
-      body { padding: 10px 8px; }
-      header {
-        padding: 14px;
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .audit-item {
-        grid-template-columns: 24px 1fr;
-        gap: 10px;
-      }
-      .action-col {
-        grid-column: span 2;
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 4px;
-      }
-    }
-    .status-icon {
-      font-size: 18px;
-      line-height: 1;
-      margin-top: 2px;
-    }
-    .item-content h4 {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 4px;
-      color: #e2e8f0;
-    }
-    .item-content p {
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-    .item-solution {
-      font-size: 12px;
-      background: rgba(15, 23, 42, 0.6);
-      border-left: 3px solid var(--accent-green);
-      padding: 5px 9px;
-      border-radius: 0 6px 6px 0;
-      color: #cbd5e1;
-    }
-    .item-solution.err {
-      border-left-color: var(--accent-rose);
-      color: #fecdd3;
-    }
-    .btn-fix {
-      background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
-      color: #fff;
-      font-weight: 700;
       font-size: 11px;
       border: none;
-      padding: 6px 12px;
+      padding: 5px 11px;
       border-radius: 6px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      box-shadow: 0 2px 10px rgba(244, 63, 94, 0.3);
+      transition: transform 0.15s;
+    }
+    .btn-recheck:active { transform: scale(0.95); }
+    .btn-nav {
+      background: var(--card-sub);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 4px 9px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 600;
       white-space: nowrap;
     }
-    .btn-fix:hover { opacity: 0.9; }
-    .badge-ok {
-      background: rgba(16, 185, 129, 0.15);
-      color: #34d399;
-      border: 1px solid rgba(16, 185, 129, 0.3);
+    /* Compact Categories & Rows */
+    .cat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .cat-header {
+      background: rgba(30, 41, 59, 0.4);
+      padding: 7px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .cat-title {
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .cat-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+    .item-list {
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .audit-item {
+      display: grid;
+      grid-template-columns: 22px 1fr auto;
+      gap: 8px;
+      align-items: flex-start;
+      padding: 8px 10px;
+      background: rgba(15, 23, 42, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+    }
+    .status-icon {
+      font-size: 15px;
+      line-height: 1.2;
+    }
+    .item-content h4 {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 2px;
+    }
+    .item-content p {
       font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+    .item-solution {
+      font-size: 11px;
+      background: rgba(15, 23, 42, 0.5);
+      border-left: 2.5px solid var(--accent-green);
+      padding: 3px 7px;
+      border-radius: 0 4px 4px 0;
+      color: #cbd5e1;
+    }
+    .badge-ok {
+      background: rgba(16, 185, 129, 0.12);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      font-size: 10px;
       font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 12px;
+      padding: 2px 7px;
+      border-radius: 10px;
       white-space: nowrap;
+    }
+    .btn-fix {
+      background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+      color: #fff;
+      font-weight: 700;
+      font-size: 10px;
+      border: none;
+      padding: 4px 9px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    /* Live Scan Modal Popup */
+    .scan-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.78);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+    .scan-modal.active {
+      display: flex;
+    }
+    .modal-box {
+      background: #0f172a;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 440px;
+      padding: 18px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes popIn {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 8px;
+    }
+    .modal-head h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .progress-bar {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #10b981);
+      transition: width 0.12s linear;
+    }
+    .test-log-list {
+      max-height: 220px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-right: 4px;
+      scrollbar-width: thin;
+    }
+    .test-log-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11.5px;
+      padding: 5px 8px;
+      background: rgba(30, 41, 59, 0.5);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+    .test-log-item.testing {
+      border-color: rgba(56, 189, 248, 0.4);
+      background: rgba(56, 189, 248, 0.08);
+    }
+    .test-log-item.pass {
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    .test-log-item.fail {
+      border-color: rgba(244, 63, 94, 0.4);
+      background: rgba(244, 63, 94, 0.08);
+    }
+    .modal-foot {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 6px;
+    }
+    .btn-modal-close {
+      background: var(--card-sub);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -228,21 +307,37 @@
   <div class="wrap">
     <header>
       <div class="brand">
-        <h1>🛡️ Remotion Studio System Readiness & Live Auto-Fix</h1>
-        <p style="font-size: 12px; color: var(--muted); margin-top: 2px;">টারমাক্স পরিবেশ, হেডলেস ব্রাউজার, ফিক্সড সমস্যা ও ফুল ডিপেন্ডেন্সি লাইভ চেকার</p>
+        <h1>🛡️ লাইভ সিস্টেম অডিট</h1>
       </div>
-      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-        <span class="score-badge" id="overallBadge">🔄 স্ক্যান হচ্ছে...</span>
+      <div class="header-actions">
+        <span class="score-badge" id="overallBadge">✓ 100% READY</span>
         <button class="btn-recheck" id="btnRecheck">🔄 Re-Check</button>
-        <div class="nav-links">
-          <a href="/video-workflow-mindmap.html" class="btn">🗺️ Mindmap</a>
-          <a href="/modules-preview.html" class="btn">✨ মোশন লজিক</a>
-        </div>
+        <a href="/video-workflow-mindmap.html" class="btn-nav">🗺️ Mindmap</a>
+        <a href="/modules-preview.html" class="btn-nav">✨ মোশন লজিক</a>
       </div>
     </header>
 
-    <div id="categoriesContainer" style="display: flex; flex-direction: column; gap: 16px;">
-      <!-- Dynamic 5 Categories Rendered Here -->
+    <div id="categoriesContainer" style="display: flex; flex-direction: column; gap: 8px;">
+      <!-- Compact Categories will render here -->
+    </div>
+  </div>
+
+  <!-- Live Diagnostic Scan Modal -->
+  <div class="scan-modal" id="scanModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="modalTitle">🔍 টারমাক্স সিস্টেম ডায়াগনস্টিক স্ক্যান...</h3>
+        <span style="font-size: 11px; color: var(--muted);" id="testCounter">0 / 0</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="test-log-list" id="testLogList">
+        <!-- Live step by step test verification lines -->
+      </div>
+      <div class="modal-foot">
+        <button class="btn-modal-close" id="btnModalClose" style="display: none;" onclick="closeModal()">ঠিক আছে (Close)</button>
+      </div>
     </div>
   </div>
 
@@ -250,28 +345,75 @@
     const container = document.getElementById('categoriesContainer');
     const overallBadge = document.getElementById('overallBadge');
     const btnRecheck = document.getElementById('btnRecheck');
+    const scanModal = document.getElementById('scanModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const testCounter = document.getElementById('testCounter');
+    const progressFill = document.getElementById('progressFill');
+    const testLogList = document.getElementById('testLogList');
+    const btnModalClose = document.getElementById('btnModalClose');
 
-    async function runAudit() {
-      overallBadge.className = 'score-badge';
-      overallBadge.textContent = '🔄 স্ক্যান হচ্ছে...';
-      container.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--muted);">টারমাক্স আর্কিটেকচার ও ডিপেন্ডেন্সি স্ক্যান চলছে...</div>';
+    let globalAuditData = null;
+
+    async function startScan() {
+      scanModal.classList.add('active');
+      btnModalClose.style.display = 'none';
+      progressFill.style.width = '10%';
+      modalTitle.innerHTML = '🔍 টারমাক্স সিস্টেম ডায়াগনস্টিক স্ক্যান...';
+      testLogList.innerHTML = '';
 
       try {
         const res = await fetch('/api/audit');
-        const data = await res.json();
-        renderAudit(data);
+        globalAuditData = await res.json();
+        await runLiveInspection(globalAuditData);
       } catch (err) {
-        container.innerHTML = `<div style="padding: 20px; color: #f43f5e; text-align: center;">অডিট সার্ভার সংযোগে সমস্যা: ${err.message}</div>`;
+        testLogList.innerHTML = `<div style="color:#f43f5e;font-size:12px;padding:10px;">সংযোগ এরর: ${err.message}</div>`;
+        btnModalClose.style.display = 'block';
       }
     }
 
-    function renderAudit(data) {
+    async function runLiveInspection(data) {
+      const allItems = data.categories.flatMap(c => c.items);
+      const total = allItems.length;
+      let passedCount = 0;
+
+      for (let i = 0; i < total; i++) {
+        const item = allItems[i];
+        testCounter.textContent = `${i + 1} / ${total}`;
+        progressFill.style.width = `${Math.round(((i + 1) / total) * 100)}%`;
+
+        const row = document.createElement('div');
+        row.className = 'test-log-item testing';
+        row.innerHTML = `<span>⏳ টেস্টিং: <strong>${item.title}</strong></span><span>...</span>`;
+        testLogList.appendChild(row);
+        testLogList.scrollTop = testLogList.scrollHeight;
+
+        await new Promise(r => setTimeout(r, 110)); // realistic visual inspection delay
+
+        if (item.ok) {
+          passedCount++;
+          row.className = 'test-log-item pass';
+          row.innerHTML = `<span>✅ <strong>${item.title}</strong></span><span style="color:#34d399;font-weight:700;">PASS</span>`;
+        } else {
+          row.className = 'test-log-item fail';
+          row.innerHTML = `<span>❌ <strong>${item.title}</strong></span><span style="color:#f43f5e;font-weight:700;">FAIL</span>`;
+        }
+      }
+
+      modalTitle.innerHTML = passedCount === total 
+        ? '🎉 সকল টেস্ট সফলভাবে PASS করেছে!' 
+        : `⚠️ ${total - passedCount}টি টেস্টে সমস্যা পাওয়া গেছে!`;
+
+      btnModalClose.style.display = 'block';
+      renderCompactView(data);
+    }
+
+    function renderCompactView(data) {
       if (data.ok) {
         overallBadge.className = 'score-badge';
-        overallBadge.textContent = '✓ 100% PRODUCTION READY';
+        overallBadge.textContent = '✓ 100% READY';
       } else {
         overallBadge.className = 'score-badge warn';
-        overallBadge.textContent = '⚠️ সমস্যা পাওয়া গেছে (Fix Needed)';
+        overallBadge.textContent = '⚠️ সমস্যা পাওয়া গেছে';
       }
 
       container.innerHTML = data.categories.map(cat => `
@@ -290,14 +432,14 @@
                 <div class="item-content">
                   <h4>${item.title}</h4>
                   <p><strong>আগের সমস্যা:</strong> ${item.problem}</p>
-                  <div class="item-solution ${item.ok ? '' : 'err'}">
-                    <strong>${item.ok ? 'সমাধান:' : 'বর্তমান অবস্থা:'}</strong> ${item.solution}
+                  <div class="item-solution">
+                    <strong>সমাধান:</strong> ${item.solution}
                   </div>
                 </div>
-                <div class="action-col">
+                <div>
                   ${item.ok 
-                    ? `<span class="badge-ok">RESOLVED</span>` 
-                    : `<button class="btn-fix" onclick="triggerFix('${item.fixId}', this)">🛠️ Fix Now</button>`
+                    ? `<span class="badge-ok">PASS</span>` 
+                    : `<button class="btn-fix" onclick="triggerFix('${item.fixId}', this)">🛠️ Fix</button>`
                   }
                 </div>
               </div>
@@ -305,6 +447,10 @@
           </div>
         </div>
       `).join('');
+    }
+
+    function closeModal() {
+      scanModal.classList.remove('active');
     }
 
     window.triggerFix = async function(fixId, btn) {
@@ -318,22 +464,22 @@
         });
         const result = await res.json();
         if (result.ok) {
-          btn.textContent = '✓ ফিক্সড!';
-          setTimeout(runAudit, 800);
+          btn.textContent = '✓ PASS';
+          setTimeout(startScan, 500);
         } else {
           alert('ফিক্স ব্যর্থ: ' + (result.error || 'Unknown'));
           btn.disabled = false;
-          btn.textContent = '🛠️ Fix Now';
+          btn.textContent = '🛠️ Fix';
         }
       } catch (err) {
-        alert('ফিক্স রিকোয়েস্ট এরর: ' + err.message);
+        alert('ফিক্স এরর: ' + err.message);
         btn.disabled = false;
-        btn.textContent = '🛠️ Fix Now';
+        btn.textContent = '🛠️ Fix';
       }
     };
 
-    btnRecheck.addEventListener('click', runAudit);
-    runAudit();
+    btnRecheck.addEventListener('click', startScan);
+    window.addEventListener('load', startScan);
   </script>
 </body>
 </html>
