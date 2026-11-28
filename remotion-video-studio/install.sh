@@ -72,7 +72,7 @@ if [ ! -f "package.json" ]; then
   node -e 'const fs=require("fs");const p=JSON.parse(fs.readFileSync("package.json","utf8"));p.type="module";fs.writeFileSync("package.json",JSON.stringify(p,null,2)+"\n");'
 fi
 
-pnpm add remotion @remotion/cli @remotion/renderer @remotion/bundler puppeteer-core react react-dom
+pnpm add remotion @remotion/cli @remotion/renderer @remotion/bundler react react-dom
 
 echo "==> [4/6] Setting up native ARM64 @remotion/renderer compositor binaries..."
 REMOTION_VER="$(node -p "require('./node_modules/remotion/package.json').version")"
