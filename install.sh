@@ -151,14 +151,20 @@ if [ "$SEL_IMG" = true ] && [ ! -f "$TESS_DIR/ben.traineddata" ] && command -v c
 fi
 
 # Deploy Skills
+deploy_skill_dirs() {
+    local target_dir="$1"
+    mkdir -p "$target_dir"
+    cp -r "$SCRIPT_DIR/skills/"* "$target_dir/"
+    [ -d "$SCRIPT_DIR/remotion-video-studio" ] && cp -r "$SCRIPT_DIR/remotion-video-studio" "$target_dir/"
+    [ -d "$SCRIPT_DIR/animation-styles" ] && cp -r "$SCRIPT_DIR/animation-styles" "$target_dir/"
+}
+
 if [ -d "$HOME/.gemini" ]; then
-    mkdir -p "$HOME/.gemini/config/skills"
-    cp -r "$SCRIPT_DIR/skills/"* "$HOME/.gemini/config/skills/"
-    echo "  [✓] Deployed skills to AntiGem"
+    deploy_skill_dirs "$HOME/.gemini/config/skills"
+    echo "  [✓] Deployed skills (including Remotion Studio & Animation Styles) to AntiGem"
 fi
 if [ -d "$HOME/.claude" ]; then
-    mkdir -p "$HOME/.claude/skills"
-    cp -r "$SCRIPT_DIR/skills/"* "$HOME/.claude/skills/"
+    deploy_skill_dirs "$HOME/.claude/skills"
     echo "  [✓] Deployed skills to Claude Code"
 fi
 

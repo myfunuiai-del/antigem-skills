@@ -1,3 +1,9 @@
 # Rust build artifacts
 tools/*/target/
+tools/target/
 Cargo.lock
+
+# Python cache
+**/__pycache__/
+*.py[cod]
+
