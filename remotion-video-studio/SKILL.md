@@ -59,3 +59,14 @@ Located at `animation-assets/modules/` (deployed directly to `$HOME/remotion-stu
 - **Context Filtering Rule:** Only trigger kinetic text/camera shake when the narrative context demands it (action/impact/promo). Keep calm in emotional/nature scenes.
 - **Interactive Visualizer:** Accessible live via `http://127.0.0.1:4173/modules-preview.html`.
 
+
+## Project Workspace & Asset Container Rule (Mandatory Standard)
+Whenever creating or processing a video project, ALWAYS isolate everything into a dedicated project folder:
+- **Project Path:** `$HOME/remotion-studio/projects/<project-slug>/`
+- **Standard Folder Hierarchy:**
+  - `docs/`: `VIDEO.md` (REA blueprint), `audio.md` (voice/sound spec), `script.md` ([bracket] kinetic script).
+  - `assets/`: `characters/` (hero/puppet rigs), `scenes/` (backgrounds/SVGs), `audio/` (voice, srt, bgm, sfx).
+  - `specs/`: `storyboard.json` (beat syncs), `motion-logic.json` (bracket keywords, shake keyframes, mockups).
+  - `export/`: `<project-slug>.mp4` (final rendered master video) + `poster.png`.
+- **System Sync:** Files required by studio runtime (`src/scene.html`, `rigs/`, `animation-assets/`) will be copied automatically as per execution rules.
+- **Completion Output:** At the end of every workflow, ALWAYS provide clickable markdown links (`file://`) to both the project container directory and the exported `.mp4` file.
