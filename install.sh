@@ -125,6 +125,23 @@ if [ -d "$SCRIPT_DIR/bin" ]; then
     echo "  [✓] Deployed binaries to $BIN_TARGET"
 fi
 
+# Configure headless Chromium & WebGL if Chromium is present
+if [ -x "$BIN_TARGET/chromium-browser" ]; then
+    [ ! -e "$BIN_TARGET/chromium" ] && ln -sf chromium-browser "$BIN_TARGET/chromium"
+    PREFIX_BASE="${PREFIX:-/data/user/0/ai.antigem/files/usr}"
+    mkdir -p "$PREFIX_BASE/etc/chromium"
+    cat > "$PREFIX_BASE/etc/chromium/default.conf" << 'EOF'
+# Termux default Chromium flags:
+# - --no-sandbox --disable-dev-shm-usage: prevent Android sandbox & /dev/shm crashes
+# - Mesa Zink (--use-gl=angle --use-angle=gl-egl): fix WebGL/Three.js Context Lost in Termux
+# - LP_NUM_THREADS=2: limit llvmpipe CPU threads to reduce phone heating
+export LIBGL_ALWAYS_SOFTWARE=1
+export LP_NUM_THREADS="${LP_NUM_THREADS:-2}"
+CHROMIUM_FLAGS="--no-sandbox --disable-dev-shm-usage --use-gl=angle --use-angle=gl-egl --ignore-gpu-blocklist"
+EOF
+    echo "  [✓] Configured headless Chromium flags & symlink in $PREFIX_BASE/etc/chromium"
+fi
+
 # Download Bengali OCR traineddata if Image Organizer [2] is selected
 TESS_DIR="${PREFIX:-/data/user/0/ai.antigem/files/usr}/share/tessdata"
 if [ "$SEL_IMG" = true ] && [ ! -f "$TESS_DIR/ben.traineddata" ] && command -v curl >/dev/null 2>&1; then

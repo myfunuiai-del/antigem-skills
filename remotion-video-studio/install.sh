@@ -31,6 +31,22 @@ if command -v pkg >/dev/null 2>&1; then
     apt-get install "${APT_OPTS[@]}" "${MISSING_PKGS[@]}"
   fi
 
+  # Setup Chromium symlink & default flags for headless / Three.js / WebGL
+  if [ -x "$PREFIX_DIR/bin/chromium-browser" ]; then
+    [ ! -e "$PREFIX_DIR/bin/chromium" ] && ln -sf chromium-browser "$PREFIX_DIR/bin/chromium"
+    mkdir -p "$PREFIX_DIR/etc/chromium"
+    cat > "$PREFIX_DIR/etc/chromium/default.conf" << 'EOF'
+# Termux default Chromium flags:
+# - --no-sandbox --disable-dev-shm-usage: prevent Android sandbox & /dev/shm crashes
+# - Mesa Zink (--use-gl=angle --use-angle=gl-egl): fix WebGL/Three.js Context Lost in Termux
+# - LP_NUM_THREADS=2: limit llvmpipe CPU threads to reduce phone heating
+export LIBGL_ALWAYS_SOFTWARE=1
+export LP_NUM_THREADS="${LP_NUM_THREADS:-2}"
+CHROMIUM_FLAGS="--no-sandbox --disable-dev-shm-usage --use-gl=angle --use-angle=gl-egl --ignore-gpu-blocklist"
+EOF
+    echo "  [✓] Configured headless Chromium flags (default.conf) and symlink."
+  fi
+
   if [ ! -x "$LD_LINUX" ]; then
     echo "==> [2/6] Installing glibc-repo & glibc-runner (for native @remotion/renderer)..."
     if [ ! -f "$PREFIX_DIR/etc/apt/sources.list.d/glibc.list" ]; then
