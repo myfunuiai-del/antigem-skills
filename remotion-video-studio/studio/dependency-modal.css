@@ -103,6 +103,16 @@
   gap: 15px;
 }
 
+/* Visual Section Card Separation */
+.dep-card-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 .dep-sec-label {
   font-size: 0.78rem;
   font-weight: 600;
@@ -113,8 +123,13 @@
 
 .dep-folder-row {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+.dep-folder-row .dep-input {
+  min-width: 0;
+  flex: 1;
 }
 .dep-pick-btn {
   display: inline-flex;
@@ -291,60 +306,69 @@
   line-height: 1.5;
 }
 
-/* Auto-Detected File Checklist */
+/* Clean Compact Scrollable Text List for Files */
 .dep-checklist {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  max-height: 116px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
-@media (max-width: 500px) {
-  .dep-checklist { grid-template-columns: 1fr; }
+.dep-checklist::-webkit-scrollbar {
+  width: 4px;
+}
+.dep-checklist::-webkit-scrollbar-thumb {
+  background: #3f4758;
+  border-radius: 4px;
 }
 .dep-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 10px;
-  border-radius: 8px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  font-size: 0.78rem;
+  padding: 2px 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  font-size: 0.79rem;
   color: var(--muted);
-  cursor: pointer;
-  user-select: none;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  cursor: default;
+  user-select: text;
+  line-height: 1.4;
 }
 .dep-item .tick {
-  width: 18px;
-  height: 18px;
-  border-radius: 5px;
-  border: 1.5px solid #3f4758;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   font-weight: 700;
+  color: #4b5563;
+  width: 14px;
+  display: inline-block;
+  text-align: center;
   flex-shrink: 0;
-  color: transparent;
 }
 .dep-item.found {
-  border-color: rgba(34, 197, 94, 0.55);
-  background: rgba(34, 197, 94, 0.08);
-  color: #dcfce7;
+  color: #e2e8f0;
 }
 .dep-item.found .tick {
-  background: #22c55e;
-  border-color: #22c55e;
-  color: #052e16;
+  color: #22c55e;
 }
 .dep-item .file-meta {
-  font-size: 0.7rem;
-  color: #86efac;
+  font-size: 0.72rem;
+  color: #4ade80;
   margin-left: auto;
-  max-width: 115px;
+  max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.dep-item .file-hint {
+  font-size: 0.71rem;
+  color: #64748b;
+  margin-left: auto;
+  font-family: monospace;
 }
 
 /* Segmented Tabs & Chips */

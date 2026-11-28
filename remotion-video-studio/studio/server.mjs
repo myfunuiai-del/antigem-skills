@@ -17,6 +17,12 @@ const MIME = {
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.mp3': 'audio/mpeg',
+  '.wav': 'audio/wav',
+  '.m4a': 'audio/mp4',
   '.ttf': 'font/ttf',
 };
 
@@ -238,6 +244,65 @@ function scanDir(targetDir) {
   return result;
 }
 
+function listRigAssets() {
+  const archetypesDir = path.join(__dirname, 'rigs', 'archetypes');
+  const rigOutDir = path.join(__dirname, 'rigs', 'out');
+  const archetypes = [];
+  const videos = [];
+
+  if (fs.existsSync(archetypesDir)) {
+    for (const f of fs.readdirSync(archetypesDir).sort()) {
+      if (!f.endsWith('.r2d.json')) continue;
+      const full = path.join(archetypesDir, f);
+      try {
+        const m = JSON.parse(fs.readFileSync(full, 'utf8'));
+        const stem = f.replace(/\.r2d\.json$/, '');
+        const pngRel = `rigs/archetypes/out/${stem}.png`;
+        archetypes.push({
+          id: stem,
+          name: m.meta?.name || stem,
+          description: m.meta?.description || '',
+          bones: (m.bones || []).length,
+          ik: (m.ik || []).length,
+          physics: (m.physics || []).length,
+          animations: (m.animations || []).map(a => a.id),
+          hasMouth: (m.parameters || []).some(p => p.id === 'MouthOpen'),
+          previewPng: fs.existsSync(path.join(__dirname, pngRel)) ? `./${pngRel}` : null,
+        });
+      } catch {}
+    }
+  }
+
+  for (const dir of [rigOutDir, path.join(archetypesDir, 'out')]) {
+    if (!fs.existsSync(dir)) continue;
+    for (const f of fs.readdirSync(dir).sort()) {
+      if (!f.endsWith('.mp4')) continue;
+      const full = path.join(dir, f);
+      const rel = path.relative(__dirname, full).replace(/\\/g, '/');
+      const metaFile = full.replace(/\.mp4$/, '.meta.json');
+      let meta = {};
+      if (fs.existsSync(metaFile)) {
+        try { meta = JSON.parse(fs.readFileSync(metaFile, 'utf8')); } catch {}
+      }
+      const posterRel = rel.replace(/\.mp4$/, '.png');
+      videos.push({
+        file: f,
+        url: `./${rel}`,
+        poster: fs.existsSync(path.join(__dirname, posterRel)) ? `./${posterRel}` : null,
+        modelName: meta.modelName || f,
+        duration: meta.duration || null,
+        fps: meta.fps || 30,
+        layers: meta.layers || [],
+        hasAudio: Boolean(meta.hasAudio),
+        sizeKB: meta.sizeKB || Math.round(fs.statSync(full).size / 1024),
+        createdAt: meta.createdAt || null,
+      });
+    }
+  }
+  videos.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  return { archetypes, videos };
+}
+
 function listInstalledSkills() {
   try {
     return fs.readdirSync(SKILLS_DIR, { withFileTypes: true })
@@ -277,6 +342,9 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/api/skills') {
       return sendJson(res, 200, { skills: listInstalledSkills() });
     }
+    if (url.pathname === '/api/rigs') {
+      return sendJson(res, 200, listRigAssets());
+    }
     if (url.pathname === '/api/browse') {
       try { return sendJson(res, 200, browseDir(url.searchParams.get('dir') || '')); }
       catch (err) { return sendJson(res, 400, { error: err.message }); }
@@ -315,7 +383,30 @@ const server = http.createServer(async (req, res) => {
     }
 
     const ext = path.extname(fullPath).toLowerCase();
-    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+    const contentType = MIME[ext] || 'application/octet-stream';
+    const stat = fs.statSync(fullPath);
+    const range = req.headers.range;
+    if (range) {
+      const m = /^bytes=(\d*)-(\d*)$/.exec(range);
+      if (m) {
+        const start = m[1] ? parseInt(m[1], 10) : 0;
+        const end = m[2] ? parseInt(m[2], 10) : stat.size - 1;
+        if (start <= end && end < stat.size) {
+          res.writeHead(206, {
+            'Content-Range': `bytes ${start}-${end}/${stat.size}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': end - start + 1,
+            'Content-Type': contentType,
+          });
+          return fs.createReadStream(fullPath, { start, end }).pipe(res);
+        }
+      }
+    }
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Content-Length': stat.size,
+      'Accept-Ranges': 'bytes',
+    });
     fs.createReadStream(fullPath).pipe(res);
   } catch (err) {
     res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });

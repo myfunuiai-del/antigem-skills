@@ -77,11 +77,11 @@
     "prompt": "project/script.md-কে একটি প্রফেশনাল ভয়েসওভার ডিরেকশন শিটে রূপান্তর করো। আগে অপশন দিয়ে ভয়েস স্টাইল (Deep Dramatic / Friendly Storyteller / Fast Viral / Documentary) জেনে প্রতিটি লাইনের পাশে [Pause], [Emphasis], [Speed] ও [Tone Shift] মার্ক করে দাও।"
   },
   "art": {
-    "title": "৪. হাইব্রিড আর্ট ও অ্যাসেট",
+    "title": "৪. হাইব্রিড আর্ট ও মডিউলার SVG অ্যাসেট",
     "role": "Editorial Art Director",
-    "tool": "Hybrid + svg-gen",
+    "tool": "Modular SVG + Hybrid",
     "optional": false,
-    "prompt": "project/storyboard.json ও project/style-bible.json পড়ে project/assets-map.json তৈরি করো এবং মিসিং অ্যাসেটগুলো বানিয়ে নাও।\n১) ফোর্সড প্রশ্ন: শুরুতে অপশন দিয়ে জেনে নাও—আমার নিজস্ব কোন লিড ক্যারেক্টার (PNG/SVG) আছে, কোন সিনের ছবি আমার সংগ্রহে আছে, এবং মিসিং সিনগুলো svg-generator নাকি image-generator দিয়ে বানাব।\n২) কঠোর নিয়ম (Negative Constraints):\n- নিজস্ব লিড ক্যারেক্টার: কখনোই বদলাবে না—শুধু বাড়তি পোজ/এক্সপ্রেশন লাগলে হুবহু একই স্টাইলে এক্সট্রা বানাবে।\n- সংগৃহীত ছবি: AI দিয়ে রিপ্লেস করবে না; প্রয়োজনে ব্যাকগ্রাউন্ড মাস্কিং করে style-bible.json অনুযায়ী পেপার কাটআউট বর্ডার, শ্যাডো ও কালার গ্রেড দেবে।\n- মিসিং সিন: শুধু যেগুলো নেই সেগুলোর জন্য ৩টি আলাদা ট্রান্সপারেন্ট Z-Depth লেয়ার (BG, MID, FG) বানিয়ে সব পাথ project/assets-map.json-এ সেভ করবে।"
+    "prompt": "project/storyboard.json ও project/style-bible.json পড়ে project/assets-map.json তৈরি করো এবং প্রতিটি মিসিং সিনের জন্য আলাদা মডিউলার হাই-ডিটেইল অ্যাসেট বানাও।\n১) ফোর্সড প্রশ্ন: শুরুতে অপশন দিয়ে জেনে নাও—আমার নিজস্ব কোন লিড ক্যারেক্টার (PNG/SVG) আছে, কোন সিনের ছবি আমার সংগ্রহে আছে, এবং মিসিং সিনগুলো ক্লিন ভেক্টর SVG নাকি image-generator দিয়ে বানাব।\n২) কঠোর মডিউলার নিয়ম (Negative Constraints):\n- কখনোই এক ফাইলে সব সিনের ভেক্টর আর্ট গুঁজে দেবে না! প্রতিটি সিনের জন্য আলাদা ডেডিকেটেড `.svg` ফাইল (`assets/scene1.svg`..`sceneN.svg`) বানাবে (প্রয়োজনে প্যারালাল সাব-এজেন্ট চালিয়ে), যাতে রেফারেন্স-ম্যাচড প্রপোরশন, মাল্টি-স্টপ গ্রেডিয়েন্ট, রিম-লাইটিং, ব্যাকগ্রাউন্ড ডেপথ-ব্লার ও প্রতিটি অ্যানিমেটেবল অংশের জন্য আলাদা `<g id=\"...\">` গ্রুপ (`head`, `eyes`, `mouth`, `arms`, `bg-layer`, `fg-layer`) থাকে।\n- নিজস্ব লিড ক্যারেক্টার ও সংগৃহীত ছবি কখনো বদলাবে না—style-bible.json অনুযায়ী ব্লেন্ড করবে।\n- প্রতিটি সিনের অ্যাসেট PNG স্টিল রেন্ডার করে চোখে দেখে QC পাস করার পরই project/assets-map.json লক করবে।"
   },
   "art_map": {
     "title": "৪.১ রিয়েল GeoJSON ম্যাপ ও কোলাজ",
@@ -100,9 +100,9 @@
   "motion": {
     "title": "৬. সিনেমাটিক মোশন ও বাংলা ক্যাপশন",
     "role": "Motion & Finishing Engineer",
-    "tool": "React + SVG + Three.js",
+    "tool": "Modular SVG + Remotion",
     "optional": false,
-    "prompt": "project/style-bible.json, project/storyboard.json ও project/assets-map.json পড়ে remotion-video-studio-এর src/scene.html-এ পুরো সিনেমাটিক অ্যানিমেশন ও ক্যাপশন একসাথে কোড করো।\nকঠোর টেকনিক্যাল নিয়ম (Negative Constraints):\n১) Frame-Pure Math: কখনোই CSS @keyframes, CSS transition বা setTimeout ব্যবহার করবে না—১০০% অ্যানিমেশন গাণিতিকভাবে শুধু window.setFrame(frame) দিয়ে চলবে!\n২) মোশন কোয়ালিটি: সব এন্ট্রান্স ও কাট (Hard/Match/Speed Ramp)-এ spring physics (overshoot & settle) বা cubic-bezier ব্যবহার করো (কোনো linear lerp নয়), BG/MID/FG-তে Z-depth প্যারালাক্স ও হালকা Ken Burns ক্যামেরা ব্রিদিং দাও।\n৩) অফলাইন বাংলা ফন্ট ও ইমেজ গার্ড: ~/remotion-studio/fonts/ ফোল্ডারের HindSiliguriFixed-{Regular,SemiBold,Bold}.ttf @font-face দিয়ে লোড করো এবং window.readyPromise রাখো যাতে document.fonts.ready ও সব img.complete হওয়ার আগে কোনো ফ্রেম রেন্ডার না হয়।\n৪) ফিনিশিং: .srt অনুযায়ী safeZones-এর ভেতরে ওয়ার্ড-বাই-ওয়ার্ড হাইলাইটেড ক্যাপশন এবং পুরো ক্যানভাসে ৫% frame-driven ফিল্ম গ্রেইন ও ভিনিয়েট যোগ করো।"
+    "prompt": "project/style-bible.json, project/storyboard.json ও project/assets-map.json পড়ে remotion-video-studio-এর src/scene.html-এ প্রতিটি মডিউলার `assets/scene*.svg` মাউন্ট/ইনলাইন করে সত্যিকারের পার্ট-বাই-পার্ট সিনেমাটিক অ্যানিমেশন ও ক্যাপশন কোড করো।\nকঠোর টেকনিক্যাল নিয়ম (Negative Constraints):\n১) Frame-Pure Math: কখনোই CSS @keyframes, CSS transition বা setTimeout ব্যবহার করবে না—১০০% অ্যানিমেশন গাণিতিকভাবে শুধু window.setFrame(frame) দিয়ে চলবে!\n২) পার্ট-বাই-পার্ট লাইভ অ্যানিমেশন: শুধু জুম-প্যান স্লাইডশো নয়—প্রতিটি SVG-এর `<g id=\"...\">` লেয়ার আলাদাভাবে অ্যানিমেট করো (RMS অডিও লিপ-সিঙ্ক মাউথ, ন্যাচারাল আই-ব্লিঙ্ক, হাত/প্রপস নড়াচড়া, BG/MID/FG ডেপথ প্যারালাক্স এবং spring physics কাট/এন্ট্রান্স)।\n৩) অফলাইন বাংলা ফন্ট ও ইমেজ গার্ড: ~/remotion-studio/fonts/ ফোল্ডারের HindSiliguriFixed-{Regular,SemiBold,Bold}.ttf @font-face দিয়ে লোড করো এবং window.readyPromise রাখো যাতে document.fonts.ready ও সব অ্যাসেট লোড হওয়ার আগে কোনো ফ্রেম রেন্ডার না হয়।\n৪) ফিনিশিং: .srt অনুযায়ী safeZones-এর ভেতরে ওয়ার্ড-বাই-ওয়ার্ড হাইলাইটেড ক্যাপশন, ফ্লোটিং ডাস্ট পার্টিকেল এবং হালকা ভিনিয়েট যোগ করো।"
   },
   "qc_render": {
     "title": "৭. ৪-পয়েন্ট স্টিল QC → ফাইনাল রেন্ডার",
