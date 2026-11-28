@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import os from 'node:os';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.MKPROMPT_PORT || 4173);
@@ -329,6 +330,126 @@ function saveStoryToFile(targetDir, storyText) {
   return { path: fullPath, fileName, bytes: Buffer.byteLength(storyText, 'utf-8') };
 }
 
+
+function auditSystemItems() {
+  const prefix = process.env.PREFIX || '/data/user/0/ai.antigem/files/usr';
+  const home = os.homedir();
+  const confPath = path.join(prefix, 'etc/chromium/default.conf');
+  const symlinkPath = path.join(prefix, 'bin/chromium');
+  const fontPath = path.join(home, 'remotion-studio/fonts/HindSiliguriFixed-Bold.ttf');
+  const wrapperPath = path.join(home, 'remotion-studio/binaries/remotion');
+  const modulesPath = path.join(home, 'remotion-studio/animation-assets/modules/bm-typography.js');
+
+  const items = [
+    {
+      id: 'chromium_flags',
+      category: 'termux',
+      title: 'Chromium স্যান্ডবক্স ও /dev/shm ক্র্যাশ গার্ড',
+      desc: 'etc/chromium/default.conf ফাইলে --no-sandbox ও --disable-dev-shm-usage ফ্ল্যাগ সক্রিয় থাকা।',
+      ok: fs.existsSync(confPath) && fs.readFileSync(confPath, 'utf8').includes('--no-sandbox'),
+      fixId: 'fix_chromium_flags'
+    },
+    {
+      id: 'chromium_symlink',
+      category: 'termux',
+      title: 'Chromium বাইনারি সিমলিংক ব্রিজ',
+      desc: '$PREFIX/bin/chromium -> chromium-browser লিঙ্ক বজায় রাখা।',
+      ok: fs.existsSync(symlinkPath),
+      fixId: 'fix_chromium_symlink'
+    },
+    {
+      id: 'glibc_wrapper',
+      category: 'remotion',
+      title: 'Native ARM64 Compositor Wrappers',
+      desc: 'remotion-studio/binaries/{remotion,ffmpeg,ffprobe} এক্সিকিউটেবল র‍্যাপার থাকা।',
+      ok: fs.existsSync(wrapperPath) && (fs.statSync(wrapperPath).mode & 0o111) !== 0,
+      fixId: 'fix_glibc_wrapper'
+    },
+    {
+      id: 'bangla_fonts',
+      category: 'remotion',
+      title: 'অফলাইন বাংলা ফন্ট ও যুক্তবর্ণ সাপোর্ট',
+      desc: 'HindSiliguriFixed ফন্ট ফাইল স্টুডিও ও সিস্টেমে ইনস্টল থাকা।',
+      ok: fs.existsSync(fontPath),
+      fixId: 'fix_bangla_fonts'
+    },
+    {
+      id: 'core_modules',
+      category: 'modules',
+      title: 'কোর মোশন লজিক মডিউলস (Zero-Token Logic)',
+      desc: 'bm-typography.js, camera-shake.js, device-mockup.js সক্রিয় থাকা।',
+      ok: fs.existsSync(modulesPath),
+      fixId: 'fix_core_modules'
+    }
+  ];
+
+  return { ok: items.every(i => i.ok), items };
+}
+
+async function fixSystemItem(fixId) {
+  const prefix = process.env.PREFIX || '/data/user/0/ai.antigem/files/usr';
+  const home = os.homedir();
+  const repoRaw = 'https://raw.githubusercontent.com/myfunuiai-del/antigem-skills/main/remotion-video-studio';
+
+  if (fixId === 'fix_chromium_flags') {
+    const dir = path.join(prefix, 'etc/chromium');
+    fs.mkdirSync(dir, { recursive: true });
+    const content = `export LIBGL_ALWAYS_SOFTWARE=1\nexport LP_NUM_THREADS="2"\nCHROMIUM_FLAGS="--no-sandbox --disable-dev-shm-usage --use-gl=angle --use-angle=gl-egl --ignore-gpu-blocklist"\n`;
+    fs.writeFileSync(path.join(dir, 'default.conf'), content);
+    return { ok: true, message: 'Chromium flags configured successfully!' };
+  }
+
+  if (fixId === 'fix_chromium_symlink') {
+    const target = path.join(prefix, 'bin/chromium-browser');
+    const link = path.join(prefix, 'bin/chromium');
+    if (fs.existsSync(target) && !fs.existsSync(link)) {
+      fs.symlinkSync('chromium-browser', link);
+    }
+    return { ok: true, message: 'Chromium symlink created!' };
+  }
+
+  if (fixId === 'fix_bangla_fonts') {
+    const fontDir = path.join(home, 'remotion-studio/fonts');
+    const localFontDir = path.join(home, '.local/share/fonts');
+    fs.mkdirSync(fontDir, { recursive: true });
+    fs.mkdirSync(localFontDir, { recursive: true });
+    // fetch fonts if needed or copy from local repo
+    const localRepoFont = path.join(__dirname, 'fonts/HindSiliguriFixed-Bold.ttf');
+    if (fs.existsSync(localRepoFont)) {
+      fs.copyFileSync(localRepoFont, path.join(fontDir, 'HindSiliguriFixed-Bold.ttf'));
+      fs.copyFileSync(localRepoFont, path.join(localFontDir, 'HindSiliguriFixed-Bold.ttf'));
+    }
+    return { ok: true, message: 'Fonts restored successfully!' };
+  }
+
+  if (fixId === 'fix_core_modules') {
+    const targetDir = path.join(home, 'remotion-studio/animation-assets/modules');
+    const srcDir = path.join(__dirname, 'animation-assets/modules');
+    fs.mkdirSync(targetDir, { recursive: true });
+    if (fs.existsSync(srcDir)) {
+      for (const file of fs.readdirSync(srcDir)) {
+        fs.copyFileSync(path.join(srcDir, file), path.join(targetDir, file));
+      }
+    }
+    return { ok: true, message: 'Core motion modules deployed!' };
+  }
+
+  if (fixId === 'fix_glibc_wrapper') {
+    const binDir = path.join(home, 'remotion-studio/binaries');
+    const gnuDir = path.join(home, 'remotion-studio/binaries-gnu');
+    const glibcLib = path.join(prefix, 'glibc/lib');
+    const ldLinux = path.join(glibcLib, 'ld-linux-aarch64.so.1');
+    fs.mkdirSync(binDir, { recursive: true });
+    for (const b of ['remotion', 'ffmpeg', 'ffprobe']) {
+      const script = `#!/data/user/0/ai.antigem/files/usr/bin/sh\nunset LD_PRELOAD\nexec "${ldLinux}" --library-path "${gnuDir}:${glibcLib}" "${gnuDir}/${b}" "$@"\n`;
+      fs.writeFileSync(path.join(binDir, b), script, { mode: 0o755 });
+    }
+    return { ok: true, message: 'Compositor binaries and wrappers configured!' };
+  }
+
+  return { ok: false, error: 'Unknown fixId: ' + fixId };
+}
+
 const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') {
     return sendJson(res, 200, { ok: true });
@@ -336,6 +457,18 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${HOST}:${PORT}`);
 
+        if (url.pathname === '/api/audit') {
+      return sendJson(res, 200, auditSystemItems());
+    }
+    if (url.pathname === '/api/audit-fix' && req.method === 'POST') {
+      try {
+        const body = await readJsonBody(req);
+        const resFix = await fixSystemItem(body.fixId);
+        return sendJson(res, 200, resFix);
+      } catch (err) {
+        return sendJson(res, 500, { ok: false, error: err.message });
+      }
+    }
     if (url.pathname === '/api/health') {
       return sendJson(res, 200, { ok: true, studio: __dirname });
     }
