@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @font-face {
+      font-family: 'HindSiliguriFixed';
+      src: url('../fonts/HindSiliguriFixed-Bold.ttf') format('truetype');
+      font-weight: 700;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #020617;
+      color: #f8fafc;
+      width: 1280px;
+      height: 720px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'HindSiliguriFixed', sans-serif;
+    }
+    #stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <div id="typoContainer"></div>
+    <div id="mockupContainer"></div>
+  </div>
+
+  <script type="module">
+    import { BmTypography } from '../animation-assets/modules/bm-typography.js';
+    import { CameraShake } from '../animation-assets/modules/camera-shake.js';
+    import { DeviceMockup } from '../animation-assets/modules/device-mockup.js';
+
+    const typo = new BmTypography({
+      accentColor: '#38bdf8',
+      glowColor: 'rgba(56, 189, 248, 0.5)',
+      scribbleColor: '#f43f5e'
+    });
+
+    const shake = new CameraShake({ fps: 30, decay: 7, frequency: 20 });
+    shake.trigger({ startFrame: 15, amplitude: 18 });
+
+    const phone = new DeviceMockup({ kind: 'phone', width: 220, height: 440, rx: 8, ry: -10 });
+
+    const typoEl = document.getElementById('typoContainer');
+    const mockupEl = document.getElementById('mockupContainer');
+    const stageEl = document.getElementById('stage');
+
+    typoEl.innerHTML = typo.renderHTML("টারমাক্সে [স্মার্ট মোশন ইঞ্জিন] এখন [১০০% সফল]!", { fontSize: 38 });
+    mockupEl.innerHTML = phone.renderHTML({
+      liftCard: { title: 'Rendering Speed', badge: '60 FPS Native', icon: '⚡' }
+    });
+
+    window.setFrame = function(frame) {
+      const transform = shake.getTransform(frame);
+      stageEl.style.transform = transform;
+      return true;
+    };
+
+    window.readyPromise = document.fonts.ready;
+  </script>
+</body>
+</html>
