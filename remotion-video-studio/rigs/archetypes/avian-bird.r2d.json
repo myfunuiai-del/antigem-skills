@@ -1,0 +1,245 @@
+{
+  "format": "rev2d",
+  "version": 1,
+  "meta": {
+    "name": "archetype-avian-bird",
+    "width": 512,
+    "height": 512,
+    "background": "#102136",
+    "fps": 30,
+    "author": "AntiGem Rig Archetypes",
+    "description": "Avian bird archetype: hinged lowerBeak lip-sync, 3-segment phase-lagged flapping wing, physics tail feathers, and tucked/perched IK legs."
+  },
+  "parameters": [
+    { "id": "BodyLift", "min": -30, "max": 40, "default": 0, "group": "Body" },
+    { "id": "AngleZ", "min": -25, "max": 25, "default": 0, "group": "Head" },
+    { "id": "EyeLOpen", "min": 0, "max": 1, "default": 1, "group": "Face" },
+    { "id": "MouthOpen", "min": 0, "max": 1, "default": 0, "group": "LipSync" },
+    { "id": "WingBase", "min": -65, "max": 55, "default": 0, "group": "Flight" },
+    { "id": "WingMid", "min": -45, "max": 45, "default": 0, "group": "Flight" },
+    { "id": "WingTip", "min": -45, "max": 45, "default": 0, "group": "Flight" },
+    { "id": "TailFeather", "min": -35, "max": 35, "default": 0, "group": "Physics" },
+    { "id": "LegTuck", "min": 0, "max": 1, "default": 0, "group": "Legs" }
+  ],
+  "bones": [
+    { "id": "root", "x": 256, "y": 380, "length": 0 },
+    { "id": "body", "parent": "root", "x": 0, "y": -95, "rotation": -18, "length": 78 },
+    { "id": "head", "parent": "body", "x": 58, "y": -26, "rotation": 18, "length": 50 },
+    { "id": "lowerBeak", "parent": "head", "x": 28, "y": 6, "rotation": 0, "length": 34 },
+    { "id": "crest", "parent": "head", "x": -6, "y": -24, "rotation": -135, "length": 28 },
+
+    { "id": "wingUpper", "parent": "body", "x": 20, "y": -10, "rotation": -130, "length": 52 },
+    { "id": "wingMid", "parent": "wingUpper", "x": 52, "y": 0, "rotation": 18, "length": 48 },
+    { "id": "wingTip", "parent": "wingMid", "x": 48, "y": 0, "rotation": 16, "length": 44 },
+
+    { "id": "tail", "parent": "body", "x": -34, "y": 6, "rotation": 165, "length": 64 },
+
+    { "id": "legLUpper", "parent": "body", "x": 8, "y": 24, "rotation": 128, "length": 36 },
+    { "id": "legLLower", "parent": "legLUpper", "x": 36, "y": 0, "rotation": -34, "length": 34 },
+    { "id": "footTarget", "parent": "root", "x": 6, "y": -22, "length": 0 }
+  ],
+  "parts": [
+    {
+      "id": "shadow",
+      "parent": "root",
+      "shape": { "type": "ellipse", "cx": 256, "cy": 380, "rx": 64, "ry": 10 },
+      "fill": "rgba(4,10,20,0.42)",
+      "z": 0
+    },
+    {
+      "id": "tailFeathers",
+      "parent": "tail",
+      "shape": { "type": "path", "d": "M 224 294 L 146 312 L 154 334 L 228 308 Z", "detail": 8 },
+      "fill": "#22577a",
+      "stroke": { "color": "#0b1e2e", "width": 2 },
+      "z": 1
+    },
+    {
+      "id": "leg",
+      "skin": { "bones": ["legLUpper", "legLLower"], "weights": "auto", "falloff": 2.4 },
+      "shape": { "type": "rect", "x": 246, "y": 302, "w": 11, "h": 56, "radius": 5, "detail": 8 },
+      "fill": "#f4a261",
+      "stroke": { "color": "#542a0a", "width": 1.8 },
+      "z": 2
+    },
+    {
+      "id": "claw",
+      "parent": "legLLower",
+      "shape": { "type": "path", "d": "M 248 356 L 274 358 L 266 364 L 244 362 Z" },
+      "fill": "#f4a261",
+      "stroke": { "color": "#542a0a", "width": 1.6 },
+      "z": 2.5
+    },
+    {
+      "id": "bodyBase",
+      "parent": "body",
+      "shape": { "type": "ellipse", "cx": 264, "cy": 282, "rx": 56, "ry": 36, "rotation": -18, "detail": 10 },
+      "fill": {
+        "type": "linear",
+        "from": [220, 250],
+        "to": [308, 314],
+        "stops": [[0, "#4cc9f0"], [1, "#277da1"]]
+      },
+      "stroke": { "color": "#0b1e2e", "width": 2.5 },
+      "z": 3
+    },
+    {
+      "id": "belly",
+      "parent": "body",
+      "shape": { "type": "ellipse", "cx": 274, "cy": 292, "rx": 36, "ry": 22, "rotation": -16 },
+      "fill": "#e6f7ff",
+      "z": 4
+    },
+    {
+      "id": "crest",
+      "parent": "crest",
+      "shape": { "type": "polygon", "points": [296,214, 270,186, 306,204], "detail": 6 },
+      "fill": "#3a86ff",
+      "stroke": { "color": "#0b1e2e", "width": 2 },
+      "z": 5
+    },
+    {
+      "id": "lowerBeak",
+      "parent": "lowerBeak",
+      "shape": { "type": "polygon", "points": [336,246, 376,248, 336,256], "detail": 6 },
+      "fill": "#e07a1f",
+      "stroke": { "color": "#3d1c02", "width": 2 },
+      "z": 6
+    },
+    {
+      "id": "head",
+      "parent": "head",
+      "shape": { "type": "ellipse", "cx": 312, "cy": 238, "rx": 30, "ry": 28, "detail": 8 },
+      "fill": "#4cc9f0",
+      "stroke": { "color": "#0b1e2e", "width": 2.5 },
+      "z": 7
+    },
+    {
+      "id": "upperBeak",
+      "parent": "head",
+      "shape": { "type": "path", "d": "M 334 232 L 382 245 Q 368 250 334 248 Z", "detail": 6 },
+      "fill": "#ffb703",
+      "stroke": { "color": "#3d1c02", "width": 2 },
+      "z": 8
+    },
+    {
+      "id": "eye",
+      "parent": "head",
+      "shape": { "type": "ellipse", "cx": 322, "cy": 232, "rx": 7, "ry": 7.5 },
+      "fill": "#ffffff",
+      "stroke": { "color": "#0b1e2e", "width": 1.8 },
+      "z": 9
+    },
+    {
+      "id": "pupil",
+      "parent": "head",
+      "shape": { "type": "ellipse", "cx": 324, "cy": 232, "rx": 3.8, "ry": 4.2 },
+      "fill": "#0c1420",
+      "z": 10
+    },
+    {
+      "id": "wing",
+      "skin": { "bones": ["wingUpper", "wingMid", "wingTip"], "weights": "auto", "falloff": 2.2 },
+      "shape": {
+        "type": "path",
+        "d": "M 276 266 C 244 230 198 188 156 178 C 148 208 184 258 238 282 C 258 290 274 282 276 266 Z",
+        "detail": 9
+      },
+      "fill": {
+        "type": "linear",
+        "from": [276, 266],
+        "to": [156, 178],
+        "stops": [[0, "#3a86ff"], [1, "#1d3557"]]
+      },
+      "stroke": { "color": "#0b1e2e", "width": 2.2 },
+      "z": 11
+    }
+  ],
+  "bindings": [
+    {
+      "target": "bone:body.y",
+      "params": ["BodyLift"],
+      "keys": [{ "at": [-30], "value": -65 }, { "at": [0], "value": -95 }, { "at": [40], "value": -135 }]
+    },
+    {
+      "target": "bone:head.rotation",
+      "params": ["AngleZ"],
+      "keys": [{ "at": [-25], "value": -7 }, { "at": [0], "value": 18 }, { "at": [25], "value": 43 }]
+    },
+    {
+      "target": "part:eye.shape.ry",
+      "params": ["EyeLOpen"],
+      "keys": [{ "at": [0], "value": 0.5 }, { "at": [1], "value": 7.5 }]
+    },
+    {
+      "target": "part:pupil.opacity",
+      "params": ["EyeLOpen"],
+      "keys": [{ "at": [0], "value": 0 }, { "at": [0.2], "value": 1 }, { "at": [1], "value": 1 }]
+    },
+    {
+      "target": "bone:lowerBeak.rotation",
+      "params": ["MouthOpen"],
+      "keys": [{ "at": [0], "value": 0 }, { "at": [1], "value": 28 }]
+    },
+    {
+      "target": "bone:wingUpper.rotation",
+      "params": ["WingBase"],
+      "keys": [{ "at": [-65], "value": -195 }, { "at": [0], "value": -130 }, { "at": [55], "value": -75 }]
+    },
+    {
+      "target": "bone:wingMid.rotation",
+      "params": ["WingMid"],
+      "keys": [{ "at": [-45], "value": -27 }, { "at": [0], "value": 18 }, { "at": [45], "value": 63 }]
+    },
+    {
+      "target": "bone:wingTip.rotation",
+      "params": ["WingTip"],
+      "keys": [{ "at": [-45], "value": -29 }, { "at": [0], "value": 16 }, { "at": [45], "value": 61 }]
+    },
+    {
+      "target": "bone:tail.rotation",
+      "params": ["TailFeather"],
+      "keys": [{ "at": [-35], "value": 130 }, { "at": [0], "value": 165 }, { "at": [35], "value": 200 }]
+    },
+    {
+      "target": "bone:footTarget.y",
+      "params": ["LegTuck"],
+      "keys": [{ "at": [0], "value": -22 }, { "at": [1], "value": -62 }]
+    }
+  ],
+  "ik": [
+    { "id": "legIk", "bones": ["legLUpper", "legLLower"], "target": "footTarget", "mix": 1, "bendPositive": false, "softness": 5 }
+  ],
+  "physics": [
+    {
+      "id": "tailPhys",
+      "inputs": [{ "param": "BodyLift", "type": "y", "weight": 0.9 }, { "param": "WingBase", "type": "angle", "weight": 0.3 }],
+      "outputs": [{ "param": "TailFeather", "segment": 0, "type": "angle", "scale": 0.55 }],
+      "segments": [{ "length": 64, "mass": 0.8 }],
+      "gravity": 520, "damping": 0.16, "stiffness": 28
+    }
+  ],
+  "animations": [
+    {
+      "id": "fly",
+      "duration": 0.8,
+      "loop": true,
+      "tracks": [
+        { "target": "param:BodyLift", "keys": [{ "t": 0, "v": 10, "ease": "smooth" }, { "t": 0.4, "v": 34, "ease": "smooth" }, { "t": 0.8, "v": 10 }] },
+        { "target": "param:LegTuck", "keys": [{ "t": 0, "v": 1 }, { "t": 0.8, "v": 1 }] },
+        { "target": "param:WingBase", "keys": [{ "t": 0, "v": -48, "ease": "smooth" }, { "t": 0.4, "v": 46, "ease": "smooth" }, { "t": 0.8, "v": -48 }] },
+        { "target": "param:WingMid", "offset": 0.12, "keys": [{ "t": 0, "v": -32, "ease": "smooth" }, { "t": 0.4, "v": 34, "ease": "smooth" }, { "t": 0.8, "v": -32 }] },
+        { "target": "param:WingTip", "offset": 0.24, "keys": [{ "t": 0, "v": -36, "ease": "smooth" }, { "t": 0.4, "v": 38, "ease": "smooth" }, { "t": 0.8, "v": -36 }] }
+      ]
+    },
+    {
+      "id": "talk",
+      "duration": 1.2,
+      "loop": true,
+      "tracks": [
+        { "target": "param:MouthOpen", "keys": [{ "t": 0, "v": 0.05, "ease": "smooth" }, { "t": 0.22, "v": 0.92, "ease": "smooth" }, { "t": 0.5, "v": 0.18, "ease": "smooth" }, { "t": 0.78, "v": 0.85, "ease": "smooth" }, { "t": 1.2, "v": 0.05 }] },
+        { "target": "param:AngleZ", "keys": [{ "t": 0, "v": -6, "ease": "smooth" }, { "t": 0.6, "v": 12, "ease": "smooth" }, { "t": 1.2, "v": -6 }] }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "model": "/data/user/0/ai.antigem/files/home/remotion-studio/rigs/out/bird-synced.r2d.json",
+  "modelName": "archetype-avian-bird",
+  "mp4": "/data/user/0/ai.antigem/files/home/remotion-studio/rigs/out/test-bird-talking-fly.mp4",
+  "poster": "/data/user/0/ai.antigem/files/home/remotion-studio/rigs/out/test-bird-talking-fly.png",
+  "fps": 30,
+  "frames": 131,
+  "duration": 4.37,
+  "width": 1024,
+  "height": 1024,
+  "layers": [
+    "fly",
+    "speech,add"
+  ],
+  "hasAudio": true,
+  "sizeKB": 425,
+  "createdAt": "2026-11-27T22:51:21.464Z",
+  "framesSummaryBytes": 4235
+}

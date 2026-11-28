@@ -1,0 +1,18 @@
+{
+  "ok": true,
+  "modelName": "বাড়ি ফেরা — 3D PBR Train Drone Shot (Three.js + Bengali Voice)",
+  "mp4": "/data/user/0/ai.antigem/files/home/remotion-studio/rigs/out/train-drone-hybrid.mp4",
+  "fps": 24,
+  "duration": 10,
+  "width": 1280,
+  "height": 720,
+  "layers": [
+    "Three.js PBR + PMREM IBL",
+    "GLSL Sunset Sky & River",
+    "5-Arch Stone Viaduct",
+    "Bengali Neural Voiceover (bn-BD-PradeepNeural)"
+  ],
+  "hasAudio": true,
+  "sizeKB": 6228,
+  "createdAt": "2026-11-28T00:59:48.626Z"
+}

@@ -1,0 +1,338 @@
+{
+  "format": "rev2d",
+  "version": 1,
+  "meta": {
+    "name": "archetype-biped-talking",
+    "width": 512,
+    "height": 512,
+    "background": "#182032",
+    "fps": 30,
+    "author": "AntiGem Rig Archetypes",
+    "description": "Biped human archetype with 2-bone IK arms & legs, physics scarf/hair, blinking eyes, and MouthOpen lip-sync."
+  },
+  "parameters": [
+    { "id": "Breath", "min": 0, "max": 1, "default": 0, "group": "Body" },
+    { "id": "AngleX", "min": -30, "max": 30, "default": 0, "group": "Face" },
+    { "id": "AngleZ", "min": -30, "max": 30, "default": 0, "group": "Face" },
+    { "id": "EyeBallX", "min": -1, "max": 1, "default": 0, "group": "Face" },
+    { "id": "EyeBallY", "min": -1, "max": 1, "default": 0, "group": "Face" },
+    { "id": "EyeLOpen", "min": 0, "max": 1, "default": 1, "group": "Face" },
+    { "id": "EyeROpen", "min": 0, "max": 1, "default": 1, "group": "Face" },
+    { "id": "MouthOpen", "min": 0, "max": 1, "default": 0, "group": "LipSync" },
+    { "id": "HandLX", "min": -80, "max": 80, "default": 0, "group": "IK" },
+    { "id": "HandLY", "min": -80, "max": 80, "default": 0, "group": "IK" },
+    { "id": "HandRX", "min": -80, "max": 80, "default": 0, "group": "IK" },
+    { "id": "HandRY", "min": -80, "max": 80, "default": 0, "group": "IK" },
+    { "id": "WalkCycle", "min": -1, "max": 1, "default": 0, "group": "Locomotion" },
+    { "id": "Scarf1", "min": -45, "max": 45, "default": 0, "group": "Physics" },
+    { "id": "Scarf2", "min": -45, "max": 45, "default": 0, "group": "Physics" }
+  ],
+  "bones": [
+    { "id": "root", "x": 256, "y": 462, "length": 0 },
+    { "id": "pelvis", "parent": "root", "x": 0, "y": -132, "rotation": -90, "length": 36 },
+    { "id": "torso", "parent": "pelvis", "x": 36, "y": 0, "rotation": 0, "length": 88 },
+    { "id": "neck", "parent": "torso", "x": 88, "y": 0, "rotation": 0, "length": 22 },
+    { "id": "head", "parent": "neck", "x": 22, "y": 0, "rotation": 0, "length": 78 },
+
+    { "id": "armLUpper", "parent": "torso", "x": 76, "y": 38, "rotation": 152, "length": 54 },
+    { "id": "armLFore", "parent": "armLUpper", "x": 54, "y": 0, "rotation": 14, "length": 50 },
+    { "id": "handLTarget", "parent": "root", "x": 66, "y": -152, "length": 0 },
+
+    { "id": "armRUpper", "parent": "torso", "x": 76, "y": -38, "rotation": -152, "length": 54 },
+    { "id": "armRFore", "parent": "armRUpper", "x": 54, "y": 0, "rotation": -14, "length": 50 },
+    { "id": "handRTarget", "parent": "root", "x": -66, "y": -152, "length": 0 },
+
+    { "id": "legLUpper", "parent": "pelvis", "x": -4, "y": 22, "rotation": 176, "length": 66 },
+    { "id": "legLLower", "parent": "legLUpper", "x": 66, "y": 0, "rotation": 6, "length": 66 },
+    { "id": "footLTarget", "parent": "root", "x": 28, "y": -6, "length": 0 },
+
+    { "id": "legRUpper", "parent": "pelvis", "x": -4, "y": -22, "rotation": -176, "length": 66 },
+    { "id": "legRLower", "parent": "legRUpper", "x": 66, "y": 0, "rotation": -6, "length": 66 },
+    { "id": "footRTarget", "parent": "root", "x": -28, "y": -6, "length": 0 },
+
+    { "id": "scarf1", "parent": "neck", "x": 4, "y": -32, "rotation": 168, "length": 36 },
+    { "id": "scarf2", "parent": "scarf1", "x": 36, "y": 0, "rotation": 0, "length": 36 }
+  ],
+  "warps": [
+    { "id": "faceWarp", "parent": "head", "rect": [196, 108, 120, 120], "cols": 3, "rows": 3 }
+  ],
+  "parts": [
+    {
+      "id": "shadow",
+      "parent": "root",
+      "shape": { "type": "ellipse", "cx": 256, "cy": 462, "rx": 64, "ry": 12 },
+      "fill": "rgba(8,10,18,0.45)",
+      "z": 0
+    },
+    {
+      "id": "scarfTail",
+      "skin": { "bones": ["scarf1", "scarf2"], "weights": "auto", "falloff": 2.5 },
+      "shape": {
+        "type": "polygon",
+        "points": [224,218, 224,234, 210,254, 198,286, 216,292, 228,260, 236,232],
+        "detail": 8
+      },
+      "fill": "#e85d4a",
+      "stroke": { "color": "#6e1c14", "width": 2 },
+      "z": 1
+    },
+    {
+      "id": "legR",
+      "skin": { "bones": ["legRUpper", "legRLower"], "weights": "auto", "falloff": 2.2 },
+      "shape": { "type": "rect", "x": 222, "y": 334, "w": 24, "h": 124, "radius": 11, "detail": 10 },
+      "fill": "#2d3b59",
+      "stroke": { "color": "#111827", "width": 2.5 },
+      "z": 2
+    },
+    {
+      "id": "legL",
+      "skin": { "bones": ["legLUpper", "legLLower"], "weights": "auto", "falloff": 2.2 },
+      "shape": { "type": "rect", "x": 266, "y": 334, "w": 24, "h": 124, "radius": 11, "detail": 10 },
+      "fill": "#36466b",
+      "stroke": { "color": "#111827", "width": 2.5 },
+      "z": 2
+    },
+    {
+      "id": "armR",
+      "skin": { "bones": ["armRUpper", "armRFore"], "weights": "auto", "falloff": 2.4 },
+      "shape": { "type": "path", "d": "M 226 244 L 204 282 L 182 324 L 166 316 L 188 274 L 210 236 Z", "detail": 8 },
+      "fill": "#3c91e6",
+      "stroke": { "color": "#111827", "width": 2.5 },
+      "z": 3
+    },
+    {
+      "id": "torso",
+      "parent": "torso",
+      "shape": { "type": "rect", "x": 216, "y": 224, "w": 80, "h": 112, "radius": 24, "detail": 14 },
+      "fill": {
+        "type": "linear",
+        "from": [216, 224],
+        "to": [296, 336],
+        "stops": [[0, "#5eb1ff"], [1, "#2f6fd6"]]
+      },
+      "stroke": { "color": "#111827", "width": 2.5 },
+      "z": 4
+    },
+    {
+      "id": "neck",
+      "parent": "neck",
+      "shape": { "type": "rect", "x": 244, "y": 202, "w": 24, "h": 28, "radius": 8 },
+      "fill": "#f4c39b",
+      "stroke": { "color": "#111827", "width": 2 },
+      "z": 5
+    },
+    {
+      "id": "armL",
+      "skin": { "bones": ["armLUpper", "armLFore"], "weights": "auto", "falloff": 2.4 },
+      "shape": { "type": "path", "d": "M 286 244 L 308 282 L 330 324 L 346 316 L 324 274 L 302 236 Z", "detail": 8 },
+      "fill": "#52a2f7",
+      "stroke": { "color": "#111827", "width": 2.5 },
+      "z": 6
+    },
+    {
+      "id": "headBase",
+      "parent": "faceWarp",
+      "shape": { "type": "ellipse", "cx": 256, "cy": 166, "rx": 48, "ry": 50, "detail": 12 },
+      "fill": "#ffd7b8",
+      "stroke": { "color": "#111827", "width": 2.5 },
+      "z": 7
+    },
+    {
+      "id": "hair",
+      "parent": "faceWarp",
+      "shape": { "type": "path", "d": "M 208 160 C 206 118 242 112 260 112 C 288 112 306 130 304 162 C 290 142 268 134 252 138 C 232 134 218 144 208 160 Z", "detail": 10 },
+      "fill": "#22293a",
+      "stroke": { "color": "#0e121c", "width": 2 },
+      "z": 8
+    },
+    {
+      "id": "eyeR",
+      "parent": "faceWarp",
+      "shape": { "type": "ellipse", "cx": 236, "cy": 166, "rx": 6.5, "ry": 9 },
+      "fill": "#ffffff",
+      "stroke": { "color": "#111827", "width": 1.8 },
+      "z": 9
+    },
+    {
+      "id": "pupilR",
+      "parent": "faceWarp",
+      "shape": { "type": "ellipse", "cx": 237, "cy": 166, "rx": 3.5, "ry": 4.5 },
+      "fill": "#141824",
+      "z": 10
+    },
+    {
+      "id": "eyeL",
+      "parent": "faceWarp",
+      "shape": { "type": "ellipse", "cx": 276, "cy": 166, "rx": 6.5, "ry": 9 },
+      "fill": "#ffffff",
+      "stroke": { "color": "#111827", "width": 1.8 },
+      "z": 9
+    },
+    {
+      "id": "pupilL",
+      "parent": "faceWarp",
+      "shape": { "type": "ellipse", "cx": 277, "cy": 166, "rx": 3.5, "ry": 4.5 },
+      "fill": "#141824",
+      "z": 10
+    },
+    {
+      "id": "mouth",
+      "parent": "faceWarp",
+      "shape": { "type": "ellipse", "cx": 256, "cy": 192, "rx": 11, "ry": 2.5 },
+      "fill": "#9e2d3b",
+      "stroke": { "color": "#451018", "width": 1.8 },
+      "z": 11
+    }
+  ],
+  "bindings": [
+    {
+      "target": "bone:torso.scaleY",
+      "params": ["Breath"],
+      "keys": [{ "at": [0], "value": 1 }, { "at": [1], "value": 1.03 }]
+    },
+    {
+      "target": "bone:head.rotation",
+      "params": ["AngleZ"],
+      "keys": [{ "at": [-30], "value": -22 }, { "at": [0], "value": 0 }, { "at": [30], "value": 22 }]
+    },
+    {
+      "target": "warp:faceWarp.offsets",
+      "params": ["AngleX"],
+      "keys": [
+        { "at": [-30], "value": { "3": [-6, 0], "4": [-10, 0], "5": [-6, 0] } },
+        { "at": [0], "value": {} },
+        { "at": [30], "value": { "3": [6, 0], "4": [10, 0], "5": [6, 0] } }
+      ]
+    },
+    {
+      "target": "part:eyeL.shape.ry",
+      "params": ["EyeLOpen"],
+      "keys": [{ "at": [0], "value": 0.5 }, { "at": [1], "value": 9 }]
+    },
+    {
+      "target": "part:pupilL.opacity",
+      "params": ["EyeLOpen"],
+      "keys": [{ "at": [0], "value": 0 }, { "at": [0.2], "value": 1 }, { "at": [1], "value": 1 }]
+    },
+    {
+      "target": "part:eyeR.shape.ry",
+      "params": ["EyeROpen"],
+      "keys": [{ "at": [0], "value": 0.5 }, { "at": [1], "value": 9 }]
+    },
+    {
+      "target": "part:pupilR.opacity",
+      "params": ["EyeROpen"],
+      "keys": [{ "at": [0], "value": 0 }, { "at": [0.2], "value": 1 }, { "at": [1], "value": 1 }]
+    },
+    {
+      "target": "part:pupilL.shape.cx",
+      "params": ["EyeBallX"],
+      "keys": [{ "at": [-1], "value": 274 }, { "at": [0], "value": 277 }, { "at": [1], "value": 279 }]
+    },
+    {
+      "target": "part:pupilR.shape.cx",
+      "params": ["EyeBallX"],
+      "keys": [{ "at": [-1], "value": 234 }, { "at": [0], "value": 237 }, { "at": [1], "value": 239 }]
+    },
+    {
+      "target": "part:pupilL.shape.cy",
+      "params": ["EyeBallY"],
+      "keys": [{ "at": [-1], "value": 169 }, { "at": [0], "value": 166 }, { "at": [1], "value": 163 }]
+    },
+    {
+      "target": "part:pupilR.shape.cy",
+      "params": ["EyeBallY"],
+      "keys": [{ "at": [-1], "value": 169 }, { "at": [0], "value": 166 }, { "at": [1], "value": 163 }]
+    },
+    {
+      "target": "part:mouth.shape.ry",
+      "params": ["MouthOpen"],
+      "keys": [{ "at": [0], "value": 2.5 }, { "at": [1], "value": 12 }]
+    },
+    {
+      "target": "part:mouth.shape.rx",
+      "params": ["MouthOpen"],
+      "keys": [{ "at": [0], "value": 11 }, { "at": [1], "value": 9 }]
+    },
+    {
+      "target": "bone:handLTarget.x",
+      "params": ["HandLX"],
+      "keys": [{ "at": [-80], "value": -14 }, { "at": [0], "value": 66 }, { "at": [80], "value": 146 }]
+    },
+    {
+      "target": "bone:handLTarget.y",
+      "params": ["HandLY"],
+      "keys": [{ "at": [-80], "value": -72 }, { "at": [0], "value": -152 }, { "at": [80], "value": -232 }]
+    },
+    {
+      "target": "bone:handRTarget.x",
+      "params": ["HandRX"],
+      "keys": [{ "at": [-80], "value": -146 }, { "at": [0], "value": -66 }, { "at": [80], "value": 14 }]
+    },
+    {
+      "target": "bone:handRTarget.y",
+      "params": ["HandRY"],
+      "keys": [{ "at": [-80], "value": -72 }, { "at": [0], "value": -152 }, { "at": [80], "value": -232 }]
+    },
+    {
+      "target": "bone:footLTarget.x",
+      "params": ["WalkCycle"],
+      "keys": [{ "at": [-1], "value": -8 }, { "at": [0], "value": 28 }, { "at": [1], "value": 64 }]
+    },
+    {
+      "target": "bone:footRTarget.x",
+      "params": ["WalkCycle"],
+      "keys": [{ "at": [-1], "value": 8 }, { "at": [0], "value": -28 }, { "at": [1], "value": -64 }]
+    },
+    {
+      "target": "bone:scarf1.rotation",
+      "params": ["Scarf1"],
+      "keys": [{ "at": [-45], "value": 123 }, { "at": [0], "value": 168 }, { "at": [45], "value": 213 }]
+    },
+    {
+      "target": "bone:scarf2.rotation",
+      "params": ["Scarf2"],
+      "keys": [{ "at": [-45], "value": -45 }, { "at": [0], "value": 0 }, { "at": [45], "value": 45 }]
+    }
+  ],
+  "ik": [
+    { "id": "armLIk", "bones": ["armLUpper", "armLFore"], "target": "handLTarget", "mix": 1, "bendPositive": false, "softness": 8 },
+    { "id": "armRIk", "bones": ["armRUpper", "armRFore"], "target": "handRTarget", "mix": 1, "bendPositive": true, "softness": 8 },
+    { "id": "legLIk", "bones": ["legLUpper", "legLLower"], "target": "footLTarget", "mix": 1, "bendPositive": true, "softness": 6 },
+    { "id": "legRIk", "bones": ["legRUpper", "legRLower"], "target": "footRTarget", "mix": 1, "bendPositive": false, "softness": 6 }
+  ],
+  "physics": [
+    {
+      "id": "scarfPhys",
+      "inputs": [{ "param": "AngleZ", "type": "angle", "weight": 0.4 }, { "param": "HandLX", "type": "x", "weight": 0.12 }],
+      "outputs": [
+        { "param": "Scarf1", "segment": 0, "type": "angle", "scale": 0.8 },
+        { "param": "Scarf2", "segment": 1, "type": "angle", "scale": 0.9 }
+      ],
+      "segments": [{ "length": 36, "mass": 1 }, { "length": 36, "mass": 0.8 }],
+      "gravity": 980, "damping": 0.12, "stiffness": 18
+    }
+  ],
+  "animations": [
+    {
+      "id": "idle",
+      "duration": 2.4,
+      "loop": true,
+      "tracks": [
+        { "target": "param:Breath", "keys": [{ "t": 0, "v": 0, "ease": "smooth" }, { "t": 1.2, "v": 1, "ease": "smooth" }, { "t": 2.4, "v": 0 }] },
+        { "target": "param:EyeLOpen", "keys": [{ "t": 0, "v": 1 }, { "t": 1.6, "v": 1 }, { "t": 1.7, "v": 0 }, { "t": 1.82, "v": 1 }, { "t": 2.4, "v": 1 }] },
+        { "target": "param:EyeROpen", "keys": [{ "t": 0, "v": 1 }, { "t": 1.6, "v": 1 }, { "t": 1.7, "v": 0 }, { "t": 1.82, "v": 1 }, { "t": 2.4, "v": 1 }] },
+        { "target": "param:AngleZ", "keys": [{ "t": 0, "v": -2, "ease": "smooth" }, { "t": 1.2, "v": 4, "ease": "smooth" }, { "t": 2.4, "v": -2 }] }
+      ]
+    },
+    {
+      "id": "talk",
+      "duration": 1.2,
+      "loop": true,
+      "tracks": [
+        { "target": "param:MouthOpen", "keys": [{ "t": 0, "v": 0.1, "ease": "smooth" }, { "t": 0.2, "v": 0.85, "ease": "smooth" }, { "t": 0.45, "v": 0.25, "ease": "smooth" }, { "t": 0.75, "v": 0.95, "ease": "smooth" }, { "t": 1.2, "v": 0.1 }] },
+        { "target": "param:HandLY", "keys": [{ "t": 0, "v": 0, "ease": "smooth" }, { "t": 0.6, "v": 32, "ease": "smooth" }, { "t": 1.2, "v": 0 }] }
+      ]
+    }
+  ]
+}

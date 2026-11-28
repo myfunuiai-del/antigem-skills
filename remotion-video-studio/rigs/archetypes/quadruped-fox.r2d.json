@@ -1,0 +1,348 @@
+{
+  "format": "rev2d",
+  "version": 1,
+  "meta": {
+    "name": "archetype-quadruped-fox",
+    "width": 512,
+    "height": 512,
+    "background": "#15221e",
+    "fps": 30,
+    "author": "AntiGem Rig Archetypes",
+    "description": "Quadruped animal archetype (Fox): horizontal spine, 4 IK legs with gait cycle, physics-driven 3-bone tail & ears, and hinged lowerJaw lip-sync."
+  },
+  "parameters": [
+    { "id": "Breath", "min": 0, "max": 1, "default": 0, "group": "Body" },
+    { "id": "WalkCycle", "min": -1, "max": 1, "default": 0, "group": "Locomotion" },
+    { "id": "StepFLX", "min": -40, "max": 40, "default": 0, "group": "IK" },
+    { "id": "StepFLY", "min": -30, "max": 30, "default": 0, "group": "IK" },
+    { "id": "StepFRX", "min": -40, "max": 40, "default": 0, "group": "IK" },
+    { "id": "StepFRY", "min": -30, "max": 30, "default": 0, "group": "IK" },
+    { "id": "StepBLX", "min": -40, "max": 40, "default": 0, "group": "IK" },
+    { "id": "StepBLY", "min": -30, "max": 30, "default": 0, "group": "IK" },
+    { "id": "StepBRX", "min": -40, "max": 40, "default": 0, "group": "IK" },
+    { "id": "StepBRY", "min": -30, "max": 30, "default": 0, "group": "IK" },
+    { "id": "AngleZ", "min": -30, "max": 30, "default": 0, "group": "Head" },
+    { "id": "EyeLOpen", "min": 0, "max": 1, "default": 1, "group": "Face" },
+    { "id": "EyeBallX", "min": -1, "max": 1, "default": 0, "group": "Face" },
+    { "id": "MouthOpen", "min": 0, "max": 1, "default": 0, "group": "LipSync" },
+    { "id": "Tail1", "min": -45, "max": 45, "default": 0, "group": "Physics" },
+    { "id": "Tail2", "min": -45, "max": 45, "default": 0, "group": "Physics" },
+    { "id": "Tail3", "min": -45, "max": 45, "default": 0, "group": "Physics" },
+    { "id": "EarBounce", "min": -20, "max": 20, "default": 0, "group": "Physics" }
+  ],
+  "bones": [
+    { "id": "root", "x": 256, "y": 420, "length": 0 },
+    { "id": "pelvis", "parent": "root", "x": -62, "y": -110, "rotation": 0, "length": 64 },
+    { "id": "chest", "parent": "pelvis", "x": 64, "y": 0, "rotation": -4, "length": 68 },
+    { "id": "neck", "parent": "chest", "x": 62, "y": -6, "rotation": -52, "length": 44 },
+    { "id": "head", "parent": "neck", "x": 44, "y": 0, "rotation": 56, "length": 66 },
+    { "id": "lowerJaw", "parent": "head", "x": 20, "y": 24, "rotation": 0, "length": 46 },
+    { "id": "earL", "parent": "head", "x": -4, "y": -28, "rotation": -82, "length": 34 },
+    { "id": "earR", "parent": "head", "x": -18, "y": -24, "rotation": -102, "length": 34 },
+
+    { "id": "tail1", "parent": "pelvis", "x": -6, "y": -6, "rotation": -152, "length": 42 },
+    { "id": "tail2", "parent": "tail1", "x": 42, "y": 0, "rotation": 14, "length": 42 },
+    { "id": "tail3", "parent": "tail2", "x": 42, "y": 0, "rotation": 12, "length": 38 },
+
+    { "id": "flUpper", "parent": "chest", "x": 52, "y": 14, "rotation": 102, "length": 50 },
+    { "id": "flLower", "parent": "flUpper", "x": 50, "y": 0, "rotation": -16, "length": 50 },
+    { "id": "flTarget", "parent": "root", "x": 58, "y": -4, "length": 0 },
+
+    { "id": "frUpper", "parent": "chest", "x": 42, "y": 14, "rotation": 102, "length": 50 },
+    { "id": "frLower", "parent": "frUpper", "x": 50, "y": 0, "rotation": -16, "length": 50 },
+    { "id": "frTarget", "parent": "root", "x": 42, "y": -4, "length": 0 },
+
+    { "id": "blUpper", "parent": "pelvis", "x": 6, "y": 14, "rotation": 112, "length": 52 },
+    { "id": "blLower", "parent": "blUpper", "x": 52, "y": 0, "rotation": -28, "length": 52 },
+    { "id": "blTarget", "parent": "root", "x": -60, "y": -4, "length": 0 },
+
+    { "id": "brUpper", "parent": "pelvis", "x": -4, "y": 14, "rotation": 112, "length": 52 },
+    { "id": "brLower", "parent": "brUpper", "x": 52, "y": 0, "rotation": -28, "length": 52 },
+    { "id": "brTarget", "parent": "root", "x": -76, "y": -4, "length": 0 }
+  ],
+  "parts": [
+    {
+      "id": "shadow",
+      "parent": "root",
+      "shape": { "type": "ellipse", "cx": 256, "cy": 420, "rx": 106, "ry": 14 },
+      "fill": "rgba(5,12,10,0.45)",
+      "z": 0
+    },
+    {
+      "id": "legBR",
+      "skin": { "bones": ["brUpper", "brLower"], "weights": "auto", "falloff": 2.4 },
+      "shape": { "type": "rect", "x": 168, "y": 322, "w": 20, "h": 96, "radius": 9, "detail": 10 },
+      "fill": "#b5491e",
+      "stroke": { "color": "#261209", "width": 2 },
+      "z": 1
+    },
+    {
+      "id": "legFR",
+      "skin": { "bones": ["frUpper", "frLower"], "weights": "auto", "falloff": 2.4 },
+      "shape": { "type": "rect", "x": 288, "y": 322, "w": 19, "h": 96, "radius": 9, "detail": 10 },
+      "fill": "#b5491e",
+      "stroke": { "color": "#261209", "width": 2 },
+      "z": 1
+    },
+    {
+      "id": "tail",
+      "skin": { "bones": ["tail1", "tail2", "tail3"], "weights": "auto", "falloff": 2.2 },
+      "shape": {
+        "type": "path",
+        "d": "M 190 302 C 154 282 118 242 94 218 C 82 232 96 278 134 304 C 158 318 180 318 190 302 Z",
+        "detail": 9
+      },
+      "fill": {
+        "type": "linear",
+        "from": [188, 304],
+        "to": [92, 222],
+        "stops": [[0, "#e86a2c"], [0.68, "#e86a2c"], [0.76, "#fff5eb"], [1, "#fff5eb"]]
+      },
+      "stroke": { "color": "#261209", "width": 2.2 },
+      "z": 2
+    },
+    {
+      "id": "body",
+      "skin": { "bones": ["pelvis", "chest"], "weights": "auto", "falloff": 2.0 },
+      "shape": { "type": "rect", "x": 182, "y": 274, "w": 144, "h": 58, "radius": 26, "detail": 12 },
+      "fill": "#e86a2c",
+      "stroke": { "color": "#261209", "width": 2.5 },
+      "z": 3
+    },
+    {
+      "id": "chestFluff",
+      "parent": "chest",
+      "shape": { "type": "ellipse", "cx": 318, "cy": 298, "rx": 22, "ry": 26 },
+      "fill": "#fff2e6",
+      "stroke": { "color": "#261209", "width": 2 },
+      "z": 4
+    },
+    {
+      "id": "legBL",
+      "skin": { "bones": ["blUpper", "blLower"], "weights": "auto", "falloff": 2.4 },
+      "shape": { "type": "rect", "x": 186, "y": 322, "w": 22, "h": 96, "radius": 10, "detail": 10 },
+      "fill": "#e86a2c",
+      "stroke": { "color": "#261209", "width": 2.2 },
+      "z": 5
+    },
+    {
+      "id": "legFL",
+      "skin": { "bones": ["flUpper", "flLower"], "weights": "auto", "falloff": 2.4 },
+      "shape": { "type": "rect", "x": 304, "y": 322, "w": 20, "h": 96, "radius": 9, "detail": 10 },
+      "fill": "#e86a2c",
+      "stroke": { "color": "#261209", "width": 2.2 },
+      "z": 5
+    },
+    {
+      "id": "earR",
+      "parent": "earR",
+      "shape": { "type": "polygon", "points": [306,226, 294,186, 326,214], "detail": 8 },
+      "fill": "#b5491e",
+      "stroke": { "color": "#261209", "width": 2 },
+      "z": 5
+    },
+    {
+      "id": "neck",
+      "parent": "neck",
+      "shape": { "type": "rect", "x": 296, "y": 244, "w": 36, "h": 48, "radius": 16 },
+      "fill": "#e86a2c",
+      "z": 6
+    },
+    {
+      "id": "lowerJaw",
+      "parent": "lowerJaw",
+      "shape": { "type": "path", "d": "M 326 266 L 386 264 Q 388 278 364 280 L 324 276 Z", "detail": 8 },
+      "fill": "#fff2e6",
+      "stroke": { "color": "#261209", "width": 2 },
+      "z": 7
+    },
+    {
+      "id": "headSkull",
+      "parent": "head",
+      "shape": { "type": "path", "d": "M 294 246 C 294 216 346 212 360 242 L 392 252 Q 394 266 378 266 L 322 266 Q 294 266 294 246 Z", "detail": 10 },
+      "fill": "#e86a2c",
+      "stroke": { "color": "#261209", "width": 2.5 },
+      "z": 8
+    },
+    {
+      "id": "noseTip",
+      "parent": "head",
+      "shape": { "type": "ellipse", "cx": 390, "cy": 256, "rx": 6, "ry": 5 },
+      "fill": "#1e1614",
+      "z": 9
+    },
+    {
+      "id": "eye",
+      "parent": "head",
+      "shape": { "type": "ellipse", "cx": 344, "cy": 242, "rx": 6.5, "ry": 7.5 },
+      "fill": "#fff8f0",
+      "stroke": { "color": "#261209", "width": 1.6 },
+      "z": 9
+    },
+    {
+      "id": "pupil",
+      "parent": "head",
+      "shape": { "type": "ellipse", "cx": 346, "cy": 242, "rx": 3.2, "ry": 4.2 },
+      "fill": "#181412",
+      "z": 10
+    },
+    {
+      "id": "earL",
+      "parent": "earL",
+      "shape": { "type": "polygon", "points": [322,222, 314,182, 344,212], "detail": 8 },
+      "fill": "#e86a2c",
+      "stroke": { "color": "#261209", "width": 2.2 },
+      "z": 11
+    }
+  ],
+  "bindings": [
+    {
+      "target": "bone:chest.scaleY",
+      "params": ["Breath"],
+      "keys": [{ "at": [0], "value": 1 }, { "at": [1], "value": 1.04 }]
+    },
+    {
+      "target": "bone:head.rotation",
+      "params": ["AngleZ"],
+      "keys": [{ "at": [-30], "value": 34 }, { "at": [0], "value": 56 }, { "at": [30], "value": 78 }]
+    },
+    {
+      "target": "bone:lowerJaw.rotation",
+      "params": ["MouthOpen"],
+      "keys": [{ "at": [0], "value": 0 }, { "at": [1], "value": 24 }]
+    },
+    {
+      "target": "part:eye.shape.ry",
+      "params": ["EyeLOpen"],
+      "keys": [{ "at": [0], "value": 0.5 }, { "at": [1], "value": 7.5 }]
+    },
+    {
+      "target": "part:pupil.opacity",
+      "params": ["EyeLOpen"],
+      "keys": [{ "at": [0], "value": 0 }, { "at": [0.2], "value": 1 }, { "at": [1], "value": 1 }]
+    },
+    {
+      "target": "part:pupil.shape.cx",
+      "params": ["EyeBallX"],
+      "keys": [{ "at": [-1], "value": 343 }, { "at": [0], "value": 346 }, { "at": [1], "value": 348 }]
+    },
+    {
+      "target": "bone:flTarget.x",
+      "params": ["StepFLX"],
+      "keys": [{ "at": [-40], "value": 18 }, { "at": [0], "value": 58 }, { "at": [40], "value": 98 }]
+    },
+    {
+      "target": "bone:flTarget.y",
+      "params": ["StepFLY"],
+      "keys": [{ "at": [-30], "value": 26 }, { "at": [0], "value": -4 }, { "at": [30], "value": -34 }]
+    },
+    {
+      "target": "bone:frTarget.x",
+      "params": ["StepFRX"],
+      "keys": [{ "at": [-40], "value": 2 }, { "at": [0], "value": 42 }, { "at": [40], "value": 82 }]
+    },
+    {
+      "target": "bone:frTarget.y",
+      "params": ["StepFRY"],
+      "keys": [{ "at": [-30], "value": 26 }, { "at": [0], "value": -4 }, { "at": [30], "value": -34 }]
+    },
+    {
+      "target": "bone:blTarget.x",
+      "params": ["StepBLX"],
+      "keys": [{ "at": [-40], "value": -100 }, { "at": [0], "value": -60 }, { "at": [40], "value": -20 }]
+    },
+    {
+      "target": "bone:blTarget.y",
+      "params": ["StepBLY"],
+      "keys": [{ "at": [-30], "value": 26 }, { "at": [0], "value": -4 }, { "at": [30], "value": -34 }]
+    },
+    {
+      "target": "bone:brTarget.x",
+      "params": ["StepBRX"],
+      "keys": [{ "at": [-40], "value": -116 }, { "at": [0], "value": -76 }, { "at": [40], "value": -36 }]
+    },
+    {
+      "target": "bone:brTarget.y",
+      "params": ["StepBRY"],
+      "keys": [{ "at": [-30], "value": 26 }, { "at": [0], "value": -4 }, { "at": [30], "value": -34 }]
+    },
+    {
+      "target": "bone:tail1.rotation",
+      "params": ["Tail1"],
+      "keys": [{ "at": [-45], "value": -197 }, { "at": [0], "value": -152 }, { "at": [45], "value": -107 }]
+    },
+    {
+      "target": "bone:tail2.rotation",
+      "params": ["Tail2"],
+      "keys": [{ "at": [-45], "value": -31 }, { "at": [0], "value": 14 }, { "at": [45], "value": 59 }]
+    },
+    {
+      "target": "bone:tail3.rotation",
+      "params": ["Tail3"],
+      "keys": [{ "at": [-45], "value": -33 }, { "at": [0], "value": 12 }, { "at": [45], "value": 57 }]
+    },
+    {
+      "target": "bone:earL.rotation",
+      "params": ["EarBounce"],
+      "keys": [{ "at": [-20], "value": -102 }, { "at": [0], "value": -82 }, { "at": [20], "value": -62 }]
+    },
+    {
+      "target": "bone:earR.rotation",
+      "params": ["EarBounce"],
+      "keys": [{ "at": [-20], "value": -122 }, { "at": [0], "value": -102 }, { "at": [20], "value": -82 }]
+    }
+  ],
+  "ik": [
+    { "id": "flIk", "bones": ["flUpper", "flLower"], "target": "flTarget", "mix": 1, "bendPositive": false, "softness": 6 },
+    { "id": "frIk", "bones": ["frUpper", "frLower"], "target": "frTarget", "mix": 1, "bendPositive": false, "softness": 6 },
+    { "id": "blIk", "bones": ["blUpper", "blLower"], "target": "blTarget", "mix": 1, "bendPositive": true, "softness": 6 },
+    { "id": "brIk", "bones": ["brUpper", "brLower"], "target": "brTarget", "mix": 1, "bendPositive": true, "softness": 6 }
+  ],
+  "physics": [
+    {
+      "id": "tailPhys",
+      "inputs": [{ "param": "WalkCycle", "type": "x", "weight": 22 }, { "param": "AngleZ", "type": "angle", "weight": 0.45 }],
+      "outputs": [
+        { "param": "Tail1", "segment": 0, "type": "angle", "scale": 0.7 },
+        { "param": "Tail2", "segment": 1, "type": "angle", "scale": 0.85 },
+        { "param": "Tail3", "segment": 2, "type": "angle", "scale": 1.0 }
+      ],
+      "segments": [{ "length": 42, "mass": 1 }, { "length": 42, "mass": 0.8 }, { "length": 38, "mass": 0.6 }],
+      "gravity": -420, "damping": 0.14, "stiffness": 22
+    },
+    {
+      "id": "earPhys",
+      "inputs": [{ "param": "Breath", "type": "y", "weight": 10 }, { "param": "MouthOpen", "type": "y", "weight": 6 }],
+      "outputs": [{ "param": "EarBounce", "segment": 0, "type": "angle", "scale": 0.45 }],
+      "segments": [{ "length": 34, "mass": 0.7 }],
+      "gravity": 500, "damping": 0.16, "stiffness": 36
+    }
+  ],
+  "animations": [
+    {
+      "id": "walk",
+      "duration": 1.2,
+      "loop": true,
+      "tracks": [
+        { "target": "param:WalkCycle", "keys": [{ "t": 0, "v": -1, "ease": "smooth" }, { "t": 0.6, "v": 1, "ease": "smooth" }, { "t": 1.2, "v": -1 }] },
+        { "target": "param:StepFLX", "keys": [{ "t": 0, "v": -20, "ease": "smooth" }, { "t": 0.6, "v": 20, "ease": "smooth" }, { "t": 1.2, "v": -20 }] },
+        { "target": "param:StepFLY", "keys": [{ "t": 0, "v": 0 }, { "t": 0.3, "v": 18, "ease": "smooth" }, { "t": 0.6, "v": 0 }, { "t": 1.2, "v": 0 }] },
+        { "target": "param:StepBRX", "offset": 0, "keys": [{ "t": 0, "v": -20, "ease": "smooth" }, { "t": 0.6, "v": 20, "ease": "smooth" }, { "t": 1.2, "v": -20 }] },
+        { "target": "param:StepBRY", "offset": 0, "keys": [{ "t": 0, "v": 0 }, { "t": 0.3, "v": 18, "ease": "smooth" }, { "t": 0.6, "v": 0 }, { "t": 1.2, "v": 0 }] },
+        { "target": "param:StepFRX", "offset": 0.6, "keys": [{ "t": 0, "v": -20, "ease": "smooth" }, { "t": 0.6, "v": 20, "ease": "smooth" }, { "t": 1.2, "v": -20 }] },
+        { "target": "param:StepFRY", "offset": 0.6, "keys": [{ "t": 0, "v": 0 }, { "t": 0.3, "v": 18, "ease": "smooth" }, { "t": 0.6, "v": 0 }, { "t": 1.2, "v": 0 }] },
+        { "target": "param:StepBLX", "offset": 0.6, "keys": [{ "t": 0, "v": -20, "ease": "smooth" }, { "t": 0.6, "v": 20, "ease": "smooth" }, { "t": 1.2, "v": -20 }] },
+        { "target": "param:StepBLY", "offset": 0.6, "keys": [{ "t": 0, "v": 0 }, { "t": 0.3, "v": 18, "ease": "smooth" }, { "t": 0.6, "v": 0 }, { "t": 1.2, "v": 0 }] }
+      ]
+    },
+    {
+      "id": "talk",
+      "duration": 1.2,
+      "loop": true,
+      "tracks": [
+        { "target": "param:MouthOpen", "keys": [{ "t": 0, "v": 0.05, "ease": "smooth" }, { "t": 0.25, "v": 0.85, "ease": "smooth" }, { "t": 0.55, "v": 0.2, "ease": "smooth" }, { "t": 0.85, "v": 0.9, "ease": "smooth" }, { "t": 1.2, "v": 0.05 }] },
+        { "target": "param:AngleZ", "keys": [{ "t": 0, "v": -4, "ease": "smooth" }, { "t": 0.6, "v": 8, "ease": "smooth" }, { "t": 1.2, "v": -4 }] }
+      ]
+    }
+  ]
+}

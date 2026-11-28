@@ -13,14 +13,14 @@
     audioInfo: null,
     resumeInfo: null,
     files: {
-      voice: { label: 'ভয়েসওভার অডিও (.mp3/.wav)', found: false, names: [] },
-      srt: { label: 'সাবটাইটেল (.srt)', found: false, names: [] },
-      bgm: { label: 'ব্যাকগ্রাউন্ড মিউজিক (BGM)', found: false, names: [] },
-      leadChar: { label: 'লিড ক্যারেক্টার (char/lead)', found: false, names: [] },
-      sceneImgs: { label: 'সংগৃহীত সিন ছবি / SVG', found: false, names: [] },
-      refVideo: { label: 'রেফারেন্স ভিডিও (.mp4)', found: false, names: [] },
-      reaStyle: { label: 'REA স্টাইল (VIDEO.md / style)', found: false, names: [] },
-      storyboard: { label: 'storyboard.json / script.md', found: false, names: [] }
+      voice: { label: 'ভয়েসওভার অডিও', hint: 'voice.mp3 / narration.wav', found: false, names: [] },
+      srt: { label: 'সাবটাইটেল', hint: 'subtitles.srt / voice.srt', found: false, names: [] },
+      bgm: { label: 'ব্যাকগ্রাউন্ড মিউজিক', hint: 'bgm.mp3 / music.mp3', found: false, names: [] },
+      leadChar: { label: 'লিড ক্যারেক্টার', hint: 'char.png / hero.svg / puppet.png', found: false, names: [] },
+      sceneImgs: { label: 'সংগৃহীত সিন ছবি / SVG', hint: 'scene1.png / bg.svg', found: false, names: [] },
+      refVideo: { label: 'রেফারেন্স ভিডিও', hint: 'ref.mp4 / sample.mp4', found: false, names: [] },
+      reaStyle: { label: 'REA স্টাইল ও অডিও ব্লুপ্রিন্ট', hint: 'VIDEO.md / audio.md / style.json', found: false, names: [] },
+      storyboard: { label: 'স্ক্রিপ্ট ও স্টোরিবোর্ড', hint: 'script.md / storyboard.json', found: false, names: [] }
     },
     installedSkills: [...DEFAULT_VIDEO_SKILLS],
     selectedSkills: new Set(['beat-sync-editing', 'svg-generator', 'remotion-video-studio', 'real-sfx', 'yt-package', 'yt-chapters']),
@@ -56,14 +56,14 @@
         </div>
 
         <div class="dep-body">
-          <!-- 1. Local Folder Browser + 1-Click New Project -->
+          <!-- 1. Folder Selection & Merged Compact File List -->
           <div>
-            <span class="dep-sec-label">১. প্রজেক্ট ফোল্ডার সিলেক্ট করুন বা নতুন প্রজেক্ট বানান</span>
+            <span class="dep-sec-label">১. প্রজেক্ট ফোল্ডার ও ফাইল তালিকা</span>
             <div class="dep-folder-row">
-              <button type="button" class="dep-pick-btn" id="depBrowseBtn">ফোল্ডার সিলেক্ট</button>
-              <button type="button" class="dep-sc-btn" id="depNewProjToggle" style="padding:7px 10px;font-size:0.78rem;color:var(--accent);border-color:var(--border);">+ নতুন</button>
+              <button type="button" class="dep-pick-btn" id="depBrowseBtn" style="padding:7px 11px;font-size:0.78rem;">📁 ফোল্ডার</button>
+              <button type="button" class="dep-sc-btn" id="depNewProjToggle" style="padding:7px 9px;font-size:0.76rem;color:var(--accent);border-color:var(--border);">+ নতুন</button>
               <input type="text" id="depFolderPath" class="dep-input" placeholder="/sdcard/Download/MyVideo" />
-              <button type="button" class="dep-sc-btn" id="depScanPathBtn" style="padding:7px 11px;font-size:0.78rem;color:var(--text);">স্ক্যান</button>
+              <button type="button" class="dep-sc-btn" id="depScanPathBtn" style="padding:7px 11px;font-size:0.78rem;color:var(--text);" title="পুনরায় স্ক্যান">স্ক্যান</button>
             </div>
             <div class="dep-newproj-box" id="depNewProjBox">
               <input type="text" id="depNewProjName" class="dep-input" placeholder="নতুন প্রজেক্টের নাম (যেমন: ChinaJapanHistory)" style="flex:1;" />
@@ -72,6 +72,9 @@
             <div class="dep-scan-status" id="depScanStatus">ফোল্ডার সিলেক্ট করলেই ভেতরের সব ফাইল ও ভয়েস ডিউরেশন অটো-স্ক্যান হয়ে যাবে।</div>
             <div class="dep-info-banner" id="depAudioBanner"></div>
             <div class="dep-info-banner resume" id="depResumeBanner"></div>
+
+            <!-- Merged Compact Scrollable Checklist directly inside Section 1 -->
+            <div class="dep-checklist" id="depChecklist" style="margin-top:6px;"></div>
 
             <div class="dep-browser" id="depBrowser">
               <div class="dep-browser-bar">
@@ -88,21 +91,15 @@
             </div>
           </div>
 
-          <!-- 2. Auto-detected Checklist -->
-          <div>
-            <span class="dep-sec-label">২. ফাইল চেকলিস্ট (পাওয়া গেলে সবুজ ✓ — ট্যাপ করে ম্যানুয়ালি বদলানো যাবে)</span>
-            <div class="dep-checklist" id="depChecklist"></div>
-          </div>
-
           <!-- Optional Reference URL -->
           <div>
             <span class="dep-sec-label">রেফারেন্স ভিডিও লিংক (YouTube / অনলাইন লিংক — Optional)</span>
             <input type="text" id="depRefUrl" class="dep-input" placeholder="https://youtube.com/watch?v=... (না থাকলে ফাঁকা রাখুন)" />
           </div>
 
-          <!-- 3. Voice+SRT Ready OR Story OR Topic -->
+          <!-- 2. Voice+SRT Ready OR Story OR Topic -->
           <div>
-            <span class="dep-sec-label">৩. গল্পের সোর্স (ভয়েস + SRT থাকলে গল্প পেস্ট করতে হবে না)</span>
+            <span class="dep-sec-label">২. গল্পের সোর্স (ভয়েস + SRT থাকলে গল্প পেস্ট করতে হবে না)</span>
             <div class="dep-tabs">
               <button type="button" class="dep-tab active" data-smode="story">গল্প আছে</button>
               <button type="button" class="dep-tab" data-smode="srt_only">ভয়েস + SRT রেডি</button>
@@ -129,74 +126,84 @@
             </div>
           </div>
 
-          <!-- 4. Format, Quality Preset & Language -->
-          <div class="dep-grid-2">
-            <div>
-              <span class="dep-sec-label">ফরম্যাট</span>
-              <select id="depFormat" class="dep-select">
-                <option value="16:9 YouTube">16:9 YouTube</option>
-                <option value="9:16 Reels/Shorts">9:16 Reels / Shorts</option>
-                <option value="Both 16:9 + 9:16">দুটোই (16:9 + 9:16)</option>
-              </select>
-            </div>
-            <div>
-              <span class="dep-sec-label">রেন্ডার কোয়ালিটি প্রিসেট</span>
-              <select id="depQuality" class="dep-select">
-                <option value="master">Studio Master (1080p • 30fps • CRF 18)</option>
-                <option value="draft">Fast Draft (720p • 16fps • CRF 23)</option>
-              </select>
-            </div>
-          </div>
+          <!-- 3. Video Format, Style & Output Settings (Clear Separated Box) -->
+          <div class="dep-card-section">
+            <span style="font-size:0.86rem;font-weight:700;color:#ffd08a;margin-bottom:2px;display:block;">৩. ফরম্যাট, কোয়ালিটি ও স্টাইল সেটিংস</span>
 
-          <div>
-            <span class="dep-sec-label">ভিডিওর ভাষা (Script + Caption)</span>
-            <select id="depLang" class="dep-select">
-              <option value="Bangla (বাংলা)">বাংলা (Bangla)</option>
-              <option value="English">English</option>
-              <option value="Banglish (বাংলা + English terms)">বাংলিশ (Bangla + English)</option>
-            </select>
-          </div>
-
-          <div>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
-              <span class="dep-sec-label" style="margin:0;">অ্যানিমেশন স্টাইল ও অ্যানিমেশন স্কিল (বাকি সব স্কিল অটো-ডিটেক্ট হবে)</span>
-              <button type="button" class="dep-sc-btn" id="depOpenPreviewBtn" style="padding:4px 10px;font-size:0.74rem;color:#fde68a;border-color:rgba(245,185,66,0.45);background:rgba(245,185,66,0.1);">🎬 ১০টি লাইভ প্রিভিউ</button>
-            </div>
+            <!-- Format & Quality Grid -->
             <div class="dep-grid-2">
-              <select id="depStyle" class="dep-select">
-                <option value="">— রেফারেন্স স্টাইল: ফাঁকা (ঐচ্ছিক) —</option>
-                <option value="Follow REA Style File in Folder (VIDEO.md / style-bible.json)">ফোল্ডারের REA স্টাইল ফাইল অনুযায়ী</option>
-                <option value="Match Reference Video Style (via rea-video)">রেফারেন্স ভিডিও অনুযায়ী (rea-video)</option>
-                <option value="Kurzgesagt style (/kurzgesagt — bold flat vector, rich gradients, rim light & glow)">Kurzgesagt Style (/kurzgesagt)</option>
-                <option value="Paper Cut-out (/papercut — torn paper edges, layered drop shadows, pop-up motion)">Paper Cut-out (/papercut)</option>
-                <option value="Claymation (/claymation — plasticine stop-motion, 12fps squash & stretch, warm studio lighting)">Claymation (/claymation)</option>
-                <option value="Anime Watercolor (/anime — dreamy watercolour sky, soft painted clouds, drifting petals)">Anime Watercolor (/anime)</option>
-                <option value="Stickman (/stickman — expressive hand-wobbled ink stick figures on warm paper, snappy timing)">Stickman (/stickman)</option>
-                <option value="Ink Wash (/inkwash — sumi-e ink brush painting on rice paper, misty mountains, red seal)">Ink Wash (/inkwash)</option>
-                <option value="Voxel Art (/voxel — crisp isometric 3D block world, sunlit top faces, playful block builds)">Voxel Art (/voxel)</option>
-                <option value="1930s Cartoon (/cartoon1930 — vintage rubber-hose animation, pie-cut eyes, sepia film flicker)">1930s Cartoon (/cartoon1930)</option>
-                <option value="3D Movie style (/movie3d — Pixar-like glossy 3D lighting, specular rim, Three.js depth)">3D Movie Style (/movie3d)</option>
-                <option value="ASCII Art (/ascii — retro phosphor terminal character art, CRT scanlines, monospace motion)">ASCII Art (/ascii)</option>
-                <option value="Editorial Documentary Collage">ডকুমেন্টারি কোলাজ (Vox/Harris)</option>
-                <option value="Hand-Drawn Painting / Scribble">পেইন্টিং / হ্যান্ড-ড্রন স্কেচ</option>
-                <option value="2D Vector + Three.js Motion">2D ভেক্টর + Three.js</option>
-              </select>
-              <select id="depAnimSkill" class="dep-select">
-                <option value="">অ্যানিমেশন স্কিল: ডিফল্ট (remotion + svg)</option>
-                <option value="__custom__">কাস্টম স্কিল লিখুন...</option>
+              <div>
+                <span class="dep-sec-label">ফরম্যাট</span>
+                <select id="depFormat" class="dep-select">
+                  <option value="16:9 YouTube">16:9 YouTube</option>
+                  <option value="9:16 Reels/Shorts">9:16 Reels / Shorts</option>
+                  <option value="Both 16:9 + 9:16">দুটোই (16:9 + 9:16)</option>
+                </select>
+              </div>
+              <div>
+                <span class="dep-sec-label">রেন্ডার কোয়ালিটি প্রিসেট</span>
+                <select id="depQuality" class="dep-select">
+                  <option value="1080p_24">Cinema 1080p (24 fps • CRF 18 — ফিল্ম লুক)</option>
+                  <option value="720p_24" selected>Balanced 720p (24 fps • CRF 20 — ফাস্ট & কুল)</option>
+                  <option value="1080p_60">Ultra Smooth 1080p (60 fps • CRF 18 — হাই মোশন)</option>
+                  <option value="720p_60">Smooth 720p (60 fps • CRF 20)</option>
+                  <option value="draft">Fast Draft (540p • 16 fps • CRF 24 — প্রিভিউ)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Language -->
+            <div>
+              <span class="dep-sec-label">ভিডিওর ভাষা (Script + Caption)</span>
+              <select id="depLang" class="dep-select">
+                <option value="Bangla (বাংলা)">বাংলা (Bangla)</option>
+                <option value="English">English</option>
+                <option value="Banglish (বাংলা + English terms)">বাংলিশ (Bangla + English)</option>
               </select>
             </div>
-            <input type="text" id="depCustomStyle" class="dep-input" style="margin-top:7px;display:none;" placeholder="কাস্টম অ্যানিমেশন স্কিলের নাম লিখুন (যেমন: puppet-skill, origami-skill)" />
-          </div>
 
-          <!-- Extra Feature Toggles -->
-          <div>
-            <span class="dep-sec-label">অতিরিক্ত ফিচার</span>
-            <div class="dep-chips" id="depChips">
-              <button type="button" class="dep-chip on" data-opt="realsfx">✓ real-sfx (৭২+৭৮ রিয়েল সাউন্ড)</button>
-              <button type="button" class="dep-chip on" data-opt="banglaFont">✓ HindSiliguriFixed বাংলা ফন্ট</button>
-              <button type="button" class="dep-chip" data-opt="map">GeoJSON রিয়েল ম্যাপ আছে</button>
-              <button type="button" class="dep-chip" data-opt="shorts">লং থেকে yt-shorts কাটবে</button>
+            <!-- Style & Skill -->
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+                <span class="dep-sec-label" style="margin:0;">অ্যানিমেশন স্টাইল ও অ্যানিমেশন স্কিল</span>
+                <button type="button" class="dep-sc-btn" id="depOpenPreviewBtn" style="padding:4px 10px;font-size:0.74rem;color:#fde68a;border-color:rgba(245,185,66,0.45);background:rgba(245,185,66,0.1);">🎬 ১০টি লাইভ প্রিভিউ</button>
+              </div>
+              <div class="dep-grid-2">
+                <select id="depStyle" class="dep-select">
+                  <option value="">— রেফারেন্স স্টাইল: ফাঁকা (ঐচ্ছিক) —</option>
+                  <option value="Follow REA Style File in Folder (VIDEO.md / style-bible.json)">ফোল্ডারের REA স্টাইল ফাইল অনুযায়ী</option>
+                  <option value="Match Reference Video Style (via rea-video)">রেফারেন্স ভিডিও অনুযায়ী (rea-video)</option>
+                  <option value="Kurzgesagt style (/kurzgesagt — bold flat vector, rich gradients, rim light & glow)">Kurzgesagt Style (/kurzgesagt)</option>
+                  <option value="Paper Cut-out (/papercut — torn paper edges, layered drop shadows, pop-up motion)">Paper Cut-out (/papercut)</option>
+                  <option value="Claymation (/claymation — plasticine stop-motion, 12fps squash & stretch, warm studio lighting)">Claymation (/claymation)</option>
+                  <option value="Anime Watercolor (/anime — dreamy watercolour sky, soft painted clouds, drifting petals)">Anime Watercolor (/anime)</option>
+                  <option value="Stickman (/stickman — expressive hand-wobbled ink stick figures on warm paper, snappy timing)">Stickman (/stickman)</option>
+                  <option value="Ink Wash (/inkwash — sumi-e ink brush painting on rice paper, misty mountains, red seal)">Ink Wash (/inkwash)</option>
+                  <option value="Voxel Art (/voxel — crisp isometric 3D block world, sunlit top faces, playful block builds)">Voxel Art (/voxel)</option>
+                  <option value="1930s Cartoon (/cartoon1930 — vintage rubber-hose animation, pie-cut eyes, sepia film flicker)">1930s Cartoon (/cartoon1930)</option>
+                  <option value="3D Movie style (/movie3d — Pixar-like glossy 3D lighting, specular rim, Three.js depth)">3D Movie Style (/movie3d)</option>
+                  <option value="ASCII Art (/ascii — retro phosphor terminal character art, CRT scanlines, monospace motion)">ASCII Art (/ascii)</option>
+                  <option value="Editorial Documentary Collage">ডকুমেন্টারি কোলাজ (Vox/Harris)</option>
+                  <option value="Hand-Drawn Painting / Scribble">পেইন্টিং / হ্যান্ড-ড্রন স্কেচ</option>
+                  <option value="2D Vector + Three.js Motion">2D ভেক্টর + Three.js</option>
+                </select>
+                <select id="depAnimSkill" class="dep-select">
+                  <option value="">অ্যানিমেশন স্কিল: ডিফল্ট (remotion + svg)</option>
+                  <option value="__custom__">কাস্টম স্কিল লিখুন...</option>
+                </select>
+              </div>
+              <input type="text" id="depCustomStyle" class="dep-input" style="margin-top:7px;display:none;" placeholder="কাস্টম অ্যানিমেশন স্কিলের নাম লিখুন (যেমন: puppet-skill, origami-skill)" />
+            </div>
+
+            <!-- Extra Feature Toggles -->
+            <div>
+              <span class="dep-sec-label">অতিরিক্ত ফিচার</span>
+              <div class="dep-chips" id="depChips">
+                <button type="button" class="dep-chip on" data-opt="realsfx">✓ real-sfx (৭২+৭৮ রিয়েল সাউন্ড)</button>
+                <button type="button" class="dep-chip on" data-opt="banglaFont">✓ HindSiliguriFixed বাংলা ফন্ট</button>
+                <button type="button" class="dep-chip" data-opt="map">GeoJSON রিয়েল ম্যাপ আছে</button>
+                <button type="button" class="dep-chip" data-opt="shorts">লং থেকে yt-shorts কাটবে</button>
+              </div>
             </div>
           </div>
 
@@ -308,25 +315,18 @@
     const box = document.getElementById('depChecklist');
     box.innerHTML = Object.entries(depState.files).map(([key, item]) => {
       const meta = item.names.length
-        ? (item.names.length > 1 ? `${item.names.length} ফাইল` : item.names[0])
-        : (item.found ? 'ম্যানুয়াল' : '');
+        ? (item.names.length > 1 ? `${item.names.length}টি ফাইল (${item.names[0]})` : item.names[0])
+        : '';
       return `
-        <div class="dep-item ${item.found ? 'found' : ''}" data-fkey="${key}">
-          <span class="tick">✓</span>
-          <span>${item.label}</span>
-          ${meta ? `<span class="file-meta" title="${item.names.join(', ')}">${meta}</span>` : ''}
+        <div class="dep-item ${item.found ? 'found' : ''}">
+          <span class="tick">${item.found ? '✓' : '•'}</span>
+          <span class="dep-item-label">${item.label}</span>
+          ${meta 
+            ? `<span class="file-meta" title="${item.names.join(', ')}">${meta}</span>` 
+            : `<span class="file-hint">${item.hint}</span>`}
         </div>
       `;
     }).join('');
-
-    box.querySelectorAll('.dep-item').forEach(el => {
-      el.addEventListener('click', () => {
-        const k = el.dataset.fkey;
-        depState.files[k].found = !depState.files[k].found;
-        if (!depState.files[k].found) depState.files[k].names = [];
-        renderChecklist();
-      });
-    });
   }
 
   const NON_ANIM_SKILLS = new Set([
@@ -521,11 +521,24 @@
     const refUrl = document.getElementById('depRefUrl').value.trim();
     const format = document.getElementById('depFormat').value;
     const quality = document.getElementById('depQuality').value;
-    const isDraft = quality === 'draft';
-    const fps = isDraft ? 16 : 30;
-    const qualitySpec = isDraft
-      ? 'Fast Draft (720p, 16fps, CRF 23 — fast preview)'
-      : 'Studio Master (1080p, 30fps, CRF 18 — final broadcast)';
+    let fps = 24;
+    let qualitySpec = 'Balanced 720p (720p, 24fps, CRF 20)';
+    if (quality === '1080p_24') {
+      fps = 24;
+      qualitySpec = 'Cinema 1080p (1080p, 24fps, CRF 18 — cinematic film look)';
+    } else if (quality === '720p_24') {
+      fps = 24;
+      qualitySpec = 'Balanced 720p (720p, 24fps, CRF 20 — fast & zero-heat)';
+    } else if (quality === '1080p_60') {
+      fps = 60;
+      qualitySpec = 'Ultra Smooth 1080p (1080p, 60fps, CRF 18 — high motion)';
+    } else if (quality === '720p_60') {
+      fps = 60;
+      qualitySpec = 'Smooth 720p (720p, 60fps, CRF 20 — smooth 60fps)';
+    } else if (quality === 'draft') {
+      fps = 16;
+      qualitySpec = 'Fast Draft (540p, 16fps, CRF 24 — rapid preview)';
+    }
     const lang = document.getElementById('depLang').value;
     const styleSel = document.getElementById('depStyle').value;
     const customStyle = document.getElementById('depCustomStyle').value.trim();
@@ -591,6 +604,9 @@
     if (refUrl) present.push(`Ref URL: ${refUrl}`);
     if (f.reaStyle.found) present.push(`REA Style File: ${f.reaStyle.names.join(', ') || 'present'}`);
     if (f.storyboard.found) present.push(`Existing State: ${f.storyboard.names.join(', ') || 'present'}`);
+    // Audio / Voiceover tone spec file check (audio.md)
+    const hasAudioMd = f.voice.names.some(n => n.toLowerCase() === 'audio.md') || f.srt.names.some(n => n.toLowerCase() === 'audio.md');
+    if (hasAudioMd) present.push(`Audio Tone Spec: audio.md (present)`);
 
     // ALWAYS include remotion-video-studio & svg-generator + user's chosen/custom Animation Skill (Box 2 / Box 3)
     const animSkillRaw = document.getElementById('depAnimSkill')?.value || '';
@@ -609,13 +625,16 @@
     // Core Guardrails
     const rules = [
       `Inspect existing assets in ${folder} first; NEVER replace user's Lead Character or collected photos (blend photos via editorial cutout/shadow/grade).`,
+      `Reusable Style Assets & Skill Check (ZERO-TOKEN REUSE): Check ~/remotion-studio/animation-assets/<style>/modules/ (e.g. lighting.js, water.js, foliage.js, camera-drone.js) BEFORE writing raw code from scratch. If an asset module or animation skill is missing, construct/register it modularly into ~/remotion-studio/animation-assets/<style>/modules/<element>.js or the skills directory upon first run so future scenes reuse it with zero duplicate token waste.`,
       `Modular Per-Scene Assets (NO single-file art cramming): For every missing vector scene, create a dedicated high-detail file (${folder}/assets/scene1.svg..sceneN.svg) or style-specific Canvas/Three.js scene module matching reference style/proportions with depth blur, multi-stop gradients, rim lighting, and nested bone-rigged animatable <g id="..."> parts (torso -> shoulder -> forearm -> curved hand, eyelid mask blink, RMS lip-sync).`,
+      `Visual Consistency across Scenes: Core characters, vehicles (e.g. bus, train, car) and props MUST preserve their identity (matching livery/color palette, proportion, and details) across all cut scenes unless a deliberate story change is requested.`,
       `Fast Native Rendering: Native @remotion/renderer + @remotion/cli is ACTIVE on Android via ~/remotion-studio/remotion.config.ts (glibc binaries + swangle)—prefer official Remotion CLI/Renderer for parallel React/SVG rendering, or animation-styles/scripts/render.mjs (with live preview HTML player) when animation-styles is selected.`,
       `For videos > 60s, render in safe 30s chunks (part1.mp4..partN.mp4) and merge via ffmpeg concat (-c copy) to avoid Android overheating/OOM and allow fast single-chunk re-renders.`
     ];
     if (depState.opts.banglaFont) rules.push(`Offline Bangla font: load ~/remotion-studio/fonts/HindSiliguriFixed-{Regular,SemiBold,Bold}.ttf via @font-face and await document.fonts.ready.`);
     if (depState.opts.map) rules.push(`For real maps/routes: NEVER draw AI-guessed maps—use accurate GeoJSON/Wikimedia SVG paths + animated stroke-dashoffset.`);
     if (depState.opts.realsfx) rules.push(`Audio: use real-sfx (~/.gemini/config/sfx_library, never synthesize) with --voice-safe --duck --snap-beats --target-lufs -14 + critique.py scoreboard (swap/drop mismatches via sheet.py).`);
+    rules.push(`Audio Tone & Voice Blueprint: If audio.md exists in project folder, strictly follow its Voice Name, Speech Rate, Pitch, Mood (calm/energetic/dramatic), and BGM ducking rules before synthesizing voice via tts-edge.py or mixing stems.`);
 
     const PLAYBOOK = '/data/user/0/ai.antigem/files/home/remotion-studio/prompts-playbook.json';
     const s1Keys = [];
@@ -634,8 +653,8 @@
       execBlock = `Execution Mode (FORCED Subagent Team — Director + 4 Fresh-Context Specialists):
 You are ONLY the lightweight Director. DO NOT run heavy work inside your own context. Each subagent MUST read its assigned full Mind-Map Master Prompts from ${PLAYBOOK} inside its own fresh context, save outputs to ${folder}/project/, and reply ONLY with file paths + a 5-line summary (never edit the same file concurrently):
 1. First ask me any missing decisions with options.
-2. Subagent 1 (Research, Script & Beat-Sync): Read playbook keys [${s1Keys.join(', ')}] -> lock style-bible.json, script.md, storyboard.json, assets-map.json -> wait for my OK.
-3. Subagent 2 (Art & Map Builder): Read playbook keys [${s2Keys.join(', ')}] -> build ONLY MISSING Z-Depth layers${depState.opts.map ? ' & GeoJSON maps' : ''} -> update assets-map.json.
+2. Subagent 1 (Research, Script & Beat-Sync): Read playbook keys [${s1Keys.join(', ')}] -> locks script.md & storyboard.json. (Micro-split allowed: Can spawn sub-subagents for Script vs Beat-Sync so research never pollutes storyboard context).
+3. Subagent 2 (Art & Asset Coordinator): Read playbook keys [${s2Keys.join(', ')}]. Spawns lightweight parallel workers per missing element (Worker 2A for Character Rig, Worker 2B for Vehicle/3D Prop, Worker 2C for Background/Map) -> updates assets-map.json.
 4. Subagent 3 (Motion & Still QC): Read playbook keys [${s3Keys.join(', ')}] -> code remotion-video-studio src/scene.html -> render 4 keyframe PNG stills (Hook, Mid, Bangla Conjunct Caption, Transition/End) -> show me the 4 PNGs & wait for my OK.
 5. Subagent 4 (Final Render, Audio & Viral Pack): Read playbook keys [${s4Keys.join(', ')}] -> render final output.mp4 (30s chunks if >60s) + real-sfx critique scoreboard + yt-package/chapters publish pack.`;
     } else if (depState.execMode === 'jarvis') {
@@ -750,13 +769,26 @@ ${execBlock}`;
     if (openBtn) {
       openBtn.addEventListener('click', () => {
         backdrop.classList.add('open');
+        try { sessionStorage.setItem('dep_modal_open', '1'); } catch {}
         checkServerAndLoadSkills();
       });
     }
-    closeBtn.addEventListener('click', () => backdrop.classList.remove('open'));
+    const closeModal = () => {
+      backdrop.classList.remove('open');
+      try { sessionStorage.removeItem('dep_modal_open'); } catch {}
+    };
+    closeBtn.addEventListener('click', closeModal);
     backdrop.addEventListener('click', (e) => {
-      if (e.target === backdrop) backdrop.classList.remove('open');
+      if (e.target === backdrop) closeModal();
     });
+
+    // Auto-restore modal state on page refresh!
+    try {
+      if (sessionStorage.getItem('dep_modal_open') === '1') {
+        backdrop.classList.add('open');
+        checkServerAndLoadSkills();
+      }
+    } catch {}
 
     browseBtn.addEventListener('click', () => {
       const typed = document.getElementById('depFolderPath').value.trim();

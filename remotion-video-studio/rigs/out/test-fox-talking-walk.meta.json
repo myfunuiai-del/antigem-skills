@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "model": "/data/user/0/ai.antigem/files/home/remotion-studio/rigs/out/fox-synced.r2d.json",
+  "modelName": "archetype-quadruped-fox",
+  "mp4": "/data/user/0/ai.antigem/files/home/remotion-studio/rigs/out/test-fox-talking-walk.mp4",
+  "poster": "/data/user/0/ai.antigem/files/home/remotion-studio/rigs/out/test-fox-talking-walk.png",
+  "fps": 30,
+  "frames": 156,
+  "duration": 5.2,
+  "width": 1024,
+  "height": 1024,
+  "layers": [
+    "walk",
+    "speech,add"
+  ],
+  "hasAudio": true,
+  "sizeKB": 553,
+  "createdAt": "2026-11-27T22:52:03.162Z",
+  "framesSummaryBytes": 4978
+}

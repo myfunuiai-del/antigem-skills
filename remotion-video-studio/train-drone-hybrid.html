@@ -1,0 +1,2108 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>বাড়ি ফেরা — 3D Cinematic Train Drone Shot (Three.js PBR + Bengali Voice)</title>
+<style>
+  @font-face {
+    font-family: 'HindSiliguriFixed';
+    src: url('./fonts/HindSiliguriFixed-Regular.ttf') format('truetype');
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: 'HindSiliguriFixed';
+    src: url('./fonts/HindSiliguriFixed-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+  }
+  @font-face {
+    font-family: 'HindSiliguriFixed';
+    src: url('./fonts/HindSiliguriFixed-Bold.ttf') format('truetype');
+    font-weight: 700;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: #070a10;
+    color: #f4f1ea;
+    font-family: 'HindSiliguriFixed', system-ui, sans-serif;
+    overflow: hidden;
+  }
+  body.preview-mode {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px;
+  }
+  .stage-wrap {
+    position: relative;
+    width: 1280px;
+    height: 720px;
+    background: #0d1322;
+    overflow: hidden;
+  }
+  body.preview-mode .stage-wrap {
+    width: min(96vw, 1120px);
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(255, 224, 180, 0.14);
+  }
+  #glStage, #overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  #overlay {
+    pointer-events: none;
+  }
+  .controls {
+    width: min(96vw, 1120px);
+    background: rgba(16, 22, 32, 0.92);
+    border: 1px solid rgba(255, 220, 175, 0.16);
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  body.render-mode .controls,
+  body.render-mode .header-bar {
+    display: none !important;
+  }
+  .header-bar {
+    width: min(96vw, 1120px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: #d8cfc0;
+  }
+  .header-bar a {
+    color: #ffd08a;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .btn {
+    background: #1d2736;
+    color: #f8f4ec;
+    border: 1px solid rgba(255, 220, 175, 0.2);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn.primary {
+    background: linear-gradient(135deg, #f59e0b, #ea580c);
+    color: #120b05;
+    border: none;
+  }
+  input[type="range"] {
+    flex: 1;
+    min-width: 160px;
+    accent-color: #f59e0b;
+  }
+  .time-lbl {
+    font-size: 0.82rem;
+    color: #f5d3a1;
+    min-width: 84px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <div class="header-bar">
+    <div><strong>🚂 বাড়ি ফেরা</strong> — Three.js PBR 3D ড্রোন শট + বাংলা নিউরাল ভয়েসওভার</div>
+    <div style="display:flex;gap:14px;">
+      <a href="./rig-preview.html">🦴 রিগ ও ভিডিও গ্যালারি</a>
+      <a href="./style-preview.html">🎬 স্টাইল প্রিভিউ</a>
+    </div>
+  </div>
+
+  <div class="stage-wrap" id="stageWrap">
+    <canvas id="glStage" width="1280" height="720"></canvas>
+    <canvas id="overlay" width="1280" height="720"></canvas>
+  </div>
+
+  <div class="controls">
+    <button class="btn primary" id="playBtn">▶ প্লে / পজ</button>
+    <button class="btn" id="restartBtn">↺ শুরু থেকে</button>
+    <input type="range" id="scrub" min="0" max="240" value="0" step="1" />
+    <span class="time-lbl" id="timeLbl">0.00 / 10.00s</span>
+    <audio id="voiceAudio" src="./rigs/out/train_voice_bn_master.mp3" preload="auto"></audio>
+  </div>
+
+<script>
+(() => {
+  const isRender = new URLSearchParams(location.search).get('render') === '1';
+  document.body.classList.add(isRender ? 'render-mode' : 'preview-mode');
+
+  const W = 1280;
+  const H = 720;
+  const FPS = 24;
+  const DURATION = 10.0;
+
+  window.CONFIG = { width: W, height: H, fps: FPS, duration: DURATION };
+
+  const glCanvas = document.getElementById('glStage');
+  const overlayCanvas = document.getElementById('overlay');
+  const octx = overlayCanvas.getContext('2d');
+
+  // --- Deterministic PRNG ---
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function() {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const rand = mulberry32(20261129);
+
+  // --- Math Helpers ---
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const smoothstep = (e0, e1, x) => {
+    const t = clamp((x - e0) / (e1 - e0), 0, 1);
+    return t * t * (3 - 2 * t);
+  };
+  const easeInOutCubic = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+  // --- Procedural High-Craft Textures (Zero External Images!) ---
+  function makeGrassTexture() {
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 256;
+    const g = c.getContext('2d');
+    const r = mulberry32(404);
+    g.fillStyle = '#cfdcc4';
+    g.fillRect(0, 0, 256, 256);
+    // Soft painterly meadow dabs + dark organic moss shadows + sunlit grass blades
+    for (let i = 0; i < 650; i++) {
+      const x = r() * 256, y = r() * 256;
+      const rad = 3 + r() * 14;
+      g.fillStyle = r() > 0.48 ? '#e3ecc8' : '#96ab86';
+      g.globalAlpha = 0.14 + r() * 0.16;
+      g.beginPath();
+      g.ellipse(x, y, rad, rad * 0.55, r() * Math.PI, 0, Math.PI * 2);
+      g.fill();
+    }
+    for (let i = 0; i < 420; i++) {
+      const x = r() * 256, y = r() * 256;
+      g.strokeStyle = r() > 0.5 ? '#7c946b' : '#ebf0c5';
+      g.globalAlpha = 0.22;
+      g.lineWidth = 1.2;
+      g.beginPath();
+      g.moveTo(x, y);
+      g.lineTo(x + (r() - 0.5) * 6, y - 4 - r() * 6);
+      g.stroke();
+    }
+    g.globalAlpha = 1;
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(28, 28);
+    return tex;
+  }
+
+  function makeStoneTexture() {
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 256;
+    const g = c.getContext('2d');
+    const r = mulberry32(77);
+    g.fillStyle = '#5c4b3b'; // deep mortar joints
+    g.fillRect(0, 0, 256, 256);
+    const rows = 9;
+    const rh = 256 / rows;
+    for (let row = 0; row < rows; row++) {
+      const y = row * rh;
+      const cols = 4 + (row % 2);
+      const cw = 256 / cols;
+      const offset = (row % 2) * (cw * 0.45);
+      for (let col = -1; col <= cols; col++) {
+        const x = col * cw + offset;
+        const base = 132 + r() * 44;
+        const R = Math.floor(base * 1.06);
+        const G = Math.floor(base * 0.90);
+        const B = Math.floor(base * 0.72);
+        g.fillStyle = `rgb(${R},${G},${B})`;
+        g.fillRect(x + 2.5, y + 2.5, cw - 4.5, rh - 4.5);
+        // Subtle sunlit top bevel & warm shadow bottom edge
+        g.fillStyle = 'rgba(255,228,185,0.18)';
+        g.fillRect(x + 2.5, y + 2.5, cw - 4.5, 3);
+        g.fillStyle = 'rgba(42,28,18,0.28)';
+        g.fillRect(x + 2.5, y + rh - 4.5, cw - 4.5, 2.5);
+      }
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(2.2, 2.2);
+    return tex;
+  }
+
+  function makeWindowTexture(variant = 0) {
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 96;
+    const g = c.getContext('2d');
+    // Warm cozy lantern-lit coach interior gradient (rich amber edges, bright golden center)
+    const gr = g.createRadialGradient(32, 46, 4, 32, 46, 52);
+    if (variant === 0) {
+      gr.addColorStop(0, '#fff2b2');
+      gr.addColorStop(0.45, '#ffba42');
+      gr.addColorStop(1, '#c95c16');
+    } else if (variant === 1) {
+      gr.addColorStop(0, '#ffe394');
+      gr.addColorStop(0.5, '#f09428');
+      gr.addColorStop(1, '#9e3e12');
+    } else {
+      gr.addColorStop(0, '#ffd478');
+      gr.addColorStop(0.55, '#d67820');
+      gr.addColorStop(1, '#783010');
+    }
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 64, 96);
+
+    // Subtle draped curtain shadows on left & right top corners
+    g.fillStyle = 'rgba(72, 24, 14, 0.45)';
+    g.beginPath(); g.moveTo(0, 0); g.lineTo(18, 0); g.quadraticCurveTo(10, 42, 0, 70); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(64, 0); g.lineTo(46, 0); g.quadraticCurveTo(54, 42, 64, 70); g.closePath(); g.fill();
+
+    // Subtle warm ceiling light fixture reflection + dark lower sill
+    g.fillStyle = 'rgba(55, 20, 10, 0.32)';
+    g.fillRect(0, 74, 64, 22);
+    return new THREE.CanvasTexture(c);
+  }
+
+  function makeRoofTileTexture() {
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 128;
+    const g = c.getContext('2d');
+    g.fillStyle = '#993322';
+    g.fillRect(0, 0, 128, 128);
+    const r = mulberry32(99);
+    for (let y = 0; y < 128; y += 16) {
+      g.fillStyle = 'rgba(40,12,8,0.28)';
+      g.fillRect(0, y + 13, 128, 3);
+      for (let x = 0; x < 128; x += 16) {
+        g.fillStyle = r() > 0.5 ? 'rgba(255,165,110,0.12)' : 'rgba(65,18,12,0.16)';
+        g.fillRect(x + ((y / 16) % 2) * 8, y, 14, 13);
+      }
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(3, 3);
+    return tex;
+  }
+
+  function makeSmokeTexture() {
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 128;
+    const g = c.getContext('2d');
+    g.clearRect(0, 0, 128, 128);
+    const lobes = [
+      [64, 64, 46, 0.65],
+      [46, 58, 34, 0.48],
+      [82, 60, 32, 0.46],
+      [62, 44, 30, 0.42],
+      [66, 80, 28, 0.36],
+      [40, 74, 24, 0.28],
+      [86, 74, 22, 0.26]
+    ];
+    for (const [cx, cy, rad, a] of lobes) {
+      const gr = g.createRadialGradient(cx, cy, rad * 0.08, cx, cy, rad);
+      gr.addColorStop(0, `rgba(255,244,230,${a})`);
+      gr.addColorStop(0.52, `rgba(244,224,208,${a * 0.55})`);
+      gr.addColorStop(1, 'rgba(230,200,190,0)');
+      g.fillStyle = gr;
+      g.beginPath();
+      g.arc(cx, cy, rad, 0, Math.PI * 2);
+      g.fill();
+    }
+    return new THREE.CanvasTexture(c);
+  }
+
+  function makeGlowTexture(inner = 'rgba(255,240,190,1)', mid = 'rgba(255,162,56,0.42)') {
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 128;
+    const g = c.getContext('2d');
+    const gr = g.createRadialGradient(64, 64, 2, 64, 64, 62);
+    gr.addColorStop(0, inner);
+    gr.addColorStop(0.30, mid);
+    gr.addColorStop(1, 'rgba(255,120,40,0)');
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(c);
+  }
+
+  // --- Renderer Setup (Rich Filmic Golden-Hour ACES Exposure) ---
+  const renderer = new THREE.WebGLRenderer({
+    canvas: glCanvas,
+    antialias: true,
+    powerPreference: 'high-performance',
+    preserveDrawingBuffer: true
+  });
+  renderer.setSize(W, H, false);
+  renderer.setPixelRatio(1);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.94;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+
+  const scene = new THREE.Scene();
+  // Lighter, warmer atmospheric haze so foreground/midground stay deeply saturated!
+  scene.fog = new THREE.FogExp2(0xcf7b56, 0.0026);
+
+  const camera = new THREE.PerspectiveCamera(41, W / H, 0.4, 540);
+
+  // --- Prefiltered Golden-Hour IBL Environment (PMREMGenerator) ---
+  {
+    const envScene = new THREE.Scene();
+    const envGeo = new THREE.SphereGeometry(40, 24, 16);
+    const envMat = new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      uniforms: {},
+      vertexShader: `
+        varying vec3 vPos;
+        void main() { vPos = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+      `,
+      fragmentShader: `
+        varying vec3 vPos;
+        void main() {
+          float y = vPos.y;
+          vec3 low = vec3(0.20, 0.14, 0.12);
+          vec3 hor = vec3(0.95, 0.58, 0.30);
+          vec3 mid = vec3(0.32, 0.24, 0.44);
+          vec3 top = vec3(0.08, 0.14, 0.32);
+          vec3 col = y < 0.0 ? mix(hor, low, clamp(-y * 2.5, 0.0, 1.0))
+                             : (y < 0.25 ? mix(hor, mid, y / 0.25) : mix(mid, top, (y - 0.25) / 0.75));
+          gl_FragColor = vec4(col, 1.0);
+        }
+      `
+    });
+    envScene.add(new THREE.Mesh(envGeo, envMat));
+    const sunPanel = new THREE.Mesh(
+      new THREE.PlaneGeometry(22, 14),
+      new THREE.MeshBasicMaterial({ color: 0xffd28e })
+    );
+    sunPanel.position.set(14, 8, -28);
+    sunPanel.lookAt(0, 0, 0);
+    envScene.add(sunPanel);
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(envScene, 0.03).texture;
+    pmrem.dispose();
+  }
+
+  // --- World Layout Constants ---
+  const TRACK_Y = 7.8;
+  const SUN_DIR = new THREE.Vector3(0.24, 0.155, -0.958).normalize();
+  const HOME_POS = new THREE.Vector3(50, 14.2, -37);
+
+  function riverCenterX(z) {
+    return Math.sin(z * 0.034) * 14.0 - z * 0.13;
+  }
+  function riverHalfWidth(z) {
+    return 11.4 + Math.sin(z * 0.048 + 0.9) * 2.0;
+  }
+
+  // Curved Railway Path
+  const trackPoints = [
+    new THREE.Vector3(-108, TRACK_Y,  30),
+    new THREE.Vector3( -66, TRACK_Y,  17),
+    new THREE.Vector3( -28, TRACK_Y,   5),
+    new THREE.Vector3(   0, TRACK_Y,   0),
+    new THREE.Vector3(  28, TRACK_Y,  -3.5),
+    new THREE.Vector3(  60, TRACK_Y, -15),
+    new THREE.Vector3(  98, TRACK_Y, -35),
+    new THREE.Vector3( 134, TRACK_Y, -58)
+  ];
+  const trackCurve = new THREE.CatmullRomCurve3(trackPoints, false, 'catmullrom', 0.5);
+  const TRACK_LENGTH = trackCurve.getLength();
+
+  const TRACK_SAMPLES = [];
+  const N_SAMPLE = 140;
+  for (let i = 0; i <= N_SAMPLE; i++) {
+    const u = i / N_SAMPLE;
+    const p = trackCurve.getPointAt(u);
+    TRACK_SAMPLES.push({ x: p.x, z: p.z, u });
+  }
+  function nearestTrackDist(x, z) {
+    let minD2 = 1e9, bestX = 0;
+    for (let i = 0; i < TRACK_SAMPLES.length; i++) {
+      const s = TRACK_SAMPLES[i];
+      const dx = x - s.x, dz = z - s.z;
+      const d2 = dx * dx + dz * dz;
+      if (d2 < minD2) { minD2 = d2; bestX = s.x; }
+    }
+    return { dist: Math.sqrt(minD2), trackX: bestX };
+  }
+
+  function fbmHills(x, z) {
+    let h = 0;
+    h += Math.sin(x * 0.028 + 0.6) * Math.cos(z * 0.026 - 0.4) * 6.4;
+    h += Math.sin(x * 0.056 - z * 0.044 + 1.4) * 2.9;
+    h += Math.cos(x * 0.095 + z * 0.088 + 2.2) * 1.1;
+    h += Math.sin(x * 0.16 - z * 0.14) * 0.38;
+    return h;
+  }
+
+  function terrainHeight(x, z) {
+    const rx = riverCenterX(z);
+    const rw = riverHalfWidth(z);
+    const dRiver = Math.abs(x - rx);
+
+    const valleyWall = smoothstep(rw + 2, rw + 44, dRiver) * 13.0;
+    const backRise = smoothstep(-10, -105, z) * 13.5 + smoothstep(34, 98, Math.abs(x)) * 6.8;
+    let h = 3.0 + valleyWall + backRise * 0.70 + fbmHills(x, z);
+
+    // Carve river gorge smoothly below Y = 0
+    const riverBlend = 1.0 - smoothstep(rw - 2.0, rw + 9.5, dRiver);
+    const riverbed = -2.8 + smoothstep(0, rw, dRiver) * 2.1;
+    h = lerp(h, riverbed, riverBlend);
+
+    // Smooth grassy meadow crest for the hilltop home
+    const dHome = Math.hypot(x - HOME_POS.x, z - HOME_POS.z);
+    const homeFlat = 1.0 - smoothstep(6.8, 21.0, dHome);
+    h = lerp(h, HOME_POS.y, homeFlat);
+
+    // Railway embankment blending outside the stone viaduct span (|x| > 18.5)
+    const { dist: dTrack, trackX } = nearestTrackDist(x, z);
+    const outsideViaduct = smoothstep(18.0, 23.0, Math.abs(trackX));
+    if (outsideViaduct > 0.001 && dTrack < 13.0) {
+      const embBlend = (1.0 - smoothstep(3.0, 13.0, dTrack)) * outsideViaduct;
+      h = lerp(h, TRACK_Y - 0.34, embBlend);
+    }
+
+    if (Math.abs(trackX) <= 19.5 && dTrack < 6.2) {
+      h = Math.min(h, TRACK_Y - 2.6);
+    }
+    return h;
+  }
+
+  // --- Rich Film-Set Golden-Hour Chiaroscuro Lighting ---
+  const hemiLight = new THREE.HemisphereLight(0x7c9ad4, 0x222c1b, 0.42);
+  scene.add(hemiLight);
+
+  const sunLight = new THREE.DirectionalLight(0xffa84c, 2.75);
+  sunLight.position.copy(SUN_DIR).multiplyScalar(118);
+  sunLight.castShadow = true;
+  sunLight.shadow.mapSize.set(1024, 1024);
+  sunLight.shadow.camera.near = 22;
+  sunLight.shadow.camera.far = 230;
+  sunLight.shadow.camera.left = -60;
+  sunLight.shadow.camera.right = 60;
+  sunLight.shadow.camera.top = 44;
+  sunLight.shadow.camera.bottom = -44;
+  sunLight.shadow.bias = -0.0006;
+  scene.add(sunLight);
+
+  const fillLight = new THREE.DirectionalLight(0x5276bd, 0.28);
+  fillLight.position.set(-55, 38, 68);
+  scene.add(fillLight);
+
+  // --- 1. Dramatic Sunset Sky Dome ---
+  {
+    const skyGeo = new THREE.SphereGeometry(330, 36, 22);
+    const skyMat = new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      depthWrite: false,
+      fog: false,
+      uniforms: { uSunDir: { value: SUN_DIR.clone() } },
+      vertexShader: `
+        varying vec3 vWorldDir;
+        void main() {
+          vec4 wp = modelMatrix * vec4(position, 1.0);
+          vWorldDir = normalize(wp.xyz);
+          gl_Position = projectionMatrix * viewMatrix * wp;
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 uSunDir;
+        varying vec3 vWorldDir;
+        void main() {
+          vec3 d = normalize(vWorldDir);
+          float h = clamp(d.y, -0.15, 1.0);
+          vec3 zenith  = vec3(0.06, 0.12, 0.30);
+          vec3 midSky  = vec3(0.32, 0.22, 0.44);
+          vec3 coral   = vec3(0.84, 0.36, 0.30);
+          vec3 horizon = vec3(1.00, 0.66, 0.32);
+          vec3 col;
+          if (h < 0.08) {
+            col = mix(horizon, coral, clamp(h / 0.08, 0.0, 1.0));
+          } else if (h < 0.26) {
+            col = mix(coral, midSky, (h - 0.08) / 0.18);
+          } else {
+            col = mix(midSky, zenith, pow((h - 0.26) / 0.74, 0.78));
+          }
+
+          float sunDot = max(dot(d, normalize(uSunDir)), 0.0);
+          col += vec3(1.0, 0.54, 0.20) * pow(sunDot, 5.0) * 0.52;
+          col += vec3(1.0, 0.80, 0.44) * pow(sunDot, 32.0) * 0.72;
+          float disc = smoothstep(0.9968, 0.9994, sunDot);
+          col = mix(col, vec3(1.0, 0.96, 0.86) * 1.45, disc * 0.88);
+
+          float lowFade = smoothstep(0.02, -0.10, d.y);
+          col = mix(col, vec3(0.78, 0.44, 0.30), lowFade * 0.65);
+          gl_FragColor = vec4(col, 1.0);
+        }
+      `
+    });
+    scene.add(new THREE.Mesh(skyGeo, skyMat));
+  }
+
+  // --- 2. Smooth Sculpted Layered Horizon Mountain Ridges (Zero Sharp Cones!) ---
+  {
+    function makeMountainRing(radius, baseH, amp, colHex, seedOff, radialSegs = 96) {
+      const geo = new THREE.CylinderGeometry(radius, radius * 1.08, 1, radialSegs, 8, true);
+      const pos = geo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+        const ang = Math.atan2(z, x);
+        // Multi-harmonic natural rolling mountain skyline
+        const ridge =
+          Math.sin(ang * 5.0 + seedOff) * 0.45 +
+          Math.sin(ang * 11.0 - seedOff * 1.4) * 0.28 +
+          Math.cos(ang * 19.0 + seedOff * 2.1) * 0.14 +
+          Math.sin(ang * 31.0 + seedOff * 0.7) * 0.07;
+        // Dip softly right along the sunset valley opening (ang ≈ -1.3 rad) so the golden sun shines through!
+        const valleyDip = 1.0 - 0.55 * Math.exp(-Math.pow(ang + 1.38, 2) * 3.8);
+        const peakY = (baseH + (ridge * 0.5 + 0.5) * amp) * valleyDip;
+        const frac = y + 0.5; // 0 at bottom, 1 at top crest
+        pos.setY(i, lerp(-12, peakY, frac));
+        // Slight outward slope at base for realistic mountain volume
+        const flare = lerp(1.06, 0.95, frac);
+        pos.setX(i, x * flare);
+        pos.setZ(i, z * flare);
+      }
+      geo.computeVertexNormals();
+      const mat = new THREE.MeshStandardMaterial({
+        color: colHex,
+        roughness: 0.96,
+        metalness: 0.0,
+        envMapIntensity: 0.22,
+        side: THREE.DoubleSide
+      });
+      return new THREE.Mesh(geo, mat);
+    }
+    scene.add(makeMountainRing(175, 16, 26, 0x5c4459, 0.8));
+    scene.add(makeMountainRing(235, 24, 42, 0x403556, 2.3));
+  }
+
+  // --- 3. Deeply Saturated Painterly Valley Terrain ---
+  {
+    const sizeX = 250, sizeZ = 240, segX = 140, segZ = 135;
+    const tGeo = new THREE.PlaneGeometry(sizeX, sizeZ, segX, segZ);
+    tGeo.rotateX(-Math.PI / 2);
+
+    const pos = tGeo.attributes.position;
+    const colors = new Float32Array(pos.count * 3);
+    const cMeadow  = new THREE.Color(0x2c5c29);
+    const cSunGold = new THREE.Color(0x6d7f24);
+    const cDeepGrn = new THREE.Color(0x183a22);
+    const cSand    = new THREE.Color(0x8e6945);
+    const cRock    = new THREE.Color(0x524942);
+    const cGravel  = new THREE.Color(0x5a5048);
+    const tmp = new THREE.Color();
+
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), z = pos.getZ(i);
+      const y = terrainHeight(x, z);
+      pos.setY(i, y);
+
+      const dRiver = Math.abs(x - riverCenterX(z)) - riverHalfWidth(z);
+      const { dist: dTrack, trackX } = nearestTrackDist(x, z);
+      const n = Math.sin(x * 0.11 + z * 0.09) * 0.5 + 0.5;
+
+      tmp.copy(cMeadow).lerp(cSunGold, clamp((y - 7.0) / 14.0, 0, 1) * 0.68 + n * 0.24);
+      if (y < 5.0) tmp.lerp(cDeepGrn, clamp((5.0 - y) / 5.0, 0, 1) * 0.56);
+      if (dRiver < 3.6) {
+        tmp.lerp(cSand, 1.0 - smoothstep(-1.0, 3.6, dRiver));
+      }
+      if (y > 18.5) {
+        tmp.lerp(cRock, clamp((y - 18.5) / 12.0, 0, 0.55));
+      }
+      if (Math.abs(trackX) > 19.0 && dTrack < 4.5) {
+        tmp.lerp(cGravel, 1.0 - smoothstep(2.0, 4.5, dTrack));
+      }
+
+      colors[i * 3] = tmp.r;
+      colors[i * 3 + 1] = tmp.g;
+      colors[i * 3 + 2] = tmp.b;
+    }
+    tGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    tGeo.computeVertexNormals();
+
+    const tMat = new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      map: makeGrassTexture(),
+      roughness: 0.94,
+      metalness: 0.0,
+      envMapIntensity: 0.24
+    });
+    const terrain = new THREE.Mesh(tGeo, tMat);
+    terrain.receiveShadow = true;
+    scene.add(terrain);
+  }
+
+  // --- 4. Organic Non-Grid Shimmering Golden-Hour River Shader ---
+  const riverUniforms = {
+    uTime: { value: 0 },
+    uSunDir: { value: SUN_DIR.clone() },
+    uCamPos: { value: new THREE.Vector3() },
+    uFogColor: { value: scene.fog.color.clone() },
+    uFogDensity: { value: scene.fog.density }
+  };
+  {
+    const rSegZ = 115, rSegX = 20;
+    const rGeo = new THREE.PlaneGeometry(1, 240, rSegX, rSegZ);
+    rGeo.rotateX(-Math.PI / 2);
+    const pos = rGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const u = pos.getX(i), z = pos.getZ(i);
+      const cx = riverCenterX(z);
+      const hw = riverHalfWidth(z) + 3.4;
+      pos.setX(i, cx + u * 2.0 * hw);
+      pos.setY(i, 0.06);
+    }
+    rGeo.computeVertexNormals();
+
+    const rMat = new THREE.ShaderMaterial({
+      uniforms: riverUniforms,
+      vertexShader: `
+        varying vec3 vWorldPos;
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          vec4 wp = modelMatrix * vec4(position, 1.0);
+          vWorldPos = wp.xyz;
+          gl_Position = projectionMatrix * viewMatrix * wp;
+        }
+      `,
+      fragmentShader: `
+        uniform float uTime;
+        uniform vec3 uSunDir;
+        uniform vec3 uCamPos;
+        uniform vec3 uFogColor;
+        uniform float uFogDensity;
+        varying vec3 vWorldPos;
+        varying vec2 vUv;
+
+        // 5 rotated irrational-direction wave octaves -> zero checkerboard grid!
+        vec2 waveGrad(vec2 p, float t) {
+          vec2 g = vec2(0.0);
+          vec2 d1 = vec2( 0.956,  0.292); float ph1 = dot(p, d1) * 0.85 - t * 2.1; g += d1 * cos(ph1) * 0.032;
+          vec2 d2 = vec2(-0.588,  0.809); float ph2 = dot(p, d2) * 1.32 - t * 2.7; g += d2 * cos(ph2) * 0.025;
+          vec2 d3 = vec2( 0.309, -0.951); float ph3 = dot(p, d3) * 2.15 + t * 3.2; g += d3 * cos(ph3) * 0.018;
+          vec2 d4 = vec2(-0.891, -0.454); float ph4 = dot(p, d4) * 3.40 - t * 3.9; g += d4 * cos(ph4) * 0.012;
+          vec2 d5 = vec2( 0.743,  0.669); float ph5 = dot(p, d5) * 5.20 - t * 4.6; g += d5 * cos(ph5) * 0.008;
+          return g;
+        }
+
+        void main() {
+          vec2 p = vWorldPos.xz;
+          // Domain warp gently along river flow for fluid streaks
+          vec2 warp = vec2(sin(p.y * 0.18 - uTime * 0.8), cos(p.x * 0.22 + uTime * 0.6)) * 1.1;
+          vec2 wg = waveGrad(p + warp, uTime);
+          vec3 N = normalize(vec3(wg.x, 1.0, wg.y));
+
+          vec3 V = normalize(uCamPos - vWorldPos);
+          vec3 L = normalize(uSunDir);
+          vec3 H = normalize(L + V);
+
+          float fresnel = pow(1.0 - max(dot(N, V), 0.0), 3.4);
+          vec3 deepWater    = vec3(0.04, 0.16, 0.24);
+          vec3 shallowWater = vec3(0.09, 0.27, 0.31);
+          float sunReflAmt  = pow(max(dot(reflect(-V, N), L), 0.0), 2.8);
+          vec3 skyRefl = mix(vec3(0.36, 0.28, 0.46), vec3(1.0, 0.58, 0.26), clamp(sunReflAmt * 1.25, 0.0, 1.0));
+
+          float edge = abs(vUv.x - 0.5) * 2.0;
+          vec3 base = mix(deepWater, shallowWater, smoothstep(0.55, 0.96, edge));
+          vec3 col = mix(base, skyRefl, clamp(0.22 + fresnel * 0.74, 0.0, 0.94));
+
+          // Liquid shimmering golden sunset reflection path
+          float specWarm  = pow(max(dot(N, H), 0.0), 56.0);
+          float specGlint = pow(max(dot(N, H), 0.0), 320.0);
+          col += vec3(1.0, 0.66, 0.26) * specWarm * 0.95;
+          col += vec3(1.0, 0.94, 0.74) * specGlint * 2.2;
+
+          // Organic shoreline ripple foam
+          float bankFoam = smoothstep(0.86, 0.98, edge) * (0.4 + 0.4 * sin(p.y * 1.7 + p.x * 0.9 - uTime * 2.3));
+          col = mix(col, vec3(0.92, 0.80, 0.66), bankFoam * 0.24);
+
+          float dist = length(uCamPos - vWorldPos);
+          float fogFactor = 1.0 - exp(-uFogDensity * uFogDensity * dist * dist);
+          col = mix(col, uFogColor, clamp(fogFactor, 0.0, 1.0));
+
+          gl_FragColor = vec4(col, 1.0);
+        }
+      `
+    });
+    scene.add(new THREE.Mesh(rGeo, rMat));
+  }
+
+  // --- 5. Hero 5-Arch Warm Limestone Viaduct Bridge + Solid Hillside Abutments ---
+  const stoneTex = makeStoneTexture();
+  {
+    const viaduct = new THREE.Group();
+    const stoneMat = new THREE.MeshStandardMaterial({
+      color: 0xc2a37e, map: stoneTex, roughness: 0.88, metalness: 0.03, envMapIntensity: 0.28
+    });
+    const trimMat = new THREE.MeshStandardMaterial({
+      color: 0x9c7e5d, map: stoneTex, roughness: 0.82, metalness: 0.04, envMapIntensity: 0.26
+    });
+    const darkArchMat = new THREE.MeshStandardMaterial({
+      color: 0x624f3d, roughness: 0.92, envMapIntensity: 0.22
+    });
+
+    const uStart = 0.362, uEnd = 0.566;
+    const archCount = 5;
+    const uStep = (uEnd - uStart) / archCount;
+
+    for (let i = 0; i <= archCount; i++) {
+      const u = uStart + i * uStep;
+      const pt = trackCurve.getPointAt(u);
+      const tan = trackCurve.getTangentAt(u).normalize();
+      const angle = Math.atan2(tan.x, tan.z);
+
+      const pier = new THREE.Group();
+      pier.position.set(pt.x, 0, pt.z);
+      pier.rotation.y = angle;
+
+      const isEnd = (i === 0 || i === archCount);
+      const pierH = TRACK_Y + 3.4;
+      const shaft = new THREE.Mesh(new THREE.BoxGeometry(isEnd ? 4.35 : 3.55, pierH, isEnd ? 4.2 : 1.95), stoneMat);
+      shaft.position.y = -3.6 + pierH / 2;
+      shaft.castShadow = true;
+      shaft.receiveShadow = true;
+      pier.add(shaft);
+
+      if (!isEnd) {
+        const buttress = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.38, pierH * 0.76, 4), trimMat);
+        buttress.position.set(0, -3.6 + pierH * 0.38, 0);
+        buttress.scale.set(2.35, 1.0, 0.95);
+        buttress.rotation.y = Math.PI / 4;
+        buttress.castShadow = true;
+        buttress.receiveShadow = true;
+        pier.add(buttress);
+      }
+
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(isEnd ? 4.75 : 4.05, 0.54, isEnd ? 4.6 : 2.38), trimMat);
+      cap.position.y = TRACK_Y - 0.88;
+      cap.castShadow = true;
+      cap.receiveShadow = true;
+      pier.add(cap);
+
+      viaduct.add(pier);
+
+      if (i < archCount) {
+        const uNext = uStart + (i + 1) * uStep;
+        const pA = trackCurve.getPointAt(u);
+        const pB = trackCurve.getPointAt(uNext);
+        const mid = pA.clone().add(pB).multiplyScalar(0.5);
+        const spanVec = pB.clone().sub(pA);
+        const spanLen = spanVec.length();
+        const spanAng = Math.atan2(spanVec.x, spanVec.z);
+
+        const archGrp = new THREE.Group();
+        archGrp.position.set(mid.x, 0, mid.z);
+        archGrp.rotation.y = spanAng;
+
+        const halfL = spanLen * 0.5;
+        const archR = Math.min(halfL * 0.78, 3.45);
+        const deckTopY = TRACK_Y - 0.32;
+        const springY = deckTopY - archR - 1.05;
+
+        const shape = new THREE.Shape();
+        shape.moveTo(-halfL, springY);
+        shape.lineTo(-halfL, deckTopY);
+        shape.lineTo(halfL, deckTopY);
+        shape.lineTo(halfL, springY);
+        shape.lineTo(archR, springY);
+        shape.absarc(0, springY, archR, 0, Math.PI, false);
+        shape.lineTo(-halfL, springY);
+
+        const extrude = new THREE.ExtrudeGeometry(shape, { depth: 3.38, bevelEnabled: false, curveSegments: 18 });
+        extrude.translate(0, 0, -3.38 / 2);
+        extrude.rotateY(Math.PI / 2);
+
+        const spandrel = new THREE.Mesh(extrude, stoneMat);
+        spandrel.castShadow = true;
+        spandrel.receiveShadow = true;
+        archGrp.add(spandrel);
+
+        const ringGeo = new THREE.TorusGeometry(archR + 0.14, 0.22, 8, 20, Math.PI);
+        ringGeo.rotateY(Math.PI / 2);
+        for (const side of [-1.67, 1.67]) {
+          const ring = new THREE.Mesh(ringGeo, darkArchMat);
+          ring.position.set(side, springY, 0);
+          archGrp.add(ring);
+        }
+
+        const cornice = new THREE.Mesh(new THREE.BoxGeometry(4.0, 0.36, spanLen + 0.16), trimMat);
+        cornice.position.y = deckTopY + 0.10;
+        cornice.castShadow = true;
+        cornice.receiveShadow = true;
+        archGrp.add(cornice);
+
+        for (const side of [-1.80, 1.80]) {
+          const wall = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.76, spanLen + 0.16), stoneMat);
+          wall.position.set(side, deckTopY + 0.60, 0);
+          wall.castShadow = true;
+          wall.receiveShadow = true;
+          archGrp.add(wall);
+        }
+        viaduct.add(archGrp);
+      }
+    }
+    scene.add(viaduct);
+  }
+
+  // --- 6. Railway Infrastructure: Gravel Ballast, 210 Sleepers, Twin Steel Rails, Telegraph Poles ---
+  {
+    const gauge = 1.48;
+    const up = new THREE.Vector3(0, 1, 0);
+
+    const bedGeo = new THREE.TubeGeometry(trackCurve, 180, 1.42, 6, false);
+    const bedPos = bedGeo.attributes.position;
+    for (let i = 0; i < bedPos.count; i++) {
+      const y = bedPos.getY(i);
+      bedPos.setY(i, TRACK_Y - 0.22 + (y - TRACK_Y) * 0.22);
+    }
+    bedGeo.computeVertexNormals();
+    const bedMesh = new THREE.Mesh(bedGeo, new THREE.MeshStandardMaterial({
+      color: 0x5c5148, roughness: 0.96, envMapIntensity: 0.2
+    }));
+    bedMesh.receiveShadow = true;
+    scene.add(bedMesh);
+
+    const sleeperCount = 210;
+    const sleepers = new THREE.InstancedMesh(
+      new THREE.BoxGeometry(2.35, 0.16, 0.32),
+      new THREE.MeshStandardMaterial({ color: 0x3b2619, roughness: 0.90, envMapIntensity: 0.2 }),
+      sleeperCount
+    );
+    sleepers.receiveShadow = true;
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < sleeperCount; i++) {
+      const u = i / (sleeperCount - 1);
+      const p = trackCurve.getPointAt(u);
+      const t = trackCurve.getTangentAt(u).normalize();
+      dummy.position.set(p.x, TRACK_Y + 0.02, p.z);
+      dummy.rotation.set(0, Math.atan2(t.x, t.z), 0);
+      dummy.updateMatrix();
+      sleepers.setMatrixAt(i, dummy.matrix);
+    }
+    sleepers.instanceMatrix.needsUpdate = true;
+    scene.add(sleepers);
+
+    const railMat = new THREE.MeshStandardMaterial({
+      color: 0xd0d4dc, metalness: 0.90, roughness: 0.22, envMapIntensity: 1.0
+    });
+    for (const side of [-gauge * 0.5, gauge * 0.5]) {
+      const pts = [];
+      for (let i = 0; i <= 110; i++) {
+        const u = i / 110;
+        const p = trackCurve.getPointAt(u);
+        const t = trackCurve.getTangentAt(u).normalize();
+        const right = new THREE.Vector3().crossVectors(t, up).normalize();
+        pts.push(p.clone().addScaledVector(right, side).setY(TRACK_Y + 0.14));
+      }
+      const railMesh = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 150, 0.075, 6, false), railMat);
+      scene.add(railMesh);
+    }
+
+    const poleMat = new THREE.MeshStandardMaterial({ color: 0x422d1e, roughness: 0.92, envMapIntensity: 0.2 });
+    const wireMat = new THREE.LineBasicMaterial({ color: 0x221b24, transparent: true, opacity: 0.58 });
+    const poleTops = [];
+    for (let i = 0; i < 15; i++) {
+      const u = 0.06 + i * 0.062;
+      if (u > 0.34 && u < 0.58) continue;
+      const p = trackCurve.getPointAt(u);
+      const t = trackCurve.getTangentAt(u).normalize();
+      const right = new THREE.Vector3().crossVectors(t, up).normalize();
+      const px = p.x - right.x * 4.6, pz = p.z - right.z * 4.6;
+      const py = terrainHeight(px, pz);
+
+      const pole = new THREE.Group();
+      pole.position.set(px, py, pz);
+      pole.rotation.y = Math.atan2(t.x, t.z);
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.15, 6.0, 6), poleMat);
+      post.position.y = 3.0;
+      post.castShadow = true;
+      pole.add(post);
+      const cross = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.11, 0.11), poleMat);
+      cross.position.y = 5.5;
+      pole.add(cross);
+      scene.add(pole);
+
+      poleTops.push({ u, pos: new THREE.Vector3(px, py + 5.5, pz) });
+    }
+    for (let i = 0; i < poleTops.length - 1; i++) {
+      const a = poleTops[i], b = poleTops[i + 1];
+      if (b.u - a.u > 0.12) continue;
+      const mid = a.pos.clone().add(b.pos).multiplyScalar(0.5);
+      mid.y -= 0.72;
+      const wGeo = new THREE.BufferGeometry().setFromPoints(new THREE.QuadraticBezierCurve3(a.pos, mid, b.pos).getPoints(10));
+      scene.add(new THREE.Line(wGeo, wireMat));
+    }
+  }
+
+  // --- 7. Lush Richly-Colored Forest + Riverside Boulders (Clear Hero Sightlines!) ---
+  {
+    const pineSpots = [];
+    const broadSpots = [];
+    for (let i = 0; i < 520; i++) {
+      const x = (rand() - 0.5) * 215;
+      const z = (rand() - 0.5) * 195 - 10;
+      const dRiver = Math.abs(x - riverCenterX(z)) - riverHalfWidth(z);
+      if (dRiver < 4.8) continue;
+      const { dist: dTrack } = nearestTrackDist(x, z);
+      if (dTrack < 6.8) continue;
+
+      // Keep clean foreground bridge sightline!
+      if (z > 4 && z < 36 && x > -26 && x < 24) continue;
+      // Keep clean panoramic sightline from the camera/train directly to the Hero Hilltop Home!
+      const dHome = Math.hypot(x - HOME_POS.x, z - HOME_POS.z);
+      if (dHome < 10.5) continue;
+      if (x > 20 && x < 62 && z > -38 && z < -4) continue; // clear sunny hillside meadow in front of home!
+
+      const y = terrainHeight(x, z);
+      if (y < 1.5) continue;
+      const sc = 0.70 + rand() * 0.76;
+      if (rand() < 0.52) {
+        pineSpots.push({ x, y, z, sc, rot: rand() * Math.PI * 2 });
+      } else {
+        broadSpots.push({ x, y, z, sc, rot: rand() * Math.PI * 2, autumn: rand() < 0.28 });
+      }
+      if (pineSpots.length + broadSpots.length >= 250) break;
+    }
+
+    // Hand-placed picturesque framing trees BEHIND and BESIDE the hilltop home (never in front!)
+    const homeTrees = [
+      [HOME_POS.x - 10.5, HOME_POS.z - 5.5, 1.25, true],
+      [HOME_POS.x + 10.2, HOME_POS.z - 4.2, 1.32, false],
+      [HOME_POS.x - 6.2,  HOME_POS.z - 10.5, 1.40, false],
+      [HOME_POS.x + 4.5,  HOME_POS.z - 11.2, 1.28, true],
+      [HOME_POS.x + 12.8, HOME_POS.z + 1.8, 1.05, false],
+      [HOME_POS.x - 13.0, HOME_POS.z + 0.5, 1.10, false]
+    ];
+    for (const [x, z, sc, aut] of homeTrees) {
+      broadSpots.push({ x, y: terrainHeight(x, z), z, sc, rot: rand() * 6.28, autumn: aut });
+    }
+
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3b2619, roughness: 0.94, envMapIntensity: 0.18 });
+    const dummy = new THREE.Object3D();
+
+    // Species A: Rich 4-Tier Velvety Deep-Forest Pines
+    if (pineSpots.length > 0) {
+      const n = pineSpots.length;
+      const pTrunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.14, 0.28, 2.2, 7), trunkMat, n);
+      const p1 = new THREE.InstancedMesh(new THREE.ConeGeometry(1.75, 2.35, 10), new THREE.MeshStandardMaterial({ color: 0x133522, roughness: 0.90, envMapIntensity: 0.22 }), n);
+      const p2 = new THREE.InstancedMesh(new THREE.ConeGeometry(1.42, 2.15, 10), new THREE.MeshStandardMaterial({ color: 0x1d492b, roughness: 0.88, envMapIntensity: 0.22 }), n);
+      const p3 = new THREE.InstancedMesh(new THREE.ConeGeometry(1.06, 1.95, 10), new THREE.MeshStandardMaterial({ color: 0x2b5d31, roughness: 0.86, envMapIntensity: 0.22 }), n);
+      const p4 = new THREE.InstancedMesh(new THREE.ConeGeometry(0.68, 1.65, 10), new THREE.MeshStandardMaterial({ color: 0x447234, roughness: 0.84, envMapIntensity: 0.24 }), n);
+      p1.castShadow = p2.castShadow = p3.castShadow = true;
+      p1.receiveShadow = p2.receiveShadow = true;
+
+      for (let i = 0; i < n; i++) {
+        const s = pineSpots[i];
+        dummy.rotation.set(0, s.rot, 0);
+        dummy.scale.setScalar(s.sc);
+
+        dummy.position.set(s.x, s.y + 0.9 * s.sc, s.z);
+        dummy.updateMatrix(); pTrunk.setMatrixAt(i, dummy.matrix);
+
+        dummy.position.set(s.x, s.y + 2.35 * s.sc, s.z);
+        dummy.updateMatrix(); p1.setMatrixAt(i, dummy.matrix);
+
+        dummy.position.set(s.x, s.y + 3.65 * s.sc, s.z);
+        dummy.updateMatrix(); p2.setMatrixAt(i, dummy.matrix);
+
+        dummy.position.set(s.x, s.y + 4.85 * s.sc, s.z);
+        dummy.updateMatrix(); p3.setMatrixAt(i, dummy.matrix);
+
+        dummy.position.set(s.x, s.y + 5.85 * s.sc, s.z);
+        dummy.updateMatrix(); p4.setMatrixAt(i, dummy.matrix);
+      }
+      scene.add(pTrunk, p1, p2, p3, p4);
+    }
+
+    // Species B: Smooth Lush Miyazaki Broadleaf Trees (4 organic overlapping spheres)
+    if (broadSpots.length > 0) {
+      const n = broadSpots.length;
+      const bTrunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.16, 0.34, 2.7, 7), trunkMat, n);
+      const smoothSphere = new THREE.SphereGeometry(1.38, 12, 10);
+      const bMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.88, metalness: 0.0, envMapIntensity: 0.22 });
+      const b1 = new THREE.InstancedMesh(smoothSphere, bMat, n);
+      const b2 = new THREE.InstancedMesh(smoothSphere, bMat, n);
+      const b3 = new THREE.InstancedMesh(smoothSphere, bMat, n);
+      const b4 = new THREE.InstancedMesh(smoothSphere, bMat, n);
+      b1.castShadow = b2.castShadow = b3.castShadow = true;
+      b1.receiveShadow = b2.receiveShadow = true;
+
+      const cG1 = new THREE.Color(0x214f27), cG2 = new THREE.Color(0x3a6e2e), cG3 = new THREE.Color(0x638530), cG4 = new THREE.Color(0x889935);
+      const cA1 = new THREE.Color(0x96451e), cA2 = new THREE.Color(0xc46b24), cA3 = new THREE.Color(0xdf942c), cA4 = new THREE.Color(0xebb43e);
+
+      for (let i = 0; i < n; i++) {
+        const s = broadSpots[i];
+        dummy.rotation.set(0, s.rot, 0);
+        dummy.scale.setScalar(s.sc);
+        dummy.position.set(s.x, s.y + 1.15 * s.sc, s.z);
+        dummy.updateMatrix(); bTrunk.setMatrixAt(i, dummy.matrix);
+
+        dummy.position.set(s.x, s.y + 3.45 * s.sc, s.z);
+        dummy.scale.set(s.sc * 1.15, s.sc * 0.90, s.sc * 1.12);
+        dummy.updateMatrix(); b1.setMatrixAt(i, dummy.matrix);
+
+        dummy.position.set(s.x + Math.cos(s.rot) * 1.05 * s.sc, s.y + 2.85 * s.sc, s.z + Math.sin(s.rot) * 1.05 * s.sc);
+        dummy.scale.set(s.sc * 0.90, s.sc * 0.78, s.sc * 0.90);
+        dummy.updateMatrix(); b2.setMatrixAt(i, dummy.matrix);
+
+        dummy.position.set(s.x - Math.cos(s.rot + 0.5) * 0.95 * s.sc, s.y + 3.10 * s.sc, s.z - Math.sin(s.rot + 0.5) * 0.95 * s.sc);
+        dummy.scale.set(s.sc * 0.86, s.sc * 0.76, s.sc * 0.86);
+        dummy.updateMatrix(); b3.setMatrixAt(i, dummy.matrix);
+
+        dummy.position.set(s.x + Math.sin(s.rot) * 0.4 * s.sc, s.y + 4.35 * s.sc, s.z - Math.cos(s.rot) * 0.4 * s.sc);
+        dummy.scale.set(s.sc * 0.78, s.sc * 0.72, s.sc * 0.78);
+        dummy.updateMatrix(); b4.setMatrixAt(i, dummy.matrix);
+
+        b1.setColorAt(i, s.autumn ? cA1 : cG1);
+        b2.setColorAt(i, s.autumn ? cA2 : cG2);
+        b3.setColorAt(i, s.autumn ? cA3 : cG3);
+        b4.setColorAt(i, s.autumn ? cA4 : cG4);
+      }
+      b1.instanceColor.needsUpdate = b2.instanceColor.needsUpdate = b3.instanceColor.needsUpdate = b4.instanceColor.needsUpdate = true;
+      scene.add(bTrunk, b1, b2, b3, b4);
+    }
+
+    // Grounded Dark Wet Shoreline Stones (strictly half-submerged at water edge, clear of viaduct & track!)
+    const rockSpots = [];
+    for (let i = 0; i < 160 && rockSpots.length < 28; i++) {
+      const z = lerp(-68, 38, rand());
+      if (Math.abs(z) < 12) continue; // keep clear of stone viaduct piers & arches
+      const side = rand() > 0.5 ? 1 : -1;
+      const x = riverCenterX(z) + side * (riverHalfWidth(z) - 0.4 + rand() * 1.4);
+      const { dist: dTrack } = nearestTrackDist(x, z);
+      if (dTrack < 11.0) continue;
+      const y = terrainHeight(x, z);
+      if (y < -0.55 || y > 0.65) continue; // strictly shoreline level — zero floating stones!
+      rockSpots.push({ x, y: Math.min(y, 0.18) - 0.18, z, sc: 0.48 + rand() * 0.68 });
+    }
+    if (rockSpots.length > 0) {
+      const rockGeo = new THREE.DodecahedronGeometry(1.0, 0);
+      const rockMat = new THREE.MeshStandardMaterial({ color: 0x3b3530, roughness: 0.92, envMapIntensity: 0.15 });
+      const rocks = new THREE.InstancedMesh(rockGeo, rockMat, rockSpots.length);
+      rocks.receiveShadow = true;
+      for (let i = 0; i < rockSpots.length; i++) {
+        const s = rockSpots[i];
+        dummy.position.set(s.x, s.y, s.z);
+        dummy.rotation.set(rand() * 3, rand() * 3, rand() * 3);
+        dummy.scale.set(s.sc * 1.35, s.sc * 0.58, s.sc * 1.05);
+        dummy.updateMatrix();
+        rocks.setMatrixAt(i, dummy.matrix);
+      }
+      scene.add(rocks);
+    }
+  }
+
+  // --- 8. Glowing Sunset Clouds ---
+  const cloudGroup = new THREE.Group();
+  {
+    const cloudMat = new THREE.MeshStandardMaterial({
+      color: 0xffc6a2,
+      emissive: 0x7c362e,
+      emissiveIntensity: 0.42,
+      roughness: 0.96,
+      envMapIntensity: 0.2
+    });
+    const puffGeo = new THREE.SphereGeometry(1, 14, 10);
+    const cloudDefs = [
+      [-65, 48, -118, 15], [8, 52, -142, 19], [74, 46, -120, 14],
+      [-110, 42, -72, 13], [116, 44, -62, 14], [-22, 56, -98, 11],
+      [44, 48, -102, 12]
+    ];
+    for (const [cx, cy, cz, sc] of cloudDefs) {
+      const c = new THREE.Group();
+      c.position.set(cx, cy, cz);
+      c.userData.baseX = cx;
+      c.userData.speed = 0.42 + rand() * 0.42;
+      const lobes = [
+        [0, 0, 0, 1.05, 0.44, 0.72],
+        [-0.82, -0.09, 0.12, 0.76, 0.36, 0.62],
+        [0.84, -0.08, -0.1, 0.80, 0.38, 0.64],
+        [0.24, 0.24, 0.08, 0.68, 0.40, 0.56],
+        [-0.38, 0.18, -0.14, 0.60, 0.35, 0.54]
+      ];
+      for (const [lx, ly, lz, sx, sy, sz] of lobes) {
+        const m = new THREE.Mesh(puffGeo, cloudMat);
+        m.position.set(lx * sc, ly * sc, lz * sc);
+        m.scale.set(sx * sc, sy * sc, sz * sc);
+        c.add(m);
+      }
+      cloudGroup.add(c);
+    }
+    scene.add(cloudGroup);
+  }
+
+  // --- 9. Hero Hilltop Village Home ("আমার বাড়ি") — Crisp, Cozy, Never Overblown! ---
+  const homeSmokeSprites = [];
+  const smokeTex = makeSmokeTexture();
+  const glowTex = makeGlowTexture();
+  const winTex0 = makeWindowTexture(0);
+  const winTex1 = makeWindowTexture(1);
+  const winTex2 = makeWindowTexture(2);
+  let homeChimneyWorld = new THREE.Vector3();
+  {
+    const home = new THREE.Group();
+    home.position.copy(HOME_POS);
+    home.rotation.y = -0.62;
+
+    const plasterMat = new THREE.MeshStandardMaterial({ color: 0xeed9b9, roughness: 0.86, envMapIntensity: 0.25 });
+    const roofMat = new THREE.MeshPhysicalMaterial({
+      color: 0xa83622, map: makeRoofTileTexture(), roughness: 0.56, clearcoat: 0.22, envMapIntensity: 0.35
+    });
+    const timberMat = new THREE.MeshStandardMaterial({ color: 0x4d2c1b, roughness: 0.86, envMapIntensity: 0.2 });
+    const brickMat = new THREE.MeshStandardMaterial({ color: 0x854332, roughness: 0.88, envMapIntensity: 0.2 });
+    const homeWinMat = new THREE.MeshStandardMaterial({
+      map: winTex0, emissive: 0xff9224, emissiveMap: winTex0, emissiveIntensity: 1.55, roughness: 0.22
+    });
+    const whiteTrimMat = new THREE.MeshStandardMaterial({ color: 0xf4ead8, roughness: 0.75, envMapIntensity: 0.25 });
+
+    // Stone foundation terrace
+    const plinth = new THREE.Mesh(new THREE.BoxGeometry(10.0, 1.5, 8.6), new THREE.MeshStandardMaterial({ color: 0x8a7968, map: stoneTex, roughness: 0.9, envMapIntensity: 0.25 }));
+    plinth.position.y = 0.55;
+    plinth.receiveShadow = true;
+    plinth.castShadow = true;
+    home.add(plinth);
+
+    // Main cottage walls
+    const body = new THREE.Mesh(new THREE.BoxGeometry(7.8, 4.3, 6.4), plasterMat);
+    body.position.set(0, 3.25, -0.35);
+    body.castShadow = true;
+    body.receiveShadow = true;
+    home.add(body);
+
+    // Timber corner beams for architectural craft
+    for (const cx of [-3.9, 3.9]) {
+      for (const cz of [-3.55, 2.85]) {
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(0.24, 4.35, 0.24), timberMat);
+        beam.position.set(cx, 3.25, cz);
+        home.add(beam);
+      }
+    }
+
+    // Gable walls + terracotta pitched roof with clean fascia trim
+    const gableShape = new THREE.Shape();
+    gableShape.moveTo(-3.9, 0);
+    gableShape.lineTo(0, 2.85);
+    gableShape.lineTo(3.9, 0);
+    gableShape.closePath();
+    const gableGeo = new THREE.ExtrudeGeometry(gableShape, { depth: 6.4, bevelEnabled: false });
+    gableGeo.translate(0, 5.4, -3.55);
+    const gableMesh = new THREE.Mesh(gableGeo, plasterMat);
+    gableMesh.castShadow = true;
+    home.add(gableMesh);
+
+    const roofPitch = Math.atan2(2.85, 3.9);
+    const roofSlopeLen = Math.hypot(3.9, 2.85) + 1.05;
+    for (const s of [-1, 1]) {
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(roofSlopeLen, 0.34, 7.9), roofMat);
+      slab.position.set(s * 2.15, 6.65, -0.35);
+      slab.rotation.z = -s * roofPitch;
+      slab.castShadow = true;
+      slab.receiveShadow = true;
+      home.add(slab);
+    }
+    const ridgeCap = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 7.95, 8), roofMat);
+    ridgeCap.rotation.x = Math.PI / 2;
+    ridgeCap.position.set(0, 8.32, -0.35);
+    home.add(ridgeCap);
+
+    // Front cozy veranda roof & wooden pillars
+    const porchRoof = new THREE.Mesh(new THREE.BoxGeometry(8.2, 0.24, 2.45), roofMat);
+    porchRoof.position.set(0, 3.85, 3.45);
+    porchRoof.rotation.x = 0.24;
+    porchRoof.castShadow = true;
+    home.add(porchRoof);
+    for (const px of [-3.5, -1.4, 1.4, 3.5]) {
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.13, 2.75, 8), timberMat);
+      post.position.set(px, 2.45, 4.2);
+      post.castShadow = true;
+      home.add(post);
+    }
+
+    // Arched timber front door
+    const door = new THREE.Mesh(new THREE.BoxGeometry(1.48, 2.58, 0.22), timberMat);
+    door.position.set(0, 2.52, 2.86);
+    home.add(door);
+
+    // Crisp Glowing Warm Mullioned Windows
+    function addWindow(wx, wy, wz, ry = 0, w = 1.45, h = 1.48) {
+      const wg = new THREE.Group();
+      wg.position.set(wx, wy, wz);
+      wg.rotation.y = ry;
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 0.24, h + 0.24, 0.18), whiteTrimMat);
+      const glass = new THREE.Mesh(new THREE.PlaneGeometry(w, h), homeWinMat);
+      glass.position.z = 0.11;
+      const barV = new THREE.Mesh(new THREE.BoxGeometry(0.08, h, 0.08), whiteTrimMat);
+      barV.position.z = 0.13;
+      const barH = new THREE.Mesh(new THREE.BoxGeometry(w, 0.08, 0.08), whiteTrimMat);
+      barH.position.z = 0.13;
+      wg.add(frame, glass, barV, barH);
+      home.add(wg);
+    }
+    addWindow(-2.28, 3.18, 2.86, 0);
+    addWindow( 2.28, 3.18, 2.86, 0);
+    addWindow( 0.0,  6.38, 2.86, 0, 1.18, 1.18);
+    addWindow(-3.92, 3.18, -0.35, -Math.PI / 2, 1.72, 1.48);
+    addWindow( 3.92, 3.18, -0.35,  Math.PI / 2, 1.72, 1.48);
+
+    // Tasteful warm hanging porch lantern (controlled halo — never washes out walls!)
+    const lantern = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), homeWinMat);
+    lantern.position.set(0, 3.35, 3.85);
+    home.add(lantern);
+
+    const lanternHalo = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: glowTex, color: 0xffa838, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.48
+    }));
+    lanternHalo.position.set(0, 3.35, 4.0);
+    lanternHalo.scale.set(2.8, 2.8, 1);
+    home.add(lanternHalo);
+
+    const homeLight = new THREE.PointLight(0xff9b36, 2.1, 20, 1.7);
+    homeLight.position.set(0, 3.6, 5.2);
+    home.add(homeLight);
+
+    // Brick chimney
+    const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.98, 3.1, 0.98), brickMat);
+    chimney.position.set(2.3, 7.5, -1.6);
+    chimney.castShadow = true;
+    home.add(chimney);
+
+    // White garden picket fence + two warm gate post lanterns
+    for (let fx = -5.8; fx <= 5.8; fx += 1.16) {
+      if (Math.abs(fx) < 1.25) continue;
+      const picket = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.05, 0.12), whiteTrimMat);
+      picket.position.set(fx, 0.55, 5.6);
+      home.add(picket);
+    }
+    const railL = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.11, 0.1), whiteTrimMat);
+    railL.position.set(-3.5, 0.78, 5.6);
+    const railR = railL.clone(); railR.position.x = 3.5;
+    home.add(railL, railR);
+
+    for (const gx of [-1.25, 1.25]) {
+      const gPost = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.35, 0.24), timberMat);
+      gPost.position.set(gx, 0.68, 5.6);
+      const gLamp = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 8), homeWinMat);
+      gLamp.position.set(gx, 1.48, 5.6);
+      home.add(gPost, gLamp);
+    }
+
+    scene.add(home);
+    home.updateMatrixWorld(true);
+    homeChimneyWorld.set(2.3, 9.15, -1.6).applyMatrix4(home.matrixWorld);
+
+    for (let i = 0; i < 12; i++) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: smokeTex, color: 0xffe2c6, transparent: true, opacity: 0.0, depthWrite: false
+      }));
+      scene.add(sp);
+      homeSmokeSprites.push(sp);
+    }
+  }
+
+  // --- 10. Hero Express Train (Proper Curved Roofs + Rich Deep Livery + Cozy Textured Glowing Windows!) ---
+  const trainMaterials = {
+    crimson: new THREE.MeshPhysicalMaterial({
+      color: 0x8c1620, roughness: 0.24, metalness: 0.14, clearcoat: 0.90, clearcoatRoughness: 0.16, envMapIntensity: 0.88
+    }),
+    smokebox: new THREE.MeshStandardMaterial({
+      color: 0x20232b, roughness: 0.40, metalness: 0.72, envMapIntensity: 0.75
+    }),
+    iron: new THREE.MeshStandardMaterial({
+      color: 0x191b22, roughness: 0.54, metalness: 0.65, envMapIntensity: 0.55
+    }),
+    brass: new THREE.MeshStandardMaterial({
+      color: 0xe6b44c, roughness: 0.20, metalness: 0.92, envMapIntensity: 1.25
+    }),
+    teal: new THREE.MeshPhysicalMaterial({
+      color: 0x103c42, roughness: 0.28, metalness: 0.12, clearcoat: 0.82, clearcoatRoughness: 0.20, envMapIntensity: 0.80
+    }),
+    upperWood: new THREE.MeshPhysicalMaterial({
+      color: 0x274c4f, roughness: 0.34, metalness: 0.10, clearcoat: 0.65, envMapIntensity: 0.65
+    }),
+    roof: new THREE.MeshPhysicalMaterial({
+      color: 0x242832, roughness: 0.48, metalness: 0.35, clearcoat: 0.35, envMapIntensity: 0.65
+    }),
+    winFrames: new THREE.MeshStandardMaterial({
+      color: 0xc29346, roughness: 0.32, metalness: 0.75
+    }),
+    winMats: [winTex0, winTex1, winTex2].map((tex, idx) => new THREE.MeshStandardMaterial({
+      map: tex,
+      emissive: 0xff8c1e,
+      emissiveMap: tex,
+      emissiveIntensity: idx === 2 ? 1.15 : 1.65,
+      roughness: 0.18
+    })),
+    headLens: new THREE.MeshStandardMaterial({
+      color: 0xfff5d4, emissive: 0xffd278, emissiveIntensity: 2.6, roughness: 0.1
+    }),
+    steelRim: new THREE.MeshStandardMaterial({
+      color: 0xd0d6de, roughness: 0.22, metalness: 0.90
+    }),
+    coal: new THREE.MeshStandardMaterial({
+      color: 0x17181c, roughness: 0.50, metalness: 0.28
+    })
+  };
+
+  // Helper: True Extruded Arched Roof Geometry (curved UPWARD along +Y, extruded cleanly along Z!)
+  function makeArchedRoofGeometry(width, height, length, thickness = 0.14) {
+    const hw = width * 0.5;
+    const shape = new THREE.Shape();
+    shape.moveTo(-hw, 0);
+    shape.quadraticCurveTo(0, height * 1.85, hw, 0);
+    shape.lineTo(hw - 0.08, -thickness);
+    shape.quadraticCurveTo(0, height * 1.85 - thickness * 1.4, -hw + 0.08, -thickness);
+    shape.closePath();
+    const geo = new THREE.ExtrudeGeometry(shape, {
+      depth: length,
+      bevelEnabled: true,
+      bevelThickness: 0.04,
+      bevelSize: 0.04,
+      bevelSegments: 2,
+      curveSegments: 16
+    });
+    geo.translate(0, 0, -length * 0.5);
+    return geo;
+  }
+
+  const spinningWheels = [];
+  const sideRods = [];
+
+  function makeWheelPair(radius, isDriver = false) {
+    const axle = new THREE.Group();
+    const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.65, 8), trainMaterials.iron);
+    rod.rotation.z = Math.PI / 2;
+    axle.add(rod);
+
+    for (const s of [-0.74, 0.74]) {
+      const wg = new THREE.Group();
+      wg.position.x = s;
+      const tyre = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 0.15, 18), trainMaterials.steelRim);
+      tyre.rotation.z = Math.PI / 2;
+      const disc = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.84, radius * 0.84, 0.17, 16), isDriver ? trainMaterials.crimson : trainMaterials.iron);
+      disc.rotation.z = Math.PI / 2;
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.24, radius * 0.24, 0.22, 10), trainMaterials.brass);
+      hub.rotation.z = Math.PI / 2;
+      wg.add(tyre, disc, hub);
+
+      if (isDriver) {
+        for (let k = 0; k < 4; k++) {
+          const sp = new THREE.Mesh(new THREE.BoxGeometry(0.19, radius * 1.55, 0.075), trainMaterials.iron);
+          sp.rotation.x = (k * Math.PI) / 4;
+          wg.add(sp);
+        }
+      }
+      axle.add(wg);
+    }
+    spinningWheels.push({ mesh: axle, radius });
+    return axle;
+  }
+
+  // Build Hero Locomotive (facing +Z)
+  const locoGroup = new THREE.Group();
+  {
+    const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.16, 0.52, 7.25), trainMaterials.iron);
+    chassis.position.set(0, 0.92, 0.0);
+    chassis.castShadow = true;
+    locoGroup.add(chassis);
+
+    for (const s of [-1.14, 1.14]) {
+      const board = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.10, 5.2), trainMaterials.crimson);
+      board.position.set(s, 1.24, 0.65);
+      locoGroup.add(board);
+    }
+
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(2.40, 0.56, 0.34), trainMaterials.crimson);
+    beam.position.set(0, 0.96, 3.65);
+    locoGroup.add(beam);
+    for (const s of [-0.74, 0.74]) {
+      const buf = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.18, 0.36, 12), trainMaterials.brass);
+      buf.rotation.x = Math.PI / 2;
+      buf.position.set(s, 0.98, 3.92);
+      locoGroup.add(buf);
+    }
+    const cow = new THREE.Mesh(new THREE.ConeGeometry(1.12, 1.35, 4), trainMaterials.iron);
+    cow.rotation.x = Math.PI / 2;
+    cow.rotation.y = Math.PI / 4;
+    cow.scale.set(1.02, 1.0, 0.56);
+    cow.position.set(0, 0.52, 4.12);
+    locoGroup.add(cow);
+
+    // Cylindrical glossy crimson boiler + dark gunmetal smokebox
+    const boiler = new THREE.Mesh(new THREE.CylinderGeometry(0.98, 1.02, 4.1, 24), trainMaterials.crimson);
+    boiler.rotation.x = Math.PI / 2;
+    boiler.position.set(0, 2.15, 0.65);
+    boiler.castShadow = true;
+    locoGroup.add(boiler);
+
+    const smokebox = new THREE.Mesh(new THREE.CylinderGeometry(1.01, 1.01, 1.35, 24), trainMaterials.smokebox);
+    smokebox.rotation.x = Math.PI / 2;
+    smokebox.position.set(0, 2.15, 3.1);
+    smokebox.castShadow = true;
+    locoGroup.add(smokebox);
+
+    const noseDoor = new THREE.Mesh(new THREE.SphereGeometry(0.96, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.45), trainMaterials.smokebox);
+    noseDoor.rotation.x = Math.PI / 2;
+    noseDoor.scale.set(1, 0.38, 1);
+    noseDoor.position.set(0, 2.15, 3.74);
+    locoGroup.add(noseDoor);
+
+    for (const bz of [-0.95, 0.15, 1.25, 2.38]) {
+      const band = new THREE.Mesh(new THREE.TorusGeometry(1.015, 0.055, 8, 28), trainMaterials.brass);
+      band.position.set(0, 2.15, bz);
+      locoGroup.add(band);
+    }
+
+    for (const s of [-1.06, 1.06]) {
+      const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 4.3, 8), trainMaterials.brass);
+      rail.rotation.x = Math.PI / 2;
+      rail.position.set(s, 2.38, 0.95);
+      locoGroup.add(rail);
+    }
+
+    // Smokestack + Brass Rim + Steam Dome + Sand Dome
+    const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.24, 1.28, 16), trainMaterials.smokebox);
+    stack.position.set(0, 3.48, 2.95);
+    stack.castShadow = true;
+    locoGroup.add(stack);
+    const stackRim = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.068, 8, 18), trainMaterials.brass);
+    stackRim.rotation.x = Math.PI / 2;
+    stackRim.position.set(0, 4.10, 2.95);
+    locoGroup.add(stackRim);
+
+    const steamDome = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.50, 0.62, 16), trainMaterials.brass);
+    steamDome.position.set(0, 3.22, 0.85);
+    const steamCap = new THREE.Mesh(new THREE.SphereGeometry(0.46, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), trainMaterials.brass);
+    steamCap.position.set(0, 3.52, 0.85);
+    locoGroup.add(steamDome, steamCap);
+
+    const sandDome = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.44, 0.48, 14), trainMaterials.crimson);
+    sandDome.position.set(0, 3.16, -0.38);
+    locoGroup.add(sandDome);
+
+    // Headlight + Volumetric Additive Beam
+    const lampBody = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.30, 0.42, 16), trainMaterials.brass);
+    lampBody.rotation.x = Math.PI / 2;
+    lampBody.position.set(0, 2.38, 3.95);
+    const lampLens = new THREE.Mesh(new THREE.CircleGeometry(0.24, 16), trainMaterials.headLens);
+    lampLens.position.set(0, 2.38, 4.17);
+    locoGroup.add(lampBody, lampLens);
+
+    const lampHalo = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: glowTex, color: 0xffd67a, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.90
+    }));
+    lampHalo.position.set(0, 2.38, 4.26);
+    lampHalo.scale.set(2.8, 2.8, 1);
+    locoGroup.add(lampHalo);
+
+    const beamGeo = new THREE.ConeGeometry(2.6, 14.5, 20, 1, true);
+    beamGeo.translate(0, -7.25, 0);
+    beamGeo.rotateX(-Math.PI / 2);
+    const beamMat = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      vertexShader: `
+        varying float vAlong; varying vec3 vN; varying vec3 vV;
+        void main() {
+          vAlong = clamp(position.z / 14.5, 0.0, 1.0);
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz);
+          gl_Position = projectionMatrix * mv;
+        }
+      `,
+      fragmentShader: `
+        varying float vAlong; varying vec3 vN; varying vec3 vV;
+        void main() {
+          float fade = pow(1.0 - vAlong, 2.0) * smoothstep(0.0, 0.08, vAlong);
+          float edge = pow(abs(dot(vN, vV)), 1.3);
+          gl_FragColor = vec4(1.0, 0.80, 0.42, fade * edge * 0.28);
+        }
+      `
+    });
+    const lightBeam = new THREE.Mesh(beamGeo, beamMat);
+    lightBeam.position.set(0, 2.36, 4.15);
+    lightBeam.rotation.x = 0.08;
+    locoGroup.add(lightBeam);
+
+    // Engineer Cab + PROPER Arched Overhanging Roof!
+    const cabBody = new THREE.Mesh(new THREE.BoxGeometry(2.38, 2.48, 2.28), trainMaterials.crimson);
+    cabBody.position.set(0, 2.40, -2.42);
+    cabBody.castShadow = true;
+    locoGroup.add(cabBody);
+
+    const cabGoldStripe = new THREE.Mesh(new THREE.BoxGeometry(2.42, 0.11, 2.32), trainMaterials.brass);
+    cabGoldStripe.position.set(0, 1.98, -2.42);
+    locoGroup.add(cabGoldStripe);
+
+    const cabRoof = new THREE.Mesh(makeArchedRoofGeometry(2.74, 0.34, 2.75, 0.15), trainMaterials.roof);
+    cabRoof.position.set(0, 3.68, -2.44);
+    cabRoof.castShadow = true;
+    locoGroup.add(cabRoof);
+
+    // Rich Glowing Warm Amber Cab Side Windows
+    for (const s of [-1, 1]) {
+      const wf = new THREE.Mesh(new THREE.BoxGeometry(0.10, 1.02, 1.24), trainMaterials.winFrames);
+      wf.position.set(s * 1.19, 2.76, -2.42);
+      const wg = new THREE.Mesh(new THREE.PlaneGeometry(1.08, 0.86), trainMaterials.winMats[0]);
+      wg.rotation.y = s > 0 ? Math.PI / 2 : -Math.PI / 2;
+      wg.position.set(s * 1.25, 2.76, -2.42);
+      const wm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.88, 0.08), trainMaterials.iron);
+      wm.position.set(s * 1.25, 2.76, -2.42);
+      locoGroup.add(wf, wg, wm);
+    }
+
+    // Driving Wheels + Pilot Wheels + Animated Brass Side Rods
+    for (const wz of [-1.95, -0.35, 1.25]) {
+      const wp = makeWheelPair(0.68, true);
+      wp.position.set(0, 0.68, wz);
+      locoGroup.add(wp);
+    }
+    for (const wz of [2.58, 3.32]) {
+      const wp = makeWheelPair(0.40, false);
+      wp.position.set(0, 0.40, wz);
+      locoGroup.add(wp);
+    }
+    for (const s of [-0.90, 0.90]) {
+      const rod = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 3.55), trainMaterials.brass);
+      rod.position.set(s, 0.68, -0.35);
+      locoGroup.add(rod);
+      sideRods.push({ mesh: rod, side: s, baseZ: -0.35, baseY: 0.68 });
+    }
+    scene.add(locoGroup);
+  }
+
+  // Coal Tender Car
+  const tenderGroup = new THREE.Group();
+  {
+    const base = new THREE.Mesh(new THREE.BoxGeometry(2.16, 0.48, 4.18), trainMaterials.iron);
+    base.position.y = 0.72;
+    const body = new THREE.Mesh(new THREE.BoxGeometry(2.28, 1.56, 3.98), trainMaterials.crimson);
+    body.position.y = 1.66;
+    body.castShadow = true;
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(2.33, 0.13, 4.02), trainMaterials.brass);
+    stripe.position.y = 1.78;
+    const rim = new THREE.Mesh(new THREE.BoxGeometry(2.36, 0.12, 4.06), trainMaterials.iron);
+    rim.position.y = 2.46;
+    const coalHeap = new THREE.Mesh(new THREE.DodecahedronGeometry(1.12, 1), trainMaterials.coal);
+    coalHeap.scale.set(0.92, 0.56, 1.52);
+    coalHeap.position.set(0, 2.48, 0.05);
+    tenderGroup.add(base, body, stripe, rim, coalHeap);
+
+    for (const wz of [-1.25, 0.0, 1.25]) {
+      const wp = makeWheelPair(0.42, false);
+      wp.position.set(0, 0.42, wz);
+      tenderGroup.add(wp);
+    }
+    scene.add(tenderGroup);
+  }
+
+  // Build 4 Luxury Heritage Passenger Coaches (PROPER Curved Slate Roofs + Rich Deep Emerald-Teal & Brass + Warm Glowing Textured Windows!)
+  const coachRoofGeo = makeArchedRoofGeometry(2.58, 0.36, 7.05, 0.16);
+  function buildPassengerCoach(coachIndex) {
+    const g = new THREE.Group();
+    const len = 6.75;
+
+    const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.16, 0.42, len), trainMaterials.iron);
+    chassis.position.y = 0.72;
+    g.add(chassis);
+
+    for (const wz of [-2.45, -1.55, 1.55, 2.45]) {
+      const wp = makeWheelPair(0.40, false);
+      wp.position.set(0, 0.40, wz);
+      g.add(wp);
+    }
+
+    // Rich deep emerald-teal lower & satin sea-green upper body so glowing golden windows POP!
+    const lower = new THREE.Mesh(new THREE.BoxGeometry(2.34, 1.15, len - 0.12), trainMaterials.teal);
+    lower.position.y = 1.48;
+    lower.castShadow = true;
+    lower.receiveShadow = true;
+    g.add(lower);
+
+    const upper = new THREE.Mesh(new THREE.BoxGeometry(2.32, 1.24, len - 0.14), trainMaterials.upperWood);
+    upper.position.y = 2.63;
+    upper.castShadow = true;
+    g.add(upper);
+
+    // Gleaming metallic gold waist & roofline trim bands
+    const goldBelt = new THREE.Mesh(new THREE.BoxGeometry(2.38, 0.12, len - 0.06), trainMaterials.brass);
+    goldBelt.position.y = 2.02;
+    const goldTop = new THREE.Mesh(new THREE.BoxGeometry(2.38, 0.10, len - 0.06), trainMaterials.brass);
+    goldTop.position.y = 3.24;
+    g.add(goldBelt, goldTop);
+
+    // PROPER Smooth Arched Slate Overhang Roof + Clerestory Vents!
+    const roof = new THREE.Mesh(coachRoofGeo, trainMaterials.roof);
+    roof.position.y = 3.30;
+    roof.castShadow = true;
+    roof.receiveShadow = true;
+    g.add(roof);
+
+    for (let v = -2; v <= 2; v++) {
+      const vent = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.17, 0.22, 8), trainMaterials.smokebox);
+      vent.position.set(0, 3.88, v * 1.18);
+      g.add(vent);
+    }
+
+    for (const ez of [-len * 0.5 - 0.16, len * 0.5 + 0.16]) {
+      const gangway = new THREE.Mesh(new THREE.BoxGeometry(1.18, 2.05, 0.36), trainMaterials.iron);
+      gangway.position.set(0, 1.98, ez);
+      g.add(gangway);
+    }
+
+    // 6 Individual Recessed Warm Amber Glowing Windows on BOTH sides
+    const winCount = 6;
+    const span = len - 1.35;
+    for (let w = 0; w < winCount; w++) {
+      const wz = -span * 0.5 + (w / (winCount - 1)) * span;
+      const matIdx = (coachIndex * 3 + w) % 3;
+      const wMat = trainMaterials.winMats[matIdx];
+
+      for (const s of [-1, 1]) {
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.94, 0.80), trainMaterials.winFrames);
+        frame.position.set(s * 1.16, 2.63, wz);
+        const glass = new THREE.Mesh(new THREE.PlaneGeometry(0.66, 0.78), wMat);
+        glass.rotation.y = s > 0 ? Math.PI / 2 : -Math.PI / 2;
+        glass.position.set(s * 1.21, 2.63, wz);
+        const mullion = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.68), trainMaterials.iron);
+        mullion.position.set(s * 1.21, 2.82, wz);
+        g.add(frame, glass, mullion);
+      }
+    }
+    return g;
+  }
+
+  const coaches = [];
+  for (let i = 0; i < 4; i++) {
+    const c = buildPassengerCoach(i);
+    scene.add(c);
+    coaches.push(c);
+  }
+
+  const trainGlowLight = new THREE.PointLight(0xff9c34, 2.8, 22, 1.6);
+  scene.add(trainGlowLight);
+
+  const trainCars = [
+    { mesh: locoGroup,   offset: 0.0,   wheelbase: 4.8 },
+    { mesh: tenderGroup, offset: 6.1,   wheelbase: 2.6 },
+    { mesh: coaches[0],  offset: 11.95, wheelbase: 4.8 },
+    { mesh: coaches[1],  offset: 19.25, wheelbase: 4.8 },
+    { mesh: coaches[2],  offset: 26.55, wheelbase: 4.8 },
+    { mesh: coaches[3],  offset: 33.85, wheelbase: 4.8 }
+  ];
+
+  // --- 11. Volumetric Painterly Locomotive Steam (Drifts Back-Left Away from Home!) ---
+  const locoSmoke = [];
+  const N_STEAM = 34;
+  for (let i = 0; i < N_STEAM; i++) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: smokeTex, color: 0xffe9cf, transparent: true, opacity: 0, depthWrite: false
+    }));
+    scene.add(sp);
+    locoSmoke.push({
+      sprite: sp,
+      seed: rand() * 100,
+      driftX: (rand() - 0.5) * 1.6,
+      driftZ: (rand() - 0.5) * 1.6
+    });
+  }
+
+  // --- 12. Articulated 3D Golden-Hour Bird Flock (Flying Clearly Through Golden Sky Sweet Spot!) ---
+  const birds = [];
+  {
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x221f32, roughness: 0.52 });
+    const wingMat = new THREE.MeshStandardMaterial({ color: 0x362e48, roughness: 0.48, side: THREE.DoubleSide });
+    const bellyMat = new THREE.MeshStandardMaterial({ color: 0xf4bd84, roughness: 0.62 });
+
+    for (let i = 0; i < 7; i++) {
+      const bird = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.90, 6), bodyMat);
+      body.rotation.x = Math.PI / 2;
+      const belly = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), bellyMat);
+      belly.scale.set(0.9, 0.7, 1.85);
+      belly.position.y = -0.04;
+      bird.add(body, belly);
+
+      const wingShape = new THREE.Shape();
+      wingShape.moveTo(0, 0.17);
+      wingShape.quadraticCurveTo(0.50, 0.26, 1.05, 0.06);
+      wingShape.quadraticCurveTo(0.52, -0.20, 0, -0.17);
+      wingShape.closePath();
+      const wingGeo = new THREE.ShapeGeometry(wingShape);
+      wingGeo.rotateX(-Math.PI / 2);
+
+      const leftWing = new THREE.Group();
+      const lwMesh = new THREE.Mesh(wingGeo, wingMat);
+      lwMesh.scale.x = -1;
+      leftWing.add(lwMesh);
+
+      const rightWing = new THREE.Group();
+      rightWing.add(new THREE.Mesh(wingGeo, wingMat));
+
+      bird.add(leftWing, rightWing);
+      bird.scale.setScalar(0.58 + (i === 0 ? 0.14 : rand() * 0.14));
+      scene.add(bird);
+
+      birds.push({
+        group: bird, leftWing, rightWing,
+        row: Math.ceil(i / 2),
+        side: i === 0 ? 0 : (i % 2 === 1 ? -1 : 1),
+        phase: i * 0.72,
+        freq: 8.6 + (i % 3) * 0.6
+      });
+    }
+  }
+
+  // --- 13. Cinematic Drone Camera Curves (Elevated Scenic Sweep -> Hero Train Orbit -> Clear Home & Sunset Reveal!) ---
+  const camPosCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-24, 19.5,  30.0), // 0.0s: High golden sweep over river & 5-arch viaduct
+    new THREE.Vector3( -4, 14.5,  24.0), // 2.5s: Swooping alongside sunlit stone viaduct as express crosses!
+    new THREE.Vector3( 15, 13.6,  17.5), // 5.0s: Hero 3/4 orbit past glowing locomotive & coaches
+    new THREE.Vector3( 24, 16.2,   5.5), // 7.5s: Smooth climb framing glowing train curving toward hilltop home
+    new THREE.Vector3( 28, 17.6,  -5.2)  // 10.0s: Majestic sunset reveal of glowing hilltop home & curving train!
+  ], false, 'catmullrom', 0.5);
+
+  const camLookCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3( -8,  8.8,   1.5), // 0.0s: Approaching train entering sunlit viaduct
+    new THREE.Vector3(  5,  9.0,  -1.0), // 2.5s: Express train spanning golden river bridge
+    new THREE.Vector3( 22,  9.8,  -5.5), // 5.0s: Leading train along curved emerald valley
+    new THREE.Vector3( 43, 13.4, -25.0), // 7.5s: Guiding gaze cleanly to the warm glowing hilltop home
+    new THREE.Vector3( 51, 14.6, -35.5)  // 10.0s: Iconic closing frame: golden home, sunset sky & train heading home!
+  ], false, 'catmullrom', 0.5);
+
+  const SUBTITLES = [
+    { start: 0.22, end: 4.55, text: 'সোনালি বিকেলে, নদী আর সবুজ পাহাড় পেরিয়ে, ঝিকঝিক শব্দে ছুটছে ট্রেন।' },
+    { start: 5.42, end: 7.82, text: 'আর ওই দূরের আলো জ্বলা ঘরটাই আমার বাড়ি—' },
+    { start: 7.92, end: 9.75, text: 'আমি বাড়ি ফিরছি।' }
+  ];
+
+  const _pFront = new THREE.Vector3();
+  const _pRear = new THREE.Vector3();
+  const _midPos = new THREE.Vector3();
+  const _dirVec = new THREE.Vector3();
+
+  function placeCarOnTrack(car, headDist) {
+    const centerDist = headDist - car.offset;
+    const uF = clamp((centerDist + car.wheelbase * 0.5) / TRACK_LENGTH, 0.002, 0.998);
+    const uR = clamp((centerDist - car.wheelbase * 0.5) / TRACK_LENGTH, 0.001, 0.997);
+    trackCurve.getPointAt(uF, _pFront);
+    trackCurve.getPointAt(uR, _pRear);
+    _midPos.addVectors(_pFront, _pRear).multiplyScalar(0.5);
+    car.mesh.position.set(_midPos.x, TRACK_Y + 0.18, _midPos.z);
+    _dirVec.subVectors(_pFront, _pRear).normalize();
+    car.mesh.rotation.set(0, Math.atan2(_dirVec.x, _dirVec.z), 0);
+  }
+
+  // --- 2D Cinema Overlay (Sun Flare + Filmic Vignette + Letterbox + Crisp Bengali Subtitles) ---
+  const _sunScreen = new THREE.Vector3();
+  function drawCinemaOverlay(t) {
+    octx.clearRect(0, 0, W, H);
+
+    // 1. Subtle Warm Anamorphic Sun Glow (projected from 3D sun)
+    _sunScreen.copy(SUN_DIR).multiplyScalar(280).add(camera.position).project(camera);
+    if (_sunScreen.z < 1.0) {
+      const sx = (_sunScreen.x * 0.5 + 0.5) * W;
+      const sy = (-_sunScreen.y * 0.5 + 0.5) * H;
+      if (sx > -300 && sx < W + 300 && sy > -220 && sy < H + 220) {
+        octx.save();
+        octx.globalCompositeOperation = 'screen';
+        const g1 = octx.createRadialGradient(sx, sy, 8, sx, sy, 260);
+        g1.addColorStop(0, 'rgba(255, 224, 152, 0.30)');
+        g1.addColorStop(0.35, 'rgba(255, 154, 68, 0.12)');
+        g1.addColorStop(1, 'rgba(255, 110, 48, 0)');
+        octx.fillStyle = g1;
+        octx.fillRect(0, 0, W, H);
+
+        const streak = octx.createLinearGradient(sx - 300, sy, sx + 300, sy);
+        streak.addColorStop(0, 'rgba(255,180,96,0)');
+        streak.addColorStop(0.5, 'rgba(255,214,142,0.20)');
+        streak.addColorStop(1, 'rgba(255,180,96,0)');
+        octx.fillStyle = streak;
+        octx.fillRect(sx - 300, sy - 5, 600, 10);
+        octx.restore();
+      }
+    }
+
+    // 2. Soft Filmic Radial Vignette
+    const vig = octx.createRadialGradient(W * 0.5, H * 0.48, H * 0.38, W * 0.5, H * 0.5, W * 0.66);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(0.75, 'rgba(10,8,16,0.14)');
+    vig.addColorStop(1, 'rgba(6,5,12,0.46)');
+    octx.fillStyle = vig;
+    octx.fillRect(0, 0, W, H);
+
+    // 3. Cinema Widescreen Letterbox Bars
+    const barH = 38;
+    octx.fillStyle = '#07080d';
+    octx.fillRect(0, 0, W, barH);
+    octx.fillRect(0, H - barH, W, barH);
+
+    // 4. Crisp Bengali Subtitles Synced to Real Neural Voiceover
+    for (const sub of SUBTITLES) {
+      if (t >= sub.start && t <= sub.end) {
+        const fadeIn = smoothstep(sub.start, sub.start + 0.22, t);
+        const fadeOut = 1.0 - smoothstep(sub.end - 0.24, sub.end, t);
+        const alpha = fadeIn * fadeOut;
+        if (alpha > 0.01) {
+          octx.save();
+          octx.globalAlpha = alpha;
+          octx.font = '600 26px "HindSiliguriFixed", sans-serif';
+          octx.textAlign = 'center';
+          octx.textBaseline = 'middle';
+
+          const textY = H - barH - 34;
+          const metrics = octx.measureText(sub.text);
+          const pillW = metrics.width + 48;
+          const pillH = 44;
+
+          octx.fillStyle = 'rgba(10, 11, 18, 0.58)';
+          const rx = W * 0.5 - pillW * 0.5;
+          const ry = textY - pillH * 0.5;
+          const r = 12;
+          octx.beginPath();
+          octx.moveTo(rx + r, ry);
+          octx.lineTo(rx + pillW - r, ry);
+          octx.quadraticCurveTo(rx + pillW, ry, rx + pillW, ry + r);
+          octx.lineTo(rx + pillW, ry + pillH - r);
+          octx.quadraticCurveTo(rx + pillW, ry + pillH, rx + pillW - r, ry + pillH);
+          octx.lineTo(rx + r, ry + pillH);
+          octx.quadraticCurveTo(rx, ry + pillH, rx, ry + pillH - r);
+          octx.lineTo(rx, ry + r);
+          octx.quadraticCurveTo(rx, ry, rx + r, ry);
+          octx.closePath();
+          octx.fill();
+
+          octx.shadowColor = 'rgba(0, 0, 0, 0.80)';
+          octx.shadowBlur = 8;
+          octx.shadowOffsetY = 2;
+          octx.fillStyle = '#fff8ec';
+          octx.fillText(sub.text, W * 0.5, textY + 1);
+          octx.restore();
+        }
+      }
+    }
+
+    // 5. Smooth Cinema Fade-In (0.3s) & Closing Fade-Out (0.35s)
+    if (t < 0.30) {
+      octx.fillStyle = `rgba(7, 8, 13, ${1.0 - smoothstep(0, 0.30, t)})`;
+      octx.fillRect(0, 0, W, H);
+    } else if (t > DURATION - 0.35) {
+      octx.fillStyle = `rgba(7, 8, 13, ${smoothstep(DURATION - 0.35, DURATION, t)})`;
+      octx.fillRect(0, 0, W, H);
+    }
+  }
+
+  // --- Deterministic Master Frame Renderer ---
+  const _emitPos = new THREE.Vector3();
+  const _smokeColorNear = new THREE.Color(0xfff0d6);
+  const _smokeColorFar  = new THREE.Color(0xdca08c);
+
+  function renderAtTime(t) {
+    const p = clamp(t / DURATION, 0, 1);
+
+    // 1. Train travel along curved track
+    const trainSpeed = 7.4;
+    const headDist = 96.0 + t * trainSpeed;
+    for (const car of trainCars) {
+      placeCarOnTrack(car, headDist);
+    }
+    for (const w of spinningWheels) {
+      w.mesh.rotation.x = headDist / w.radius;
+    }
+    const crankAngle = headDist / 0.68;
+    for (const r of sideRods) {
+      r.mesh.position.z = r.baseZ + Math.cos(crankAngle) * 0.24;
+      r.mesh.position.y = r.baseY + Math.sin(crankAngle) * 0.24;
+    }
+
+    const glowU = clamp((headDist - 15.0) / TRACK_LENGTH, 0.02, 0.98);
+    const glowP = trackCurve.getPointAt(glowU);
+    trainGlowLight.position.set(glowP.x, TRACK_Y + 2.8, glowP.z + 2.8);
+
+    // 2. Silky Painterly Locomotive Steam (drifts back-left over the river, NEVER obscuring the hilltop home!)
+    const lifeSec = 2.8;
+    for (let i = 0; i < N_STEAM; i++) {
+      const item = locoSmoke[i];
+      const age = ((t + (i / N_STEAM) * lifeSec) % lifeSec);
+      const frac = age / lifeSec;
+
+      const emitDist = headDist - age * trainSpeed;
+      const emitU = clamp((emitDist + 2.65) / TRACK_LENGTH, 0.002, 0.998);
+      trackCurve.getPointAt(emitU, _emitPos);
+
+      const rise = Math.pow(frac, 0.85) * 6.4;
+      const windX = -frac * frac * 4.8 + Math.sin(t * 0.9 + item.seed) * 0.55 * frac + item.driftX * frac;
+      const windZ =  frac * frac * 3.2 + Math.cos(t * 0.8 + item.seed) * 0.45 * frac + item.driftZ * frac;
+
+      const sp = item.sprite;
+      sp.position.set(_emitPos.x + windX, TRACK_Y + 4.35 + rise, _emitPos.z + windZ);
+      const sc = 0.95 + Math.pow(frac, 0.72) * 3.8;
+      sp.scale.set(sc, sc * 0.85, 1);
+
+      const alpha = smoothstep(0.0, 0.08, frac) * (1.0 - smoothstep(0.28, 1.0, frac)) * 0.52;
+      sp.material.opacity = alpha;
+      sp.material.rotation = item.seed + frac * 1.1;
+      sp.material.color.copy(_smokeColorNear).lerp(_smokeColorFar, frac);
+    }
+
+    // 3. Cozy Hilltop Home Chimney Woodsmoke
+    for (let i = 0; i < homeSmokeSprites.length; i++) {
+      const sp = homeSmokeSprites[i];
+      const age = ((t + i * 0.42) % 4.6) / 4.6;
+      sp.position.set(
+        homeChimneyWorld.x - age * 2.2 + Math.sin(age * 5.0 + i) * 0.42,
+        homeChimneyWorld.y + age * 6.5,
+        homeChimneyWorld.z + age * 1.2
+      );
+      const sc = 0.60 + age * 2.4;
+      sp.scale.set(sc, sc, 1);
+      sp.material.opacity = smoothstep(0.0, 0.14, age) * (1.0 - smoothstep(0.45, 1.0, age)) * 0.40;
+    }
+
+    // 4. Drifting Sunset Clouds
+    for (const c of cloudGroup.children) {
+      c.position.x = c.userData.baseX + t * c.userData.speed;
+    }
+
+    // 5. Soaring 3D Bird Flock (poetic distant V-flock gliding gracefully over the golden valley sky!)
+    const flockT = t / DURATION;
+    const flockX = lerp(-18, 22, flockT);
+    const flockY = 19.2 + Math.sin(flockT * Math.PI) * 3.8;
+    const flockZ = lerp(-6, -54, flockT);
+    const flockHeading = Math.atan2(22 - (-18), -54 - (-6));
+    for (const b of birds) {
+      const ox = -b.row * 1.45;
+      const oz = b.side * b.row * 1.35;
+      const bob = Math.sin(t * b.freq + b.phase) * 0.14;
+      b.group.position.set(
+        flockX + Math.sin(flockHeading) * ox + Math.cos(flockHeading) * oz,
+        flockY + bob + b.row * 0.24,
+        flockZ + Math.cos(flockHeading) * ox - Math.sin(flockHeading) * oz
+      );
+      b.group.rotation.set(0.06, flockHeading, Math.sin(t * 1.2 + b.phase) * 0.10);
+      const flap = Math.sin(t * b.freq + b.phase) * 0.70;
+      b.leftWing.rotation.z = -flap;
+      b.rightWing.rotation.z = flap;
+    }
+
+    // 6. Smooth Eased Drone Camera
+    const camU = clamp(lerp(p, easeInOutCubic(p), 0.35), 0, 1);
+    camPosCurve.getPointAt(camU, camera.position);
+    camera.position.y += Math.sin(t * 0.85) * 0.16;
+    const lookPt = camLookCurve.getPointAt(camU);
+    camera.lookAt(lookPt);
+
+    // 7. Update River Shader & Render
+    riverUniforms.uTime.value = t;
+    riverUniforms.uCamPos.value.copy(camera.position);
+
+    renderer.render(scene, camera);
+    drawCinemaOverlay(t);
+  }
+
+  window.renderFrame = function(frameIndex) {
+    renderAtTime(clamp(frameIndex / FPS, 0, DURATION));
+  };
+
+  // --- Interactive Browser Preview Controls ---
+  const playBtn = document.getElementById('playBtn');
+  const restartBtn = document.getElementById('restartBtn');
+  const scrub = document.getElementById('scrub');
+  const timeLbl = document.getElementById('timeLbl');
+  const voiceAudio = document.getElementById('voiceAudio');
+
+  let playing = !isRender;
+  let curTime = 0;
+  let lastTs = 0;
+
+  function syncUI(t) {
+    if (isRender) return;
+    scrub.value = Math.round(t * FPS);
+    timeLbl.textContent = `${t.toFixed(2)} / ${DURATION.toFixed(2)}s`;
+    playBtn.textContent = playing ? '⏸ পজ' : '▶ প্লে';
+  }
+
+  if (!isRender) {
+    playBtn.addEventListener('click', () => {
+      playing = !playing;
+      if (playing) {
+        if (curTime >= DURATION - 0.05) curTime = 0;
+        voiceAudio.currentTime = curTime;
+        voiceAudio.play().catch(() => {});
+        lastTs = performance.now();
+      } else {
+        voiceAudio.pause();
+      }
+      syncUI(curTime);
+    });
+    restartBtn.addEventListener('click', () => {
+      curTime = 0;
+      playing = true;
+      voiceAudio.currentTime = 0;
+      voiceAudio.play().catch(() => {});
+      lastTs = performance.now();
+      renderAtTime(0);
+      syncUI(0);
+    });
+    scrub.addEventListener('input', () => {
+      playing = false;
+      voiceAudio.pause();
+      curTime = Number(scrub.value) / FPS;
+      voiceAudio.currentTime = curTime;
+      renderAtTime(curTime);
+      syncUI(curTime);
+    });
+
+    function loop(ts) {
+      if (playing) {
+        if (!lastTs) lastTs = ts;
+        const dt = Math.min((ts - lastTs) / 1000, 0.1);
+        lastTs = ts;
+        curTime += dt;
+        if (curTime >= DURATION) {
+          curTime = 0;
+          voiceAudio.currentTime = 0;
+        }
+        renderAtTime(curTime);
+        syncUI(curTime);
+      }
+      requestAnimationFrame(loop);
+    }
+
+    document.fonts.ready.then(() => {
+      renderAtTime(0);
+      syncUI(0);
+      window.ready = true;
+      requestAnimationFrame(loop);
+    });
+  } else {
+    document.fonts.ready.then(() => {
+      renderAtTime(0);
+      window.ready = true;
+    });
+  }
+})();
+</script>
+</body>
+</html>
