@@ -23,8 +23,8 @@ echo "  [2] Image Organizer & OCR (python + python-pillow + tesseract)"
 echo "      ~45 MB download   | Required for image-organizer OCR text reading"
 echo "  [3] Video & Audio Suite (ffmpeg + yt-dlp + python)"
 echo "      ~35 MB download   | Required for video-analyzer-tool & rea-video"
-echo "  [4] Browser / JS Runtime (quickjs-ng)"
-echo "      ~2 MB download    | Required for fast-browser-automation JS eval"
+echo "  [4] Browser / Web & JS Suite (chromium + quickjs-ng)"
+echo "      ~95 MB download   | Required for fast-browser-automation, WebGL/Three.js & JS eval"
 echo "  [5] Zsh Shell & Plugins (zsh + .zshrc + autosuggestions + syntax-highlighting)"
 echo "      ~5 MB download    | Optional terminal speed & theme"
 echo "  [A] Install ALL of the above (~230 MB total download)"
@@ -62,7 +62,7 @@ PKGS=()
 [ "$SEL_RUST" = true ] && PKGS+=(rust ripgrep fd jql dust bat procs watchexec git)
 [ "$SEL_IMG" = true ]  && PKGS+=(python python-pillow tesseract curl)
 [ "$SEL_VID" = true ]  && PKGS+=(ffmpeg yt-dlp python)
-[ "$SEL_JS" = true ]   && PKGS+=(quickjs-ng)
+[ "$SEL_JS" = true ]   && PKGS+=(quickjs-ng chromium)
 [ "$SEL_ZSH" = true ]  && PKGS+=(zsh git)
 
 # Deduplicate package list
