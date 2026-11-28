@@ -172,7 +172,81 @@
       color: #38bdf8;
       border: 1px solid rgba(56, 189, 248, 0.3);
     }
+
+    /* Mobile First Responsive Styles */
+    @media (max-width: 680px) {
+      body {
+        padding: 10px 8px;
+      }
+      .wrap {
+        gap: 14px;
+      }
+      header {
+        padding: 14px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+      .brand h1 {
+        font-size: 17px;
+      }
+      .brand p {
+        font-size: 12px !important;
+      }
+      .score-badge {
+        font-size: 12px;
+        padding: 4px 10px;
+        justify-content: center;
+      }
+      .nav-links {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        width: 100%;
+      }
+      .btn {
+        text-align: center;
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+      .cat-header {
+        padding: 12px 14px;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .cat-title {
+        font-size: 14px;
+      }
+      .cat-badge {
+        font-size: 10px;
+      }
+      .item-list {
+        padding: 12px 14px;
+        gap: 12px;
+      }
+      .audit-item {
+        grid-template-columns: 24px 1fr;
+        gap: 10px;
+        position: relative;
+      }
+      .pill-status {
+        grid-column: span 2;
+        justify-self: start;
+        margin-top: 4px;
+      }
+      .item-content h4 {
+        font-size: 14px;
+      }
+      .item-content p {
+        font-size: 12px;
+      }
+      .item-solution {
+        font-size: 11px;
+        padding: 6px 8px;
+      }
+    }
   </style>
+
 </head>
 <body>
   <div class="wrap">

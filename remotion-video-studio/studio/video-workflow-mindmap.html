@@ -64,19 +64,63 @@
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
     }
     header h1 {
-      font-size: 1.12rem;
+      font-size: 1.05rem;
       font-weight: 700;
       letter-spacing: -0.01em;
     }
     .legend {
       display: flex;
-      gap: 12px;
+      gap: 8px;
       align-items: center;
       font-size: 0.74rem;
       color: var(--muted);
+      overflow-x: auto;
+      max-width: 100%;
+      padding-bottom: 4px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .legend::-webkit-scrollbar {
+      display: none;
+    }
+    .legend .dep-open-btn {
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-size: 0.76rem;
+      padding: 6px 10px;
+    }
+
+    @media (max-width: 680px) {
+      body {
+        padding: 8px 6px;
+      }
+      header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      header h1 {
+        font-size: 0.95rem;
+        text-align: center;
+      }
+      .legend {
+        justify-content: flex-start;
+      }
+      .canvas-card {
+        height: 380px;
+      }
+      .inspector {
+        padding: 12px 14px;
+      }
+      .ins-head h3 {
+        font-size: 0.95rem;
+      }
+      .prompt-text {
+        font-size: 0.78rem;
+      }
     }
     .legend-item {
       display: inline-flex;
